@@ -11,3 +11,8 @@ ingress:
   host: listing-engine.api.example.internal
 # Progressive delivery (Argo Rollouts) and HPA by QPS are platform modules
 # documented as gaps in docs/modules/progressive-delivery.md.
+models:
+  categorizer:
+    version: "0"
+  fraud:
+    version: "0"
