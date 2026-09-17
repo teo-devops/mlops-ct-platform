@@ -1,0 +1,49 @@
+# Python packages: lint, tests (steps against a fake S3 + local MLflow, API against mocked
+# models) and the images build. Blocking. The GitOps tree is validated by validate.yaml.
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  python:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Install
+        run: |
+          pip install --quiet -e "libs/ctsteps[dev]" -e "use-cases/listing-engine/plugin[dev]" -e "use-cases/listing-engine/api[dev]"
+      - name: Lint
+        run: ruff check libs use-cases && ruff format --check libs use-cases
+      - name: Test ctsteps (whole pipeline against moto + sqlite MLflow)
+        run: cd libs/ctsteps && MLFLOW_DISABLE_AGENT_HINT=1 pytest -q
+      - name: Test the use-case plugin
+        run: cd use-cases/listing-engine/plugin && MLFLOW_DISABLE_AGENT_HINT=1 pytest -q
+      - name: Test the API
+        run: cd use-cases/listing-engine/api && pytest -q
+
+  images:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - name: ctsteps-base
+        run: docker build -t ctsteps-base:ci libs/ctsteps
+      - name: listing-engine-steps
+        run: docker build --build-arg BASE=ctsteps-base:ci -t listing-engine-steps:ci use-cases/listing-engine/plugin
+      - name: listing-engine-api
+        run: docker build -t listing-engine-api:ci use-cases/listing-engine/api
+      - name: Images run as non-root and the CLI answers
+        run: |
+          [ "$(docker run --rm listing-engine-steps:ci id -u)" = "10001" ]
+          [ "$(docker run --rm listing-engine-api:ci id -u)" = "10001" ]
+          docker run --rm listing-engine-steps:ci ctsteps --help | grep -q drift

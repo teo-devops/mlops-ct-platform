@@ -13,12 +13,15 @@
 #   make status      Applications, pods, URLs and demo passwords
 #   make down        delete the cluster
 #   make validate    static checks (coherence, render, helm lint, ruff, pytest)
+#   make venv        dev virtualenv with every python package (needed by validate)
 #   make deploy-local  same charts and values with helm directly, no Argo CD
 SHELL := /usr/bin/env bash
 .DEFAULT_GOAL := help
 export CLUSTER ?= ct
+# python with the dev dependencies (make venv creates it)
+PY := $(if $(wildcard .venv-dev/bin/python),$(CURDIR)/.venv-dev/bin/python,python3)
 
-.PHONY: help prereqs up secrets bootstrap wait build pipeline promote smoke drift status down demo validate deploy-local render lint test
+.PHONY: help prereqs up secrets bootstrap wait build pipeline promote smoke drift status down demo validate deploy-local render lint test venv
 
 help:
 	@sed -n 's/^#   \(make [a-z-]*\) *\(.*\)/  \1\t\2/p' Makefile
@@ -46,9 +49,14 @@ lint:
 	@python3 scripts/validate-coherence.py
 	@kubectl kustomize overlays/demo > /dev/null && kubectl kustomize bootstrap > /dev/null && echo "✓ kustomize renders"
 	@for c in workloads/*/ use-cases/*/workloads/*/; do [ -f "$$c/Chart.yaml" ] && helm lint "$$c" -f "$$c/values.yaml" -f "$$c/values-demo.yaml" --quiet && echo "✓ helm lint $$c"; done; true
-	@if command -v ruff >/dev/null 2>&1; then ruff check libs use-cases && ruff format --check libs use-cases; else echo "ruff not installed: skipping python lint"; fi
+	@if $(PY) -m ruff --version >/dev/null 2>&1; then $(PY) -m ruff check libs use-cases && $(PY) -m ruff format --check libs use-cases && echo "✓ ruff"; else echo "ruff not installed (make venv): skipping python lint"; fi
 
 test:
-	@for d in libs/ctsteps use-cases/*/plugin use-cases/*/api; do [ -f "$$d/pyproject.toml" ] && (cd "$$d" && python3 -m pytest -q); done; true
+	@for d in libs/ctsteps use-cases/listing-engine/plugin use-cases/listing-engine/api; do \
+	  echo "== $$d"; (cd "$$d" && MLFLOW_DISABLE_AGENT_HINT=1 $(PY) -m pytest -q 2>&1 | tail -1) || exit 1; done
+
+venv:
+	python3 -m venv .venv-dev && .venv-dev/bin/pip install -q --upgrade pip \
+	  && .venv-dev/bin/pip install -q -e "libs/ctsteps[dev]" -e "use-cases/listing-engine/plugin[dev]" -e "use-cases/listing-engine/api[dev]"
 
 validate: lint test
