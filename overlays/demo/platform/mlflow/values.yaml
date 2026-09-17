@@ -72,3 +72,5 @@ resources:
 serviceMonitor:
   enabled: true
   namespace: mlflow
+  # the chart's pod-port name does not match its container port; scrape the Service port
+  useServicePort: true

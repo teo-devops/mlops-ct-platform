@@ -11,7 +11,7 @@ spec:
       - key: serving.kserve.io/inferenceservice
         operator: Exists
   podMetricsEndpoints:
-    - port: user-port
+    - portNumber: 8080
       path: /metrics
       interval: 15s
       relabelings:
