@@ -1,0 +1,65 @@
+{{- if .Values.networkPolicy.enabled }}
+# Pipeline pods reach the artifact store, the registry, the Pushgateway, the
+# API server (Argo executor + drift submitting workflows) and — promote only —
+# GitHub. Nothing reaches them except the Argo controller's pod logs (kubelet).
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny
+spec:
+  podSelector: {}
+  policyTypes: [Ingress, Egress]
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-dns-egress
+spec:
+  podSelector: {}
+  policyTypes: [Egress]
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - {protocol: UDP, port: 53}
+        - {protocol: TCP, port: 53}
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: steps-egress
+spec:
+  podSelector: {}
+  policyTypes: [Egress]
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: {{ .Values.networkPolicy.artifactStoreNamespace }}
+      ports: [{protocol: TCP, port: 9000}]
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: {{ .Values.networkPolicy.registryNamespace }}
+      ports: [{protocol: TCP, port: 5000}]
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: {{ .Values.networkPolicy.observabilityNamespace }}
+      ports: [{protocol: TCP, port: 9091}]
+    # Kubernetes API (Argo executor reports task results; drift creates Workflows)
+    - to:
+        - ipBlock: {cidr: 0.0.0.0/0, except: [10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16]}
+      ports: [{protocol: TCP, port: 443}, {protocol: TCP, port: 6443}]
+    - to:
+        - ipBlock: {cidr: 10.96.0.1/32}
+      ports: [{protocol: TCP, port: 443}]
+    - to:
+        - ipBlock: {cidr: 172.18.0.0/16}
+      ports: [{protocol: TCP, port: 6443}]
+{{- end }}

@@ -1,0 +1,166 @@
+# The continuous-training pipeline as an Argo Workflows adapter of the ctsteps
+# contract. Every task runs the SAME container with `ctsteps <step>`; the
+# orchestrator only wires parameters between tasks. Porting this pipeline to
+# Airflow or Kubeflow Pipelines = rewriting this file, not the steps
+# (pipelines/adapters/).
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: ct-pipeline
+  labels:
+    {{- include "pipelines.labels" . | nindent 4 }}
+spec:
+  serviceAccountName: {{ .Values.serviceAccount }}
+  entrypoint: pipeline
+  # Labels on every Workflow created from this template, so that the drift
+  # monitor (and humans) can find runs per model and trigger.
+  workflowMetadata:
+    labels:
+      mlops-ct-platform.dev/use-case: {{ .Values.useCase }}
+    labelsFrom:
+      ct.mlops/model:
+        expression: workflow.parameters.model
+      ct.mlops/trigger:
+        expression: workflow.parameters.trigger
+      ct.mlops/use-case:
+        expression: "'{{ .Values.useCase }}'"
+  arguments:
+    parameters:
+      - name: model
+        value: {{ index .Values.models 0 }}
+      - name: trigger
+        value: manual          # manual | cron | drift | bootstrap
+      - name: profile
+        value: ""              # data profile passed to the use case (demo: "drift")
+      - name: rows
+        value: {{ .Values.data.rows | quote }}
+  podMetadata:
+    labels:
+      {{- include "pipelines.labels" . | nindent 6 }}
+  templates:
+    - name: pipeline
+      dag:
+        tasks:
+          - name: ingest
+            template: step
+            arguments:
+              parameters:
+                - {name: step, value: ingest}
+                - {name: extra, value: "--profile '{{`{{workflow.parameters.profile}}`}}' --rows {{`{{workflow.parameters.rows}}`}} --seed {{ .Values.data.seed }}"}
+          - name: validate
+            template: step
+            depends: ingest
+            arguments:
+              parameters:
+                - {name: step, value: validate}
+          - name: preprocess
+            template: step
+            depends: validate
+            arguments:
+              parameters:
+                - {name: step, value: preprocess}
+                - {name: extra, value: "--holdout-ratio {{ .Values.data.holdoutRatio }} --reference-rows {{ .Values.data.referenceRows }} --seed {{ .Values.data.seed }}"}
+          - name: train
+            template: step
+            depends: preprocess
+            arguments:
+              parameters:
+                - {name: step, value: train}
+                - {name: extra, value: "--trigger {{`{{workflow.parameters.trigger}}`}}"}
+          - name: evaluate
+            template: step
+            depends: train
+            arguments:
+              parameters:
+                - {name: step, value: evaluate}
+                - {name: extra, value: "--mlflow-run-id {{`{{tasks.train.outputs.parameters.mlflow_run_id}}`}}"}
+          # The gate: register and promote only run when evaluate said so.
+          - name: register
+            template: step
+            depends: evaluate
+            when: "{{`{{tasks.evaluate.outputs.parameters.promote}}`}} == true"
+            arguments:
+              parameters:
+                - {name: step, value: register}
+                - {name: extra, value: "--mlflow-run-id {{`{{tasks.train.outputs.parameters.mlflow_run_id}}`}}"}
+          - name: promote
+            template: promote
+            depends: register
+            when: "{{`{{tasks.evaluate.outputs.parameters.promote}}`}} == true"
+            arguments:
+              parameters:
+                - {name: version, value: "{{`{{tasks.register.outputs.parameters.version}}`}}"}
+
+    # One template for every step: the contract is the CLI.
+    - name: step
+      inputs:
+        parameters:
+          - name: step
+          - name: extra
+            value: ""
+      outputs:
+        parameters:
+          - name: result
+            valueFrom: {path: /tmp/outputs/result.json, default: "{}"}
+          - name: mlflow_run_id
+            valueFrom: {path: /tmp/outputs/mlflow_run_id, default: ""}
+          - name: promote
+            valueFrom: {path: /tmp/outputs/promote, default: "false"}
+          - name: version
+            valueFrom: {path: /tmp/outputs/version, default: "0"}
+      container:
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        command: [sh, -ec]
+        args:
+          - >-
+            ctsteps {{`{{inputs.parameters.step}}`}}
+            --model {{`{{workflow.parameters.model}}`}}
+            --run-id {{`{{workflow.name}}`}}
+            {{`{{inputs.parameters.extra}}`}}
+        env:
+          {{- include "pipelines.stepEnv" . | nindent 10 }}
+        envFrom:
+          - secretRef:
+              name: {{ .Values.artifactStore.secretName }}
+        resources:
+          {{- toYaml .Values.resources | nindent 10 }}
+
+    # promote needs the Git credential; nothing else does.
+    - name: promote
+      inputs:
+        parameters:
+          - name: version
+      outputs:
+        parameters:
+          - name: commit
+            valueFrom: {path: /tmp/outputs/commit, default: ""}
+      container:
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        command: [sh, -ec]
+        args:
+          - >-
+            ctsteps promote
+            --model {{`{{workflow.parameters.model}}`}}
+            --run-id {{`{{workflow.name}}`}}
+            --version {{`{{inputs.parameters.version}}`}}
+            --trigger {{`{{workflow.parameters.trigger}}`}}
+        env:
+          {{- include "pipelines.stepEnv" . | nindent 10 }}
+          - name: GIT_BRANCH
+            value: {{ .Values.promote.branch }}
+          - name: CT_PROMOTE_VALUES_FILE
+            value: {{ join "," .Values.promote.valuesFiles | quote }}
+          - name: GIT_AUTHOR_NAME
+            value: {{ .Values.promote.authorName }}
+          - name: GIT_AUTHOR_EMAIL
+            value: {{ .Values.promote.authorEmail }}
+        envFrom:
+          - secretRef:
+              name: {{ .Values.artifactStore.secretName }}
+          - secretRef:
+              name: {{ .Values.promote.gitSecretName }}
+        resources:
+          requests: {cpu: 100m, memory: 256Mi}
+          limits: {memory: 1Gi}

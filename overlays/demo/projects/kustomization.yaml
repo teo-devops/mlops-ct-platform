@@ -8,6 +8,9 @@ namespace: argocd
 # reviewed by hand: they define privilege boundaries.
 resources:
   - platform.yaml
+  - listing-engine-api.yaml
+  - listing-engine-pipelines.yaml
+  - listing-engine-serving.yaml
   - minio.yaml
   - observability.yaml
 

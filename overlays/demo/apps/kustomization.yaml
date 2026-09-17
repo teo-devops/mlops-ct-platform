@@ -13,6 +13,9 @@ namespace: argocd
 # automate the harmless half of the registration and leave the dangerous half
 # by hand. See docs/decisions.md.
 resources:
+  - listing-engine-api.yaml
+  - listing-engine-pipelines.yaml
+  - listing-engine-serving.yaml
   - minio.yaml
   - observability.yaml
 
