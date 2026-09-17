@@ -6,4 +6,4 @@ models:
   categorizer:
     version: "1"
   fraud:
-    version: "0"
+    version: "1"
