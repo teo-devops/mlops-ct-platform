@@ -1,26 +1,85 @@
 # mlops-ct-platform
 
-A tool-agnostic MLOps platform that demonstrates a **closed continuous-training loop** on a
-laptop-sized Kubernetes cluster (kind):
+A tool-agnostic MLOps platform that runs a **closed continuous-training loop** on a laptop-sized
+Kubernetes cluster (kind), end to end and for real:
 
-> ingest → validate (gate) → train → evaluate champion/challenger (gate) → register → promote (GitOps)
-> → serve without downtime → monitor drift → retrain automatically.
+```
+ingest → validate (gate) → train → evaluate champion/challenger (gate) → register
+   → promote (a Git commit) → serve without downtime → monitor drift (PSI) → retrain
+```
 
-Every tool is a **module behind a contract** (artifact store, model registry, serving, orchestration,
-monitoring, model monitoring) so it can be swapped or disabled without touching the rest. The
-*Listing Engine* use case (categorise a marketplace listing and flag fraud, inspired by a real
-case study) is a plugin under `use-cases/`; the platform itself never mentions it.
+Every tool sits behind a **contract** — artifact store, model registry, serving, orchestration,
+monitoring, model monitoring — and is a self-contained, pinned **module** that can be swapped or
+disabled without touching anything else. The example use case, the *Listing Engine* (categorise a
+marketplace listing and flag fraud, inspired by a real hiring case study), is a **plugin**: the
+platform never mentions it.
 
-> Work in progress — see `docs/` as it fills up. Quickstart: `make demo`.
-
-## Layout
-
-| Directory | What |
+| What you get | Where |
 |---|---|
-| `bootstrap/`, `config/argo-cd/`, `overlays/demo/` | The GitOps control plane (Argo CD app-of-apps), inherited from [Argo-cd-Labs](https://github.com/teo-devops/Argo-cd-Labs) |
-| `overlays/demo/platform/<module>/` | One self-contained directory per platform module: pinned upstream chart + demo values |
-| `workloads/` | Shared platform workloads (artifact store, alerting rules) — `1 workload = 1 namespace = 1 AppProject = 1 Application` |
-| `libs/ctsteps/` | The step contract: pipeline steps as containers, orchestrator-agnostic |
-| `pipelines/` | Orchestrator adapters (Argo Workflows runs the demo; Airflow/KFP as reference) |
-| `use-cases/listing-engine/` | The example use case: plugin, API, and its three workloads |
-| `scripts/`, `Makefile`, `lab/` | Reproducible bootstrap on kind |
+| GitOps control plane (Argo CD app-of-apps, one AppProject per workload) | `bootstrap/`, `config/`, `overlays/demo/` |
+| Platform modules: cert-manager, KServe, MLflow, Argo Workflows, Prometheus/Grafana, Pushgateway | `overlays/demo/platform/<module>/` |
+| Shared workloads: MinIO with per-consumer users, CT alerting rules and dashboards | `workloads/` |
+| The step contract: pipeline steps as containers, orchestrator-agnostic | `libs/ctsteps/` |
+| Orchestrator adapters (Argo Workflows runs the demo; Airflow/KFP as reference) | `pipelines/` |
+| The example use case: plugin, API with graceful degradation, its three workloads | `use-cases/listing-engine/` |
+| Docs: architecture, contracts, module cards, decisions, profiles (kind / bare-metal / AWS) | `docs/` |
+
+## Quickstart (≈15 minutes on a laptop)
+
+Requirements: Docker, kind ≥ 0.31, kubectl, helm ≥ 3.14, python ≥ 3.11 with PyYAML, `gh` logged in
+(the repository is private for now; Argo CD needs a read token) — `make prereqs` checks them.
+
+```bash
+make up          # kind cluster + ingress-nginx + image preload (~5 min)
+make secrets     # namespaces and demo Secrets (random, cluster-only, never in Git)
+make bootstrap   # Argo CD from the chart, then root-app: everything else arrives by GitOps
+make wait        # platform modules Synced/Healthy
+make build       # use-case images -> kind
+make pipeline    # first run of the CT pipeline for both models: version 0 -> 1
+make smoke       # real request, fallback drill, network-policy probe
+make drift       # the world changes -> drift -> retrain -> promote commit -> new version served
+make status      # URLs and passwords: argocd | argo | mlflow | grafana | prometheus | minio .localhost:8088
+make down
+```
+
+`make demo` chains the first seven. Every UI answers on `http://<name>.localhost:8088`.
+
+## What the demo proves
+
+* **No model is deployed by hand.** A model reaches serving only through the pipeline: the gate
+  (`evaluate`) compares the candidate with the current champion on the same held-out data; `promote`
+  sets the registry alias and **pushes a commit** that bumps the served version. Argo CD syncs it,
+  KServe rolls the predictor with readiness checks. Rollback = `make promote MODEL=fraud VERSION=1`
+  (the same step, another commit).
+* **Silent failure is caught by distributions, not by errors.** The API logs every prediction to the
+  artifact store; the drift monitor (Evidently, PSI) compares the champion's frozen training
+  reference with the live window every 10 minutes and, above the retrain threshold, submits the
+  pipeline itself. `make drift` shows the whole loop in ~5 minutes:
+
+  ```
+  drift-categorizer  level=retrain max_psi=0.3285 rows=1205 retrain=ct-categorizer-drift-j7m77
+  ✓ ct-categorizer-drift-j7m77 Succeeded          gate: f1_macro improved by 0.1511 (0.99 vs 0.84)
+  46e44d1 ct: promote listing-engine/categorizer v2 (trigger=drift)
+  served versions after: categorizer/fraud = 2 1   (before: 1 1)
+  ```
+* **Degradation is a product decision.** When the fraud model is slow, down or fused (circuit
+  breaker), the API answers with explainable rules and the listing flow never blocks; the
+  categorizer is required and fails loud (503).
+* **Isolation is declared, not assumed.** `1 workload = 1 namespace = 1 AppProject = 1 Application`;
+  every workload ships its own NetworkPolicies; the smoke test proves a pod outside the API
+  namespace cannot reach the predictors.
+* **Same charts, different values.** `overlays/demo` is what runs; `overlays/prod` and
+  `overlays/aws` show the same modules with production values (docs/profiles.md).
+
+## Read next
+
+* [docs/architecture.md](docs/architecture.md) — domains, the synchronous and asynchronous paths, network
+* [docs/contracts.md](docs/contracts.md) — the six contracts and the step CLI
+* [docs/ct-loop.md](docs/ct-loop.md) — the loop step by step, with what each step reads and writes
+* [docs/modules/](docs/modules/) — one card per module, including the gaps (Kafka, Feast, Katib, Great Expectations, Argo Rollouts)
+* [docs/decisions.md](docs/decisions.md) — ADRs: why Argo Workflows and not Airflow in kind, sqlite, MinIO, push vs PR…
+* [docs/case-study.md](docs/case-study.md) — the Listing Engine case: symptoms → which module fixes what, SLOs, ownership
+* [docs/what-the-demo-does-not-prove.md](docs/what-the-demo-does-not-prove.md) — read this before extrapolating
+
+The GitOps control plane is inherited from [teo-devops/Argo-cd-Labs](https://github.com/teo-devops/Argo-cd-Labs);
+the artifact store from [teo-devops/minIO-docker](https://github.com/teo-devops/minIO-docker).
