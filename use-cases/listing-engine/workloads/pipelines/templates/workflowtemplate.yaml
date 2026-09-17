@@ -46,7 +46,7 @@ spec:
             arguments:
               parameters:
                 - {name: step, value: ingest}
-                - {name: extra, value: "--profile '{{`{{workflow.parameters.profile}}`}}' --rows {{`{{workflow.parameters.rows}}`}} --seed {{ .Values.data.seed }}"}
+                - {name: extra, value: "--rows {{`{{workflow.parameters.rows}}`}} --seed {{ .Values.data.seed }}"}
           - name: validate
             template: step
             depends: ingest
@@ -120,6 +120,17 @@ spec:
             {{`{{inputs.parameters.extra}}`}}
         env:
           {{- include "pipelines.stepEnv" . | nindent 10 }}
+          # per-run override of the data profile (workflow parameter)
+          - name: CT_DATA_PROFILE_OVERRIDE
+            value: "{{`{{workflow.parameters.profile}}`}}"
+          # state of the upstream data source: a ConfigMap outside Git that
+          # stands in for "what the data platform delivers now"
+          - name: CT_DATA_PROFILE
+            valueFrom:
+              configMapKeyRef:
+                name: {{ .Values.dataSource.configMap }}
+                key: profile
+                optional: true
         envFrom:
           - secretRef:
               name: {{ .Values.artifactStore.secretName }}

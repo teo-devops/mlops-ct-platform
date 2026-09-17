@@ -32,14 +32,25 @@ PREDICTION_COLUMN = "prediction"
 def psi_by_column(
     reference: pd.DataFrame, current: pd.DataFrame, columns: list[str]
 ) -> dict[str, float]:
-    """PSI per column (Evidently, method=psi). Categorical vs numerical inferred from dtype."""
-    numerical = [c for c in columns if pd.api.types.is_numeric_dtype(reference[c])]
-    categorical = [c for c in columns if c not in numerical]
+    """PSI per column (Evidently, method=psi). Booleans and strings are categorical."""
+    reference = reference[columns].copy()
+    current = current[columns].copy()
+    numerical, categorical = [], []
+    for c in columns:
+        if pd.api.types.is_bool_dtype(reference[c]) or not pd.api.types.is_numeric_dtype(
+            reference[c]
+        ):
+            categorical.append(c)
+            reference[c] = reference[c].astype(str)
+            current[c] = current[c].astype(str)
+        else:
+            numerical.append(c)
+            current[c] = pd.to_numeric(current[c], errors="coerce")
     dd = DataDefinition(numerical_columns=numerical, categorical_columns=categorical)
     report = Report([DataDriftPreset(method="psi", columns=columns)])
     snapshot = report.run(
-        Dataset.from_pandas(current[columns], data_definition=dd),
-        Dataset.from_pandas(reference[columns], data_definition=dd),
+        Dataset.from_pandas(current, data_definition=dd),
+        Dataset.from_pandas(reference, data_definition=dd),
     )
     out: dict[str, float] = {}
     for m in snapshot.dict()["metrics"]:
@@ -181,9 +192,6 @@ def run(
     # has the model's output for it.
     if ctx.spec.target in reference.columns and PREDICTION_COLUMN in current.columns:
         reference = reference.rename(columns={ctx.spec.target: PREDICTION_COLUMN})
-        current[PREDICTION_COLUMN] = current[PREDICTION_COLUMN].astype(
-            reference[PREDICTION_COLUMN].dtype, errors="ignore"
-        )
         columns = columns + [PREDICTION_COLUMN]
 
     psi = psi_by_column(reference, current, columns)

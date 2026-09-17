@@ -27,7 +27,66 @@ spec:
 ---
 # The drift monitor: compares the champion's training reference with the
 # live prediction log of every model, publishes PSI, and submits ct-pipeline
-# with trigger=drift above the retrain threshold.
+# with trigger=drift above the retrain threshold. A WorkflowTemplate so that
+# the CronWorkflow below and `make drift` run exactly the same thing.
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: ct-drift
+  labels:
+    {{- include "pipelines.labels" . | nindent 4 }}
+spec:
+  serviceAccountName: {{ .Values.serviceAccount }}
+  entrypoint: monitor
+  workflowMetadata:
+    labels:
+      ct.mlops/monitor: drift
+  ttlStrategy:
+    secondsAfterCompletion: 7200
+  podMetadata:
+    labels:
+      {{- include "pipelines.labels" . | nindent 6 }}
+  templates:
+    - name: monitor
+      steps:
+        - {{- range .Values.models }}
+          - name: drift-{{ . }}
+            template: drift
+            arguments:
+              parameters:
+                - {name: model, value: {{ . }}}
+          {{- end }}
+    - name: drift
+      inputs:
+        parameters:
+          - name: model
+      outputs:
+        parameters:
+          - name: result
+            valueFrom: {path: /tmp/outputs/result.json, default: "{}"}
+      container:
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        command: [sh, -ec]
+        args:
+          - >-
+            ctsteps drift
+            --model {{`{{inputs.parameters.model}}`}}
+            --window-minutes {{ .Values.drift.windowMinutes }}
+            --warn {{ .Values.drift.warn }}
+            --retrain {{ .Values.drift.retrain }}
+            --min-rows {{ .Values.drift.minRows }}
+            --pushgateway {{ .Values.drift.pushgateway }}
+            --workflow-template ct-pipeline
+        env:
+          {{- include "pipelines.stepEnv" . | nindent 10 }}
+        envFrom:
+          - secretRef:
+              name: {{ .Values.artifactStore.secretName }}
+        resources:
+          requests: {cpu: 100m, memory: 512Mi}
+          limits: {memory: 2Gi}
+---
 apiVersion: argoproj.io/v1alpha1
 kind: CronWorkflow
 metadata:
@@ -39,51 +98,7 @@ spec:
   concurrencyPolicy: Replace
   successfulJobsHistoryLimit: 2
   failedJobsHistoryLimit: 3
-  workflowMetadata:
-    labels:
-      ct.mlops/monitor: drift
   workflowSpec:
-    serviceAccountName: {{ .Values.serviceAccount }}
-    entrypoint: monitor
-    ttlStrategy:
-      secondsAfterCompletion: 7200
-    podMetadata:
-      labels:
-        {{- include "pipelines.labels" . | nindent 8 }}
-    templates:
-      - name: monitor
-        steps:
-          - {{- range .Values.models }}
-            - name: drift-{{ . }}
-              template: drift
-              arguments:
-                parameters:
-                  - {name: model, value: {{ . }}}
-            {{- end }}
-      - name: drift
-        inputs:
-          parameters:
-            - name: model
-        container:
-          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
-          imagePullPolicy: {{ .Values.image.pullPolicy }}
-          command: [sh, -ec]
-          args:
-            - >-
-              ctsteps drift
-              --model {{`{{inputs.parameters.model}}`}}
-              --window-minutes {{ .Values.drift.windowMinutes }}
-              --warn {{ .Values.drift.warn }}
-              --retrain {{ .Values.drift.retrain }}
-              --min-rows {{ .Values.drift.minRows }}
-              --pushgateway {{ .Values.drift.pushgateway }}
-              --workflow-template ct-pipeline
-          env:
-            {{- include "pipelines.stepEnv" . | nindent 12 }}
-          envFrom:
-            - secretRef:
-                name: {{ .Values.artifactStore.secretName }}
-          resources:
-            requests: {cpu: 100m, memory: 512Mi}
-            limits: {memory: 2Gi}
+    workflowTemplateRef:
+      name: ct-drift
 {{- end }}

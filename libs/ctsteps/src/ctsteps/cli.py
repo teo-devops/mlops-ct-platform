@@ -32,7 +32,15 @@ def build_parser() -> argparse.ArgumentParser:
 
     s = sub.add_parser("ingest", help="raw dataset -> artifact store")
     _common(s)
-    s.add_argument("--profile", default=os.environ.get("CT_DATA_PROFILE") or None)
+    # Data profile of the use case: explicit flag > per-run override (orchestrator
+    # parameter) > data-source state (CT_DATA_PROFILE, e.g. a ConfigMap that
+    # represents "what the upstream data platform delivers now").
+    s.add_argument(
+        "--profile",
+        default=os.environ.get("CT_DATA_PROFILE_OVERRIDE")
+        or os.environ.get("CT_DATA_PROFILE")
+        or None,
+    )
     s.add_argument("--seed", type=int, default=int(os.environ.get("CT_SEED", "42")))
     s.add_argument("--rows", type=int, default=int(os.environ.get("CT_ROWS", "6000")))
 

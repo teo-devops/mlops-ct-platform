@@ -63,5 +63,12 @@ else
   echo "    ! no GIT_TOKEN and gh not logged in: the promote step will fail until you create it"
 fi
 
+step "Data-source state (namespace listing-engine-pipelines)"
+# Stands in for the upstream data platform: which "world" the use case's
+# ingest sees. `make drift` flips it to `drift`; not in Git on purpose.
+if kubectl -n listing-engine-pipelines get configmap ct-data-source >/dev/null 2>&1; then info "kept"; else
+  kubectl -n listing-engine-pipelines create configmap ct-data-source --from-literal=profile="" >/dev/null; info "created (profile: normal)"
+fi
+
 echo
 echo "Passwords live only in the cluster. Read them with: make status"
