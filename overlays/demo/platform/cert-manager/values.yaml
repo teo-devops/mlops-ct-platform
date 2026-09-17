@@ -1,0 +1,23 @@
+# cert-manager — demo profile. Only role in this platform: issue the
+# self-signed certificate of the KServe webhook (kserve/serving-cert) and
+# inject its CA into the webhook configurations.
+crds:
+  enabled: true
+  # Keep the CRDs if the chart is ever uninstalled: Certificates/Issuers of
+  # other modules would vanish otherwise.
+  keep: true
+# The startup API check is a Helm hook Job; under Argo CD it flaps and adds
+# nothing (Argo waits for the webhook through the Application health anyway).
+startupapicheck:
+  enabled: false
+resources:
+  requests: {cpu: 20m, memory: 64Mi}
+  limits: {memory: 256Mi}
+webhook:
+  resources:
+    requests: {cpu: 20m, memory: 64Mi}
+    limits: {memory: 256Mi}
+cainjector:
+  resources:
+    requests: {cpu: 20m, memory: 64Mi}
+    limits: {memory: 256Mi}

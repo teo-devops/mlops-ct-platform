@@ -1,0 +1,76 @@
+# Defaults shared by every profile. Profile-specific overrides live in
+# values-<profile>.yaml (demo, prod, aws).
+image:
+  # MinIO images left Docker Hub in 2025; quay.io is the remaining registry.
+  # Pinned by digest: `docker pull` and `kind load` both honour it.
+  repository: quay.io/minio/minio
+  tag: RELEASE.2025-09-07T16-13-09Z
+  digest: sha256:14cea493d9a34af32f524e538b8346cf79f3321eff8e708c1e2960462bd8936e
+mcImage:
+  repository: quay.io/minio/mc
+  tag: RELEASE.2025-08-13T08-35-41Z
+  digest: sha256:a7fe349ef4bd8521fb8497f55c6042871b2ae640607cf99d9bede5e9bdf11727
+
+# Secrets are NEVER in Git. scripts/15-demo-secrets.sh creates them before the
+# first sync (docs/secrets.md):
+#   rootSecret:  MINIO_ROOT_USER / MINIO_ROOT_PASSWORD
+#   usersSecret: <ENVPREFIX>_SECRET_KEY for each user below (access key = user name)
+rootSecret: minio-root
+usersSecret: minio-users
+
+persistence:
+  size: 10Gi
+  storageClassName: ""
+
+resources:
+  requests: {cpu: 100m, memory: 256Mi}
+  limits: {memory: 1Gi}
+
+# --- Buckets, users and policies: the artifact-store contract --------------
+# Every consumer gets its own user with the minimum bucket rights. Root
+# credentials never leave this namespace.
+buckets:
+  - mlflow        # MLflow artifacts (runs, logged models)
+  - models        # serving artifacts: models/<model>/<version>/model.joblib
+  - datasets      # pipeline datasets: raw, reference, holdout
+  - predictions   # prediction log written by the APIs (drift monitor input)
+
+users:
+  - name: mlflow          # the tracking server
+    envPrefix: MLFLOW
+    policy:
+      rw: [mlflow]
+  - name: models-reader   # KServe storage-initializer
+    envPrefix: MODELS_READER
+    policy:
+      ro: [models]
+  - name: pipeline        # ctsteps (train, register, promote, drift)
+    envPrefix: PIPELINE
+    policy:
+      rw: [models, datasets, mlflow]
+      ro: [predictions]
+  - name: api-writer      # prediction log
+    envPrefix: API_WRITER
+    policy:
+      wo: [predictions]
+
+ingress:
+  enabled: false
+  className: nginx
+  consoleHost: minio.localhost
+
+networkPolicy:
+  enabled: true
+  # Namespaces allowed to reach the S3 API (9000). Keep in sync with the
+  # consumers above.
+  apiClients:
+    - mlflow
+    - listing-engine-serving
+    - listing-engine-pipelines
+    - listing-engine-api
+  # Namespace of the ingress controller (console + host port-forward path).
+  ingressNamespace: ingress-nginx
+  observabilityNamespace: observability
+  # CIDR of the kind docker network: NodePort/port-forward traffic from the
+  # host enters with a node IP as source.
+  hostCidr: 172.18.0.0/16

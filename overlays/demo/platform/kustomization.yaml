@@ -1,0 +1,30 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: argocd
+
+# ============================================================================
+# Platform modules — one self-contained directory per module:
+#   <module>/application.yaml   the Argo CD Application (upstream chart, pinned)
+#   <module>/values.yaml        the demo profile values
+#   <module>/manifests/         optional extra manifests (namespaces, PVCs, RBAC)
+#
+# Disabling a module = removing its line here. Replacing a tool = replacing
+# the directory, as long as the new one honours the same contract
+# (docs/contracts.md). Sync-waves (in each application.yaml):
+#   1  cert-manager, gateway-api-crds
+#   2  kserve-crd, mlflow, argo-workflows, kube-prometheus-stack, pushgateway
+#   3  kserve (needs cert-manager webhooks + CRDs)
+#   4  kserve-runtimes (needs the KServe webhook)
+#   5  workload Applications (../apps)
+# ============================================================================
+resources:
+  - cert-manager
+  - gateway-api-crds
+  - kserve-crd
+  - kserve
+  - kserve-runtimes
+  - mlflow
+  - argo-workflows
+  - kube-prometheus-stack
+  - pushgateway

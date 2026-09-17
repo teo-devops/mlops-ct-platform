@@ -1,0 +1,43 @@
+# kserve (kserve-resources) — demo profile.
+#
+# Contract implemented: "serving" (docs/contracts.md#serving). A model is an
+# InferenceService pulling `storageUri` from the artifact store; the API talks
+# to `<name>-predictor.<namespace>.svc`.
+#
+# Standard deployment mode = plain Deployments + Services, no Knative, no
+# Istio. Ingress creation is disabled: the demo reaches predictors in-cluster.
+# The prod profile (overlays/prod) re-enables the ingress gateway and Istio.
+kserve:
+  controller:
+    # "RawDeployment" is a deprecated alias of Standard in v0.20.
+    deploymentMode: Standard
+    gateway:
+      disableIngressCreation: true
+      disableIstioVirtualHost: true
+      ingressGateway:
+        enableGatewayApi: false
+    resources:
+      requests: {cpu: 100m, memory: 256Mi}
+      limits: {cpu: "1", memory: 1Gi}
+  storage:
+    resources:
+      requests: {cpu: 50m, memory: 64Mi}
+      limits: {cpu: "1", memory: 512Mi}
+    # Cluster-wide S3 defaults for the storage-initializer: every
+    # InferenceService reads the artifact store through them, so a Secret only
+    # needs credentials. Per-secret annotations (serving.kserve.io/s3-*)
+    # override these. Swapping MinIO for S3 = changing these four lines.
+    s3:
+      endpoint: minio.minio.svc.cluster.local:9000
+      useHttps: "0"
+      region: us-east-1
+      verifySSL: "0"
+  # Defaults for predictor pods when the InferenceService sets none. The chart
+  # default (1 CPU / 2Gi requests) is too much for a laptop.
+  inferenceservice:
+    resources:
+      requests: {cpu: 100m, memory: 256Mi}
+      limits: {cpu: "1", memory: 1Gi}
+  metricsaggregator:
+    enableMetricAggregation: "false"
+    enablePrometheusScraping: "false"

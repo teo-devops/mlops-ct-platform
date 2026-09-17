@@ -1,0 +1,12 @@
+# demo profile (kind)
+persistence:
+  size: 5Gi
+  storageClassName: standard
+ingress:
+  enabled: true
+# Images are preloaded into the kind nodes by tag (lab/images.txt); a digest
+# reference would bypass the preloaded copy and pull from the registry again.
+image:
+  digest: ""
+mcImage:
+  digest: ""

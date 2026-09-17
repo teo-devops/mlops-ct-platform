@@ -1,0 +1,46 @@
+# Platform module: mlflow — see docs/modules/mlflow.md
+# Upstream chart + values from this repository ($values). Pinned version.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: mlflow
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: platform
+  sources:
+    - repoURL: https://community-charts.github.io/helm-charts
+      chart: mlflow
+      targetRevision: 1.11.7
+      helm:
+        releaseName: mlflow
+        valueFiles:
+          - $values/overlays/demo/platform/mlflow/values.yaml
+    # Extra manifests of this module (namespaces, PVCs, RBAC...) kept next to
+    # the values so the module stays self-contained.
+    - repoURL: 'https://github.com/teo-devops/mlops-ct-platform.git'
+      targetRevision: main
+      path: overlays/demo/platform/mlflow/manifests
+    - repoURL: 'https://github.com/teo-devops/mlops-ct-platform.git'
+      targetRevision: main
+      ref: values
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: mlflow
+  syncPolicy:
+    automated:
+      selfHeal: true
+      prune: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
+      - RespectIgnoreDifferences=true
+    retry:
+      limit: 10
+      backoff:
+        duration: 15s
+        factor: 2
+        maxDuration: 3m

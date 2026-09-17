@@ -1,0 +1,79 @@
+# kube-prometheus-stack — demo profile.
+#
+# Contract implemented: "monitoring" (docs/contracts.md#monitoring): Prometheus
+# scrapes every ServiceMonitor/PodMonitor/PrometheusRule of the cluster
+# (`*SelectorNilUsesHelmValues: false`), Grafana loads dashboards from any
+# ConfigMap labelled `grafana_dashboard: "1"`.
+#
+# Trimmed for kind: no Alertmanager (rules fire, nobody pages), no scraping of
+# the control-plane components kind does not expose (they would show as Down).
+fullnameOverride: kps
+alertmanager:
+  enabled: false
+kubeEtcd: {enabled: false}
+kubeControllerManager: {enabled: false}
+kubeScheduler: {enabled: false}
+kubeProxy: {enabled: false}
+prometheusOperator:
+  admissionWebhooks:
+    enabled: false
+  tls:
+    enabled: false
+  resources:
+    requests: {cpu: 50m, memory: 128Mi}
+    limits: {memory: 512Mi}
+prometheus:
+  prometheusSpec:
+    retention: 2d
+    resources:
+      requests: {cpu: 200m, memory: 512Mi}
+      limits: {memory: 2Gi}
+    serviceMonitorSelectorNilUsesHelmValues: false
+    podMonitorSelectorNilUsesHelmValues: false
+    ruleSelectorNilUsesHelmValues: false
+    probeSelectorNilUsesHelmValues: false
+  ingress:
+    enabled: true
+    ingressClassName: nginx
+    hosts: [prometheus.localhost]
+    paths: ["/"]
+    pathType: Prefix
+grafana:
+  # Admin credentials come from a Secret created by scripts/15-demo-secrets.sh.
+  admin:
+    existingSecret: grafana-admin
+    userKey: admin-user
+    passwordKey: admin-password
+  # 256Mi gets OOMKilled on Grafana 11+ in kind.
+  resources:
+    requests: {cpu: 50m, memory: 256Mi}
+    limits: {memory: 512Mi}
+  ingress:
+    enabled: true
+    ingressClassName: nginx
+    hosts: [grafana.localhost]
+    path: /
+  sidecar:
+    dashboards:
+      enabled: true
+      label: grafana_dashboard
+      labelValue: "1"
+      searchNamespace: ALL
+      folderAnnotation: grafana_folder
+      provider:
+        foldersFromFilesStructure: true
+    datasources:
+      enabled: true
+  grafana.ini:
+    server:
+      root_url: http://grafana.localhost:8088
+    analytics:
+      check_for_updates: false
+kube-state-metrics:
+  resources:
+    requests: {cpu: 20m, memory: 64Mi}
+    limits: {memory: 256Mi}
+prometheus-node-exporter:
+  resources:
+    requests: {cpu: 20m, memory: 32Mi}
+    limits: {memory: 128Mi}

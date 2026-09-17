@@ -1,0 +1,34 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# ============================================================================
+# Entry point of the `demo` environment (kind). This is what root-app
+# reconciles (bootstrap/root-app.yaml points here with `path: overlays/demo`).
+#
+# Everything applied to the cluster hangs from this file and lives INSIDE this
+# directory: no `../..` references on purpose — an environment is read from
+# one place. Without this file root-app renders empty and shows "Synced"
+# while managing zero resources: a silent failure with a green status.
+#
+# Ordering is fixed by sync-waves, not by the order of this list:
+#   -2  the GitOps engine managing itself
+#    0  AppProjects (the isolation boundaries)
+#   1-4 platform modules (each one a self-contained directory, see platform/)
+#    5  workload Applications (platform shared services and use-case workloads)
+# ============================================================================
+resources:
+  # Wave -2 — Argo CD managing itself. A standalone file, not part of apps/:
+  # apps/kustomization.yaml forces `sync-wave: "4"` via commonAnnotations, which
+  # would override the -2 here. The engine is not a workload.
+  - argo-cd.yaml
+
+  # Wave 0 — one AppProject per workload plus the `platform` project.
+  - projects
+
+  # Waves 1..4 — platform modules (cert-manager, KServe, MLflow, Argo
+  # Workflows, monitoring...). Disabling a module = removing its line in
+  # platform/kustomization.yaml.
+  - platform
+
+  # Wave 5 — one Application per workload.
+  - apps

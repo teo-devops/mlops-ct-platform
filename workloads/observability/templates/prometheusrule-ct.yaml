@@ -1,0 +1,59 @@
+{{- if .Values.rules.enabled }}
+# Alerting rules of the continuous-training loop. They read the generic series
+# of the contracts (ct_drift_* pushed by the drift step, KServe and API
+# metrics), so they apply to every use case without changes.
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: ct-loop
+  labels:
+    app.kubernetes.io/part-of: mlops-ct-platform
+spec:
+  groups:
+    - name: ct-drift
+      rules:
+        - record: ct:drift_psi:max
+          expr: max by (use_case, model) (ct_drift_psi)
+        - alert: CTDriftWarning
+          expr: ct:drift_psi:max > {{ .Values.rules.drift.warn }} and ct:drift_psi:max <= {{ .Values.rules.drift.retrain }}
+          for: 5m
+          labels: {severity: warning}
+          annotations:
+            summary: "Drift on {{ "{{" }} $labels.use_case }}/{{ "{{" }} $labels.model }} (PSI {{ "{{" }} $value | printf \"%.2f\" }})"
+            description: "PSI between the training reference and live predictions is in the review band. Nothing is retrained yet."
+        - alert: CTDriftRetrainTriggered
+          expr: ct_drift_detected == 1
+          for: 0m
+          labels: {severity: info}
+          annotations:
+            summary: "Drift above the retrain threshold on {{ "{{" }} $labels.use_case }}/{{ "{{" }} $labels.model }}: pipeline submitted"
+        - alert: CTDriftMonitorStale
+          expr: time() - max by (use_case, model) (ct_drift_last_run_timestamp_seconds) > {{ .Values.rules.driftMaxStalenessSeconds }}
+          for: 5m
+          labels: {severity: warning}
+          annotations:
+            summary: "The drift monitor of {{ "{{" }} $labels.use_case }}/{{ "{{" }} $labels.model }} has not reported for {{ .Values.rules.driftMaxStalenessSeconds }}s"
+            description: "A silent monitor is worse than no monitor: nobody would notice drift."
+    - name: ct-pipeline
+      rules:
+        - alert: CTPipelineFailed
+          expr: increase(argo_workflows_count{status="Failed"}[30m]) > 0
+          for: 0m
+          labels: {severity: warning}
+          annotations:
+            summary: "A training pipeline failed in the last 30 minutes"
+    - name: serving
+      rules:
+        - alert: ServingP99LatencyHigh
+          expr: histogram_quantile(0.99, sum by (le, use_case) (rate(http_request_duration_seconds_bucket{handler=~"/v1/.*"}[5m]))) > {{ .Values.rules.serving.p99LatencySeconds }}
+          for: 5m
+          labels: {severity: warning}
+          annotations:
+            summary: "p99 latency of {{ "{{" }} $labels.use_case }} above {{ .Values.rules.serving.p99LatencySeconds }}s"
+        - alert: ServingErrorRatioHigh
+          expr: sum by (use_case) (rate(http_requests_total{status=~"5.."}[5m])) / sum by (use_case) (rate(http_requests_total[5m])) > {{ .Values.rules.serving.errorRatio }}
+          for: 5m
+          labels: {severity: critical}
+          annotations:
+            summary: "5xx ratio of {{ "{{" }} $labels.use_case }} above {{ .Values.rules.serving.errorRatio }}"
+{{- end }}

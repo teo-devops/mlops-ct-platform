@@ -1,0 +1,12 @@
+# prometheus-pushgateway — demo profile.
+#
+# Batch steps (the drift monitor) have no endpoint to scrape: they push their
+# metrics here and Prometheus scrapes the gateway. Part of the "monitoring"
+# contract: ct_drift_* series are what the alerting rules and dashboards read.
+fullnameOverride: pushgateway
+serviceMonitor:
+  enabled: true
+  namespace: observability
+resources:
+  requests: {cpu: 20m, memory: 32Mi}
+  limits: {memory: 128Mi}

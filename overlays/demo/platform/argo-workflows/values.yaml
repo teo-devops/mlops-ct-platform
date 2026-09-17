@@ -1,0 +1,72 @@
+# argo-workflows — demo profile.
+#
+# Contract implemented: "orchestration" (docs/contracts.md#orchestration).
+# The pipeline steps are containers with a fixed contract (libs/ctsteps); Argo
+# Workflows is the adapter that runs them in the demo. Airflow / Kubeflow
+# Pipelines adapters of the same steps live in pipelines/adapters/.
+#
+# RBAC for the workflow namespaces is provided HERE, by the platform, so that a
+# use case never writes Role/RoleBinding in its own namespace (the AppProject
+# blacklists them). Registering a new use case with pipelines = adding its
+# namespace to `controller.workflowNamespaces` and to manifests/namespaces.yaml.
+crds:
+  install: true
+  keep: true
+
+singleNamespace: false
+
+controller:
+  # Namespaces where Workflows run. The chart creates the `argo-workflow`
+  # ServiceAccount + Role + RoleBinding in each of them.
+  workflowNamespaces:
+    - listing-engine-pipelines
+  metricsConfig:
+    enabled: true
+  serviceMonitor:
+    enabled: true
+  workflowDefaults:
+    spec:
+      # Completed workflows are garbage-collected after 3 days; keep enough
+      # history for the demo dashboards.
+      ttlStrategy:
+        secondsAfterCompletion: 259200
+      podGC:
+        strategy: OnWorkflowSuccess
+  resources:
+    requests: {cpu: 50m, memory: 128Mi}
+    limits: {memory: 512Mi}
+
+workflow:
+  serviceAccount:
+    create: true
+    name: argo-workflow
+  rbac:
+    create: true
+    # Extra permissions of the workflow ServiceAccount: the drift monitor
+    # (a CronWorkflow) submits the training pipeline by creating a Workflow
+    # from a WorkflowTemplate, and reads running workflows to avoid piling
+    # up retrains.
+    rules:
+      - apiGroups: [argoproj.io]
+        resources: [workflows, workflowtemplates]
+        verbs: [get, list, create]
+
+server:
+  # No auth in the demo: the UI is reachable only from the laptop.
+  authModes: [server]
+  ingress:
+    enabled: true
+    ingressClassName: nginx
+    hosts:
+      - argo.localhost
+    paths:
+      - /
+    pathType: Prefix
+  resources:
+    requests: {cpu: 50m, memory: 128Mi}
+    limits: {memory: 512Mi}
+
+# Workflow artifacts are not used: steps exchange data through the artifact
+# store contract (S3 URIs) and small JSON outputs passed as parameters.
+useStaticCredentials: false
+artifactRepository: {}

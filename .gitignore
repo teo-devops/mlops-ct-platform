@@ -1,0 +1,24 @@
+# IDEs
+.idea/
+*.iml
+.vscode/
+
+# Temp
+*.swp
+.DS_Store
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+.venv*/
+dist/
+build/
+
+# Output of scripts/render.sh
+rendered/
+
+# Local artefacts of the demo (never commit models or datasets)
+*.joblib
+*.parquet
+outputs/

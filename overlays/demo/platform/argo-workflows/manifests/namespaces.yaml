@@ -1,0 +1,10 @@
+# Workflow namespaces must exist before the chart creates their RBAC.
+# One per use case with pipelines. The use-case Application also declares
+# `CreateNamespace=true` for the same namespace; both are idempotent.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: listing-engine-pipelines
+  labels:
+    app.kubernetes.io/managed-by: argocd
+    mlops-ct-platform.dev/workflow-namespace: "true"

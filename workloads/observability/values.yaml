@@ -1,0 +1,15 @@
+rules:
+  enabled: true
+  # Thresholds of the drift policy (Population Stability Index), from the
+  # reference document: <0.2 fine · 0.2–0.3 warn · >0.3 retrain.
+  drift:
+    warn: 0.2
+    retrain: 0.3
+  # The drift monitor must report at least every N seconds.
+  driftMaxStalenessSeconds: 1800
+  serving:
+    p99LatencySeconds: 0.5
+    errorRatio: 0.05
+dashboards:
+  enabled: true
+  folder: mlops-ct-platform

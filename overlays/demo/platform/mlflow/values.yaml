@@ -1,0 +1,63 @@
+# mlflow — demo profile.
+#
+# Contract implemented: "model-registry" (docs/contracts.md#model-registry):
+# MLFLOW_TRACKING_URI=http://mlflow.mlflow.svc.cluster.local, registered
+# models with aliases `champion` / `challenger`.
+#
+# Backend store: sqlite on a PVC (manifests/pvc.yaml). The chart's Postgres
+# subchart points at the frozen bitnamilegacy images; a single-replica
+# tracking server is enough for the demo. The prod profile uses a managed
+# Postgres (docs/profiles.md).
+strategy:
+  # One pod at a time: sqlite + ReadWriteOnce volume.
+  type: Recreate
+backendStore:
+  defaultSqlitePath: /mlflow/data/mlflow.db
+artifactRoot:
+  s3:
+    enabled: true
+    bucket: mlflow
+    # Credentials of the MinIO user `mlflow` (read/write on bucket mlflow).
+    # Created by scripts/15-demo-secrets.sh, never in Git.
+    existingSecret:
+      name: mlflow-s3-credentials
+      keyOfAccessKeyId: AWS_ACCESS_KEY_ID
+      keyOfSecretAccessKey: AWS_SECRET_ACCESS_KEY
+extraEnvVars:
+  MLFLOW_S3_ENDPOINT_URL: http://minio.minio.svc.cluster.local:9000
+  AWS_DEFAULT_REGION: us-east-1
+extraVolumes:
+  - name: data
+    persistentVolumeClaim:
+      claimName: mlflow-data
+extraVolumeMounts:
+  - name: data
+    mountPath: /mlflow/data
+# MLflow 3.x validates the Host header. In-cluster clients use the Service
+# DNS name, humans use the ingress host: allow both.
+serverAllowedHosts:
+  - mlflow.localhost
+  - mlflow.mlflow.svc.cluster.local
+  - mlflow.mlflow.svc
+  - mlflow.mlflow
+  - localhost
+  - 127.0.0.1
+corsAllowedOrigins:
+  - http://mlflow.localhost:8088
+ingress:
+  enabled: true
+  className: nginx
+  hosts:
+    - host: mlflow.localhost
+      paths:
+        - path: /
+          pathType: Prefix
+service:
+  type: ClusterIP
+  port: 80
+resources:
+  requests: {cpu: 100m, memory: 256Mi}
+  limits: {memory: 1Gi}
+serviceMonitor:
+  enabled: true
+  namespace: mlflow

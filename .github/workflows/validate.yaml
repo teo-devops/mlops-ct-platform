@@ -1,0 +1,57 @@
+# Static validation of the GitOps tree and the charts. Blocking.
+name: validate
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: azure/setup-helm@v4
+        with:
+          version: v3.20.2
+      - name: Tools
+        run: |
+          python3 -c 'import yaml' 2>/dev/null || pip install --quiet pyyaml
+          command -v kubectl >/dev/null || { curl -sLo kubectl https://dl.k8s.io/release/v1.34.0/bin/linux/amd64/kubectl; chmod +x kubectl; sudo mv kubectl /usr/local/bin/; }
+      - name: Coherence of the GitOps tree
+        run: python3 scripts/validate-coherence.py
+      - name: Kustomize renders
+        run: |
+          kubectl kustomize overlays/demo > /dev/null
+          kubectl kustomize bootstrap > /dev/null
+      - name: Templates render
+        run: |
+          python3 scripts/register-workload.py template-ci workloads/minio --archetype stateless --group ci/template --dry-run \
+            | python3 -c 'import sys,yaml; list(yaml.safe_load_all(sys.stdin))'
+      - name: Helm lint (workload charts)
+        run: |
+          for c in workloads/*/ use-cases/*/workloads/*/; do
+            [ -f "$c/Chart.yaml" ] || continue
+            helm lint "$c" -f "$c/values.yaml" -f "$c/values-demo.yaml"
+          done
+      - name: Platform module values render with their pinned charts
+        run: |
+          helm repo add argo https://argoproj.github.io/argo-helm
+          helm repo add jetstack https://charts.jetstack.io
+          helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+          helm repo add community-charts https://community-charts.github.io/helm-charts
+          helm repo update
+          P=overlays/demo/platform
+          helm template argo-cd argo/argo-cd --version 10.2.2 -f config/argo-cd/values.yaml > /dev/null
+          helm template cm jetstack/cert-manager --version v1.21.2 -f $P/cert-manager/values.yaml > /dev/null
+          helm template mlflow community-charts/mlflow --version 1.11.7 -f $P/mlflow/values.yaml > /dev/null
+          helm template wf argo/argo-workflows --version 2.0.6 -f $P/argo-workflows/values.yaml > /dev/null
+          helm template kps prometheus-community/kube-prometheus-stack --version 91.4.1 -f $P/kube-prometheus-stack/values.yaml > /dev/null
+          helm template pgw prometheus-community/prometheus-pushgateway --version 3.8.0 -f $P/pushgateway/values.yaml > /dev/null
+          helm template kserve oci://ghcr.io/kserve/charts/kserve-resources --version v0.20.0 -f $P/kserve/values.yaml > /dev/null
+          helm template rt oci://ghcr.io/kserve/charts/kserve-runtime-configs --version v0.20.0 -f $P/kserve-runtimes/values.yaml > /dev/null
+      - name: Shell syntax
+        run: for f in scripts/*.sh; do bash -n "$f"; done

@@ -1,0 +1,9 @@
+apiVersion: v2
+name: minio
+description: >-
+  S3-compatible artifact store for the platform (single-node MinIO). Implements
+  the "artifact-store" contract: buckets, per-consumer users and policies.
+  Derived from teo-devops/minIO-docker and minio-k8s.
+type: application
+version: 0.1.0
+appVersion: RELEASE.2025-09-07T16-13-09Z

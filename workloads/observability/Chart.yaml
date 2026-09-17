@@ -1,0 +1,8 @@
+apiVersion: v2
+name: observability
+description: >-
+  Platform-level alerting rules and Grafana dashboards for the continuous
+  training loop. The monitoring stack itself (Prometheus, Grafana, Pushgateway)
+  is a platform module; this workload only declares what to watch.
+type: application
+version: 0.1.0

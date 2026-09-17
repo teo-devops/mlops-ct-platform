@@ -1,0 +1,44 @@
+# ============================================================================
+# root-app — the single Application that seeds everything else.
+#
+# Applied ONCE by scripts/install.sh (phase 3). From then on the root-app
+# reconciles overlays/demo: the engine, every platform module, every AppProject
+# and every workload Application arrive by reconciliation, never by kubectl.
+#
+# Inherited from teo-devops/Argo-cd-Labs. Only repoURL and path changed.
+# ============================================================================
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: root-app
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: platform
+  source:
+    repoURL: 'https://github.com/teo-devops/mlops-ct-platform.git'
+    targetRevision: main
+    path: overlays/demo
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: argocd
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
+      # Prune last and only if the rest of the sync succeeded. It limits the
+      # damage of a broken render, but it is NOT what protects the engine: if a
+      # render stops emitting argo-cd.yaml this prune still deletes it. What
+      # keeps that deletion from cascading into Argo CD itself is that the
+      # engine Application carries no finalizer (see overlays/demo/argo-cd.yaml).
+      - PruneLast=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 15s
+        factor: 2
+        maxDuration: 5m

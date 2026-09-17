@@ -1,0 +1,26 @@
+# kserve-runtimes (kserve-runtime-configs) — the ClusterServingRuntimes.
+# Only the sklearn runtime is enabled: it is the one the step contract targets
+# (libs/ctsteps pins the same scikit-learn version as kserve/sklearnserver).
+# Enable another runtime = flip one `disabled` flag.
+kserve:
+  llmisvcConfigs:
+    enabled: false
+  servingruntime:
+    enabled: true
+    tensorflow: {disabled: true}
+    mlserver: {disabled: true}
+    sklearnserver: {disabled: false}
+    xgbserver: {disabled: true}
+    huggingfaceserver: {disabled: true}
+    tritonserver: {disabled: true}
+    pmmlserver: {disabled: true}
+    predictiveserver: {disabled: true}
+    paddleserver: {disabled: true}
+    lgbserver: {disabled: true}
+    autogluonserver: {disabled: true}
+    torchserve: {disabled: true}
+    vllmserver: {disabled: true}
+  inferenceservice:
+    resources:
+      requests: {cpu: 100m, memory: 256Mi}
+      limits: {cpu: "1", memory: 1Gi}

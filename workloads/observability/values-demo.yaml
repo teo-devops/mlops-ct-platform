@@ -1,0 +1,3 @@
+# demo profile: shorter drift cadence (the CronWorkflow runs every 10 minutes)
+rules:
+  driftMaxStalenessSeconds: 1500

@@ -1,0 +1,4 @@
+# kserve-crd — the KServe CustomResourceDefinitions (InferenceService,
+# ServingRuntime, ClusterServingRuntime...). Separate module so that the CRDs
+# are Established before the controller (wave 2 < 3). Nothing to configure.
+{}

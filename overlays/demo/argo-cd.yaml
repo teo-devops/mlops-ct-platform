@@ -1,0 +1,62 @@
+# ============================================================================
+# Argo CD managing itself through its official chart.
+#
+# Multi-source Application: the first source is the Helm chart, the second is
+# THIS repository referenced as `$values`, where the values file comes from.
+# That `ref` avoids duplicating configuration between the bootstrap
+# (`helm template -f config/argo-cd/values.yaml`) and steady state: both read
+# the same versioned file.
+#
+# Upgrading Argo CD = changing `targetRevision` here, in a PR. install.sh must
+# carry the same version (scripts/validate-coherence.py checks it).
+#
+# Inherited from teo-devops/Argo-cd-Labs.
+# ============================================================================
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: argo-cd
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "-2"
+  # NO finalizer, deliberately — unlike every other Application in this repo.
+  # root-app prunes; if a change in overlays/demo stopped emitting this file,
+  # root-app would delete this Application and, with the finalizer, cascade the
+  # deletion to the whole Argo CD installation. Without it the objects are
+  # orphaned but keep running: the safe failure. Recover by restoring the file.
+spec:
+  project: platform
+
+  sources:
+    # renovate: datasource=helm registryUrl=https://argoproj.github.io/argo-helm
+    # chart 10.2.2 -> Argo CD v3.4.6
+    - repoURL: https://argoproj.github.io/argo-helm
+      chart: argo-cd
+      targetRevision: 10.2.2
+      helm:
+        valueFiles:
+          - $values/config/argo-cd/values.yaml
+    - repoURL: 'https://github.com/teo-devops/mlops-ct-platform.git'
+      targetRevision: main
+      ref: values
+
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: argocd
+
+  syncPolicy:
+    automated:
+      # selfHeal yes: reverts any `kubectl edit` on the installation.
+      selfHeal: true
+      # prune NO: pruning the engine must be a deliberate human act. A short
+      # render of the chart cannot delete the reconciler that would fix it.
+      prune: false
+    syncOptions:
+      - ServerSideApply=true
+      - CreateNamespace=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 15s
+        factor: 2
+        maxDuration: 5m
