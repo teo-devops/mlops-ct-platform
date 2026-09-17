@@ -164,3 +164,43 @@ spec:
         resources:
           requests: {cpu: 100m, memory: 256Mi}
           limits: {memory: 1Gi}
+---
+# Promotion on its own: manual promotion of a registered version, or a
+# ROLLBACK (promote the previous version again). Same step, same audit trail:
+# a commit that bumps the served version.
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: ct-promote
+  labels:
+    {{- include "pipelines.labels" . | nindent 4 }}
+spec:
+  serviceAccountName: {{ .Values.serviceAccount }}
+  entrypoint: promote
+  workflowMetadata:
+    labelsFrom:
+      ct.mlops/model:
+        expression: workflow.parameters.model
+      ct.mlops/trigger:
+        expression: workflow.parameters.trigger
+  arguments:
+    parameters:
+      - name: model
+        value: {{ index .Values.models 0 }}
+      - name: version
+        value: "1"
+      - name: trigger
+        value: manual          # manual | rollback
+  podMetadata:
+    labels:
+      {{- include "pipelines.labels" . | nindent 6 }}
+  templates:
+    - name: promote
+      steps:
+        - - name: promote
+            templateRef:
+              name: ct-pipeline
+              template: promote
+            arguments:
+              parameters:
+                - {name: version, value: "{{`{{workflow.parameters.version}}`}}"}

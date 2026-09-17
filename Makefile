@@ -7,6 +7,7 @@
 #   make wait        wait until the platform modules are Synced/Healthy
 #   make build       build the use-case images and load them into kind
 #   make pipeline    run the continuous-training pipeline for every model
+#   make promote     promote (or roll back to) a version: make promote MODEL=fraud VERSION=2
 #   make smoke       end-to-end request + fallback drill + network-policy test
 #   make drift       send drifted traffic and watch the loop retrain
 #   make status      Applications, pods, URLs and demo passwords
@@ -17,7 +18,7 @@ SHELL := /usr/bin/env bash
 .DEFAULT_GOAL := help
 export CLUSTER ?= ct
 
-.PHONY: help prereqs up secrets bootstrap wait build pipeline smoke drift status down demo validate deploy-local render lint test
+.PHONY: help prereqs up secrets bootstrap wait build pipeline promote smoke drift status down demo validate deploy-local render lint test
 
 help:
 	@sed -n 's/^#   \(make [a-z-]*\) *\(.*\)/  \1\t\2/p' Makefile
@@ -29,6 +30,7 @@ bootstrap:  ; @ASSUME_YES=1 scripts/20-install.sh
 wait:       ; @scripts/30-wait-platform.sh
 build:      ; @scripts/35-build-images.sh
 pipeline:   ; @scripts/40-run-pipeline.sh
+promote:    ; @scripts/45-promote.sh $(MODEL) $(VERSION) $(or $(TRIGGER),manual)
 smoke:      ; @scripts/50-smoke.sh
 drift:      ; @scripts/55-induce-drift.sh
 status:     ; @scripts/60-status.sh
