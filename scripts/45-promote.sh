@@ -34,4 +34,4 @@ import json,sys; wf=json.load(sys.stdin)
 for n in wf["status"]["nodes"].values():
     if n.get("type")=="Pod":
         r=json.loads({p["name"]:p.get("value") for p in n["outputs"]["parameters"]}.get("result") or "{}")
-        print(f"    version {r.get(\"version\")} (previous {r.get(\"previous_version\")}) commit {str(r.get(\"commit\"))[:12]}")'
+        print("    version", r.get("version"), "(previous", r.get("previous_version"), ") commit", str(r.get("commit"))[:12])'

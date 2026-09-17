@@ -71,10 +71,10 @@ for n in nodes.values():
     out[n["displayName"]]=(n["phase"], params)
 ev=out.get("evaluate",("-",{}))[1]
 res=json.loads(ev.get("result","{}") or "{}")
-print(f"    gate: promote={res.get(\"promote\")} ({res.get(\"reason\")}); candidate {res.get(\"primary_metric\")}={res.get(\"candidate\")} champion={res.get(\"champion\")}")
+print("    gate: promote=%s (%s); candidate %s=%s champion=%s" % (res.get("promote"), res.get("reason"), res.get("primary_metric"), res.get("candidate"), res.get("champion")))
 if "promote" in out:
     pr=json.loads(out["promote"][1].get("result","{}") or "{}")
-    print(f"    promoted: version {pr.get(\"version\")} (previous {pr.get(\"previous_version\")}) commit {str(pr.get(\"commit\"))[:12]}")
+    print("    promoted: version %s (previous %s) commit %s" % (pr.get("version"), pr.get("previous_version"), str(pr.get("commit"))[:12]))
 else:
     print("    not promoted (register/promote skipped)")'
 done
