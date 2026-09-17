@@ -10,7 +10,7 @@
 #
 #   REQUESTS=600 ./scripts/55-induce-drift.sh
 . "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
-require kubectl curl python3 git
+require kubectl curl python3 git docker
 require_kind_context
 API="${API:-http://listing-engine.localhost:8088}"
 NS="listing-engine-pipelines"
@@ -27,27 +27,18 @@ kubectl -n "$NS" create configmap ct-data-source --from-literal=profile=drift --
 info "ct-data-source.profile = drift"
 
 step "2. Sending ${REQUESTS} drifted listings (prices collapse, electronics floods, new vocabulary)"
-python3 - "$API" "$REQUESTS" <<'PY'
-import json, random, sys, urllib.request, time
-api, n = sys.argv[1], int(sys.argv[2])
-random.seed(7)
-vocab = {
-  "electronics": ["iphone","samsung","laptop","headphones","tablet","camera","ps5","monitor","gpu","smartwatch",
-                  "foldable","e-bike","drone","vr headset","airpods","foldable","e-bike","drone","vr headset","airpods"],
-  "fashion": ["jacket","sneakers","dress","jeans","handbag","coat","boots","y2k","thrift","cargo"],
-  "home": ["sofa","table","lamp","chair","shelf"], "sports": ["bike","skis","tennis","dumbbells","helmet"],
-  "books": ["novel","textbook","comic","manga"], "kids": ["stroller","lego","crib","toy","scooter"],
-}
-median = {"electronics":350,"fashion":40,"home":90,"sports":120,"books":12,"kids":45}
-qual = ["new","like new","used","good condition","vintage","original","sealed","barely used","2023","pro"]
-cats, w = list(vocab), [0.55,0.15,0.08,0.07,0.08,0.07]
+# The listings come from the use case's own generator (drift profile), run in
+# the steps image so that traffic and training data describe the same world.
+docker run --rm "listing-engine-steps:${VERSION:-0.1.0}" python -c \
+  "from listing_engine import data; print(data.generate(seed=7, rows=${REQUESTS}, profile='drift')[['title','price']].to_json(orient='records'))" \
+  > /tmp/ct-drift-listings.json
+python3 - "$API" /tmp/ct-drift-listings.json <<'PY'
+import json, sys, urllib.request
+api, path = sys.argv[1], sys.argv[2]
 ok = err = 0
-for i in range(n):
-    c = random.choices(cats, w)[0]
-    words = [random.choice(vocab[c]), random.choice(qual)] + ([random.choice(vocab[c])] if random.random()<0.5 else [])
-    price = round(max(0.5, random.lognormvariate(__import__("math").log(median[c]), 0.7) * 0.35), 2)
-    body = json.dumps({"title": " ".join(words), "price": price}).encode()
-    req = urllib.request.Request(f"{api}/v1/listings/analyze", data=body, headers={"content-type": "application/json"})
+for i, row in enumerate(json.load(open(path))):
+    req = urllib.request.Request(f"{api}/v1/listings/analyze", data=json.dumps(row).encode(),
+                                 headers={"content-type": "application/json"})
     try:
         urllib.request.urlopen(req, timeout=5).read(); ok += 1
     except Exception:

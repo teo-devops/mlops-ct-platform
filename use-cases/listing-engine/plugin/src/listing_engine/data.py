@@ -141,7 +141,7 @@ def generate(seed: int, rows: int, profile: str | None = None) -> pd.DataFrame:
         median, sigma = PRICE[cat]
         price = float(np.exp(rng.normal(np.log(median), sigma)))
         if drift:
-            price *= 0.35  # prices collapse
+            price *= 0.25  # prices collapse (post-season)
         is_fraud = False
         r = rng.random()
         if r < 0.06:  # too cheap for what it claims to be
