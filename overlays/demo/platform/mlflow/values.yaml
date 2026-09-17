@@ -61,9 +61,13 @@ ingress:
 service:
   type: ClusterIP
   port: 80
+# MLflow 3 starts 4 uvicorn workers by default (~400 MiB each on start-up):
+# two are plenty for the demo and keep the pod inside a laptop-sized limit.
+extraArgs:
+  workers: "2"
 resources:
-  requests: {cpu: 100m, memory: 256Mi}
-  limits: {memory: 1Gi}
+  requests: {cpu: 100m, memory: 512Mi}
+  limits: {memory: 2Gi}
 serviceMonitor:
   enabled: true
   namespace: mlflow
