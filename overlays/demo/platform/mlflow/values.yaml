@@ -30,9 +30,15 @@ extraVolumes:
   - name: data
     persistentVolumeClaim:
       claimName: mlflow-data
+  # `serviceMonitor.enabled` makes the server write Prometheus multiprocess
+  # files under /mlflow/metrics; the root filesystem is read-only.
+  - name: metrics
+    emptyDir: {}
 extraVolumeMounts:
   - name: data
     mountPath: /mlflow/data
+  - name: metrics
+    mountPath: /mlflow/metrics
 # MLflow 3.x validates the Host header. In-cluster clients use the Service
 # DNS name, humans use the ingress host: allow both.
 serverAllowedHosts:
