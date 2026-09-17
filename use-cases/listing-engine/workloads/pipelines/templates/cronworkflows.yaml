@@ -9,7 +9,7 @@ metadata:
   labels:
     {{- include "pipelines.labels" $ | nindent 4 }}
 spec:
-  schedule: {{ $.Values.schedule.cron | quote }}
+  schedules: [{{ $.Values.schedule.cron | quote }}]
   concurrencyPolicy: Forbid
   startingDeadlineSeconds: 3600
   successfulJobsHistoryLimit: 3
@@ -35,7 +35,7 @@ metadata:
   labels:
     {{- include "pipelines.labels" . | nindent 4 }}
 spec:
-  schedule: {{ .Values.drift.cron | quote }}
+  schedules: [{{ .Values.drift.cron | quote }}]
   concurrencyPolicy: Replace
   successfulJobsHistoryLimit: 2
   failedJobsHistoryLimit: 3
