@@ -1,0 +1,13 @@
+# prod profile — ILLUSTRATIVE. Same chart; what changes is scale and edges.
+replicas: 3
+image:
+  repository: registry.example.internal/listing-engine/api
+  tag: 0.1.0   # digest-pinned by CI in a real pipeline
+resources:
+  requests: {cpu: 500m, memory: 256Mi}
+  limits: {memory: 1Gi}
+ingress:
+  enabled: true
+  host: listing-engine.api.example.internal
+# Progressive delivery (Argo Rollouts) and HPA by QPS are platform modules
+# documented as gaps in docs/modules/progressive-delivery.md.

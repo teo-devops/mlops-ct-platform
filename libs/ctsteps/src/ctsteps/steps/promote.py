@@ -2,7 +2,9 @@
 
 Two writes, in this order:
   1. registry: alias `champion` -> version (the old champion becomes `previous`).
-  2. Git: bump `models.<model>.version` in the serving values file and push.
+  2. Git: bump `models.<model>.version` in the values file(s) and push
+     (CT_PROMOTE_VALUES_FILE, comma-separated: typically the serving chart
+     and the API chart, so predictor and lineage change in one commit).
 
 The second write is the deployment. Nothing talks to the cluster: Argo CD
 sees the commit, the serving layer rolls the new version with readiness
@@ -60,15 +62,16 @@ def push_bump(ctx: Context, version: int, trigger: str) -> str:
             os.environ.get("GIT_AUTHOR_EMAIL", "ct-pipeline@mlops-ct-platform.local"),
             cwd=repo,
         )
-        values = repo / s.values_file
+        files = [repo / f.strip() for f in s.values_file.split(",") if f.strip()]
         msg = (
             f"ct: promote {ctx.use_case.name}/{ctx.spec.name} v{version} (trigger={trigger})\n\n"
             f"pipeline-run: {ctx.run_id}\nregistry: {registry.registered_name(ctx.use_case.name, ctx.spec.name)} v{version}\n"
             f"serving-uri: {ctx.serving_uri(version)}\n\nCo-Authored-By: ct-pipeline <ct-pipeline@mlops-ct-platform.local>"
         )
         for attempt in range(5):
-            values.write_text(bump_version(values.read_text(), ctx.spec.name, version))
-            git("add", s.values_file, cwd=repo)
+            for values in files:
+                values.write_text(bump_version(values.read_text(), ctx.spec.name, version))
+            git("add", *[str(f.relative_to(repo)) for f in files], cwd=repo)
             git("commit", "-m", msg, cwd=repo)
             try:
                 git("push", "origin", f"HEAD:{s.git_branch}", cwd=repo)

@@ -1,0 +1,19 @@
+# prod profile — ILLUSTRATIVE. Same InferenceServices; real autoscaling,
+# canary traffic split (KServe with a Gateway/Istio ingress) and more replicas.
+models:
+  categorizer:
+    version: "0"
+    minReplicas: 2
+    maxReplicas: 10
+    canaryTrafficPercent: 10
+  fraud:
+    version: "0"
+    minReplicas: 2
+    maxReplicas: 10
+runtime:
+  autoscalerClass: hpa
+  resources:
+    requests: {cpu: "1", memory: 1Gi}
+    limits: {cpu: "2", memory: 2Gi}
+# In the aws profile the predictor ServiceAccount carries an IRSA annotation
+# instead of a Secret (docs/profiles.md).

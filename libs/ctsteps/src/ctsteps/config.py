@@ -33,7 +33,7 @@ class Settings:
     git_branch: str
     git_user: str
     git_token: str
-    values_file: str
+    values_file: str  # comma-separated paths inside the repo
     # where the orchestrator reads the step result
     outputs_dir: Path
 

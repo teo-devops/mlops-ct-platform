@@ -43,6 +43,7 @@ extraVolumeMounts:
 # DNS name, humans use the ingress host: allow both.
 serverAllowedHosts:
   - mlflow.localhost
+  - mlflow.localhost:8088
   - mlflow.mlflow.svc.cluster.local
   - mlflow.mlflow.svc
   - mlflow.mlflow
