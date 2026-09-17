@@ -1,0 +1,41 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ctsteps"
+version = "0.1.0"
+description = "Continuous-training pipeline steps as containers: an orchestrator-agnostic contract."
+requires-python = ">=3.11"
+dependencies = [
+  # Exactly what kserve/sklearnserver:v0.20.0 pins: a model pickled here must
+  # unpickle there.
+  "scikit-learn==1.5.2",
+  "joblib==1.5.3",
+  "numpy==2.4.4",
+  "pandas==2.3.3",
+  "scipy==1.17.1",
+  "pyarrow>=17",
+  "mlflow==3.16.1",
+  "boto3>=1.35",
+  "evidently==0.7.23",
+  "prometheus-client>=0.21",
+  "kubernetes>=31",
+  "pyyaml>=6",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "moto[s3]>=5", "ruff>=0.8"]
+
+[project.scripts]
+ctsteps = "ctsteps.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
