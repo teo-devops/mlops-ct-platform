@@ -15,8 +15,10 @@ spec:
       path: /metrics
       interval: 15s
       relabelings:
-        - sourceLabels: [__meta_kubernetes_pod_label_serving_kserve_io_inferenceservice]
+        - action: replace
+          sourceLabels: [__meta_kubernetes_pod_label_serving_kserve_io_inferenceservice]
           targetLabel: model
-        - targetLabel: use_case
+        - action: replace
+          targetLabel: use_case
           replacement: {{ .Values.useCase }}
 {{- end }}
