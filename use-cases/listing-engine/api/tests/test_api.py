@@ -6,7 +6,9 @@ import httpx
 import pytest
 
 from app.config import settings
-from tests.conftest import CAT_URL, FRAUD_URL
+
+CAT_URL = settings.categorizer_url
+FRAUD_URL = settings.fraud_url
 
 LISTING = {"title": "iPhone 13 Pro 128GB very good condition", "price": 450.0}
 
