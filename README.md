@@ -19,12 +19,13 @@ platform never mentions it.
 | GitOps control plane (Argo CD app-of-apps, one AppProject per workload) | `gitops/` — `bootstrap/`, `argo-cd/`, `templates/`, `environments/demo/` |
 | Platform modules: cert-manager, KServe, MLflow, Argo Workflows, Prometheus/Grafana, Pushgateway | `gitops/environments/demo/platform/<module>/` |
 | Workload registrations, grouped by owner (`shared/`, `<use-case>/`) | `gitops/environments/demo/{projects,apps}/<group>/` |
-| Shared workloads: MinIO with per-consumer users, CT alerting rules and dashboards | `workloads/` |
+| Shared workloads: MinIO with per-consumer users, CT alerting rules and the *CT Loop* dashboard | `workloads/` |
 | The step contract: pipeline steps as containers, orchestrator-agnostic | `libs/ctsteps/` |
 | Orchestrator adapters (Argo Workflows runs the demo; Airflow/KFP as reference) | `pipelines/` |
-| The example use case: plugin, API with graceful degradation, its three workloads | `use-cases/listing-engine/` |
+| Platform scripts: cluster lifecycle, bootstrap, operations, repo tooling | `scripts/` |
 | kind cluster definition and the images preloaded into it | `cluster/` |
-| Docs: architecture, contracts, module cards, decisions, profiles (kind / bare-metal / AWS) | `docs/` |
+| Platform docs: architecture, contracts, the loop, module cards, decisions, profiles, runbook | `docs/` |
+| The example use case: plugin, API, three workloads, **its own docs, scripts and secrets** | `use-cases/listing-engine/` |
 
 ## Quickstart (≈15 minutes on a laptop)
 
@@ -32,19 +33,23 @@ Requirements: Docker, kind ≥ 0.31, kubectl, helm ≥ 3.14, python ≥ 3.11 wit
 (the repository is private for now; Argo CD needs a read token) — `make prereqs` checks them.
 
 ```bash
-make up          # kind cluster + ingress-nginx + image preload (~5 min)
-make secrets     # namespaces and demo Secrets (random, cluster-only, never in Git)
-make bootstrap   # Argo CD from the chart, then root-app: everything else arrives by GitOps
-make wait        # platform modules Synced/Healthy
-make build       # use-case images -> kind
-make pipeline    # first run of the CT pipeline for both models: version 0 -> 1
-make smoke       # real request, fallback drill, network-policy probe
-make drift       # the world changes -> drift -> retrain -> promote commit -> new version served
-make status      # URLs and passwords: argocd | argo | mlflow | grafana | prometheus | minio .localhost:8088
-make down
+# platform (scripts/cluster, scripts/platform)
+make up          # 02  kind cluster + ingress-nginx + image preload (~5 min)
+make secrets     # 03  platform identities and Secrets, then each use case's (random, cluster-only, never in Git)
+make bootstrap   # 04  Argo CD from the chart, then root-app: everything else arrives by GitOps
+make wait        # 05  platform modules Synced/Healthy
+# the use case (use-cases/$USE_CASE/scripts, default listing-engine)
+make build       # 06  use-case images -> kind
+make pipeline    # 07  first run of the CT pipeline for every model: version 0 -> 1
+make smoke       # 08  real request, fallback drill, network-policy probe
+make drift       # 09  the world changes -> drift -> retrain -> promote commit -> new version served
+# any time
+make status      #     Applications, served models, pipelines, URLs and passwords
+make down        # 10
 ```
 
-`make demo` chains the first seven. Every UI answers on `http://<name>.localhost:8088`.
+`make demo` chains 02 → 08; `make prereqs` (01) checks the tools. Every UI answers on
+`http://<name>.localhost:8088`. Another use case runs the same flow with `USE_CASE=<name>`.
 
 ## The platform, in one table
 
@@ -90,21 +95,41 @@ A second use case is a new directory with the same shape — see [use-cases/READ
 ## Repository map
 
 ```
-gitops/                 what Argo CD reconciles, and how it is bootstrapped
-  bootstrap/            root-app (applied once by scripts/platform/04-install.sh)
-  argo-cd/values.yaml   the engine's single source of configuration
-  templates/            AppProject + Application templates for new workloads
-  environments/demo/    the environment that runs on kind (prod/ and aws/ are documented shapes)
-    platform/<module>/  one directory per platform module: pinned chart + values (+ manifests)
-    projects/<group>/   one AppProject per workload   ┐ groups: shared/, listing-engine/, …
-    apps/<group>/       one Application per workload  ┘ (scripts/repo/register-workload.py --group)
-cluster/                kind.yaml and the image preload list
-workloads/              charts of the shared workloads (minio, observability)
-use-cases/<name>/       a use case: plugin (steps image), api, workloads/{api,serving,pipelines} (use-cases/README.md = how to add one)
-libs/ctsteps/           the step contract (python package + CLI + tests)
-pipelines/              orchestrator adapters and notes
-scripts/                launch flow numbered 01→10 across cluster/ · platform/ · demo/; repo/ = tooling (scripts/README.md)
-docs/                   design/ · modules/ · operations/ · decisions · case-study · roadmap (docs/README.md = reading order)
+mlops-ct-platform/
+├── README.md · AGENTS.md · Makefile          Makefile = the ordered entry point (make help)
+├── gitops/                                   what Argo CD reconciles, and how it is bootstrapped
+│   ├── bootstrap/                            root-app (applied once by scripts/platform/04-install.sh)
+│   ├── argo-cd/values.yaml                   the engine's single source of configuration
+│   ├── templates/                            AppProject + Application templates for new workloads
+│   └── environments/
+│       ├── demo/                             the environment that runs on kind
+│       │   ├── kustomization.yaml · argo-cd.yaml
+│       │   ├── platform/<module>/            one directory per platform module: pinned chart + values (+ manifests)
+│       │   ├── projects/<group>/             one AppProject per workload   ┐ groups: shared/, <use-case>/
+│       │   └── apps/<group>/                 one Application per workload  ┘ (scripts/repo/register-workload.py --group)
+│       ├── prod/ · aws/                      documented shapes of the same tree (docs/design/profiles.md)
+├── cluster/                                  kind.yaml and the image preload list
+├── workloads/                                charts of the shared workloads: minio, observability
+├── libs/ctsteps/                             the step contract: python package + `ctsteps` CLI + tests + base image
+├── pipelines/                                orchestrator adapters (argo/ notes; adapters/airflow, adapters/kfp as reference)
+├── scripts/                                  platform scripts; launch flow numbered 01 → 10 (scripts/README.md)
+│   ├── lib.sh                                shared helpers; every path resolves from the repo root
+│   ├── cluster/                              01-prereqs · 02-up · 10-down
+│   ├── platform/                             03-secrets · 04-install · 05-wait · status · credentials · deploy-local
+│   └── repo/                                 validate-coherence.py · register-workload.py · render.sh
+├── use-cases/                                one directory per use case (use-cases/README.md = how to add one)
+│   └── listing-engine/
+│       ├── README.md
+│       ├── docs/                             architecture of the instance · case-study · runbook
+│       ├── scripts/                          secrets · 06-build-images · 07-run-pipeline · 08-smoke · 09-induce-drift · promote
+│       ├── plugin/                           the UseCase implementation + the steps image (FROM ctsteps-base)
+│       ├── api/                              FastAPI orchestrator with graceful degradation + tests
+│       └── workloads/                        api/ · serving/ · pipelines/ — one Helm chart per workload
+└── docs/                                     platform documentation (docs/README.md = reading order)
+    ├── design/                               architecture · contracts · ct-loop · profiles · secrets · archetypes
+    ├── modules/                              one card per module, implemented and gaps
+    ├── operations/                           runbook · what-the-demo-does-not-prove
+    └── decisions.md · roadmap.md
 ```
 
 ## Read next
@@ -112,6 +137,8 @@ docs/                   design/ · modules/ · operations/ · decisions · case-
 * [docs/design/architecture.md](docs/design/architecture.md) — domains, the synchronous and asynchronous paths, network
 * [docs/design/contracts.md](docs/design/contracts.md) — the six contracts and the step CLI
 * [docs/design/ct-loop.md](docs/design/ct-loop.md) — the loop step by step, with what each step reads and writes
+* [use-cases/README.md](use-cases/README.md) — the shape of a use case and the six steps to add one
+* [scripts/README.md](scripts/README.md) — every script, its `make` target and the launch order
 * [docs/modules/](docs/modules/) — one card per module, including the gaps (Kafka, Feast, Katib, Great Expectations, Argo Rollouts)
 * [docs/decisions.md](docs/decisions.md) — ADRs: why Argo Workflows and not Airflow in kind, sqlite, MinIO, push vs PR…
 * [use-cases/listing-engine/docs/](use-cases/listing-engine/docs/) — the example use case: instance architecture, case study, runbook
