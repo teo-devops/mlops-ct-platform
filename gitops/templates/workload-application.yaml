@@ -10,6 +10,9 @@
 #   PATH        directory with the manifests (a Helm chart or plain YAML),
 #               e.g. workloads/minio or use-cases/listing-engine/workloads/api
 #   ARCHETYPE   stateless | batch | stateful | pipeline   (docs/design/archetypes.md)
+#   GROUP       owner folder under projects/ and apps/: `shared` for platform-wide
+#               workloads, or the use-case name. Platform scripts use the label to
+#               tell platform workloads from use-case workloads.
 #
 # Inherited from teo-devops/Argo-cd-Labs.
 # ============================================================================
@@ -18,6 +21,8 @@ kind: Application
 metadata:
   name: NAME
   namespace: argocd
+  labels:
+    mlops-ct-platform.dev/group: GROUP
   annotations:
     mlops-ct-platform.dev/archetype: ARCHETYPE
   finalizers:

@@ -54,4 +54,4 @@ jobs:
           helm template kserve oci://ghcr.io/kserve/charts/kserve-resources --version v0.20.0 -f $P/kserve/values.yaml > /dev/null
           helm template rt oci://ghcr.io/kserve/charts/kserve-runtime-configs --version v0.20.0 -f $P/kserve-runtimes/values.yaml > /dev/null
       - name: Shell syntax
-        run: for f in scripts/lib.sh scripts/*/*.sh; do bash -n "$f"; done
+        run: for f in scripts/lib.sh scripts/*/*.sh use-cases/*/scripts/*.sh; do bash -n "$f"; done

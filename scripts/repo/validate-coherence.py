@@ -37,7 +37,7 @@ ROOT_APP = GITOPS / "bootstrap" / "root-app.yaml"
 EXPECTED_SERVER = "https://kubernetes.default.svc"
 ARCHETYPES = {"stateless", "batch", "stateful", "pipeline"}
 ARCHETYPE_ANNOTATION = "mlops-ct-platform.dev/archetype"
-MARKERS = ("NAME", "REPO_URL", "DESCRIPTION", "GROUP", "ARCHETYPE", "PATH")
+MARKERS = ("NAME", "REPO_URL", "DESCRIPTION", "GROUP", "TEAM", "ARCHETYPE", "PATH")
 PLATFORM_PROJECTS = {"platform"}
 
 errors: list[str] = []
@@ -244,6 +244,9 @@ def main() -> int:
         if len(git_repos) > 1:
             error(f"{r}: {len(git_repos)} Git repositories ({sorted(git_repos)}); 1 workload = 1 repo")
 
+        group = (doc.get("metadata", {}).get("labels") or {}).get("mlops-ct-platform.dev/group")
+        if group != path.parent.name:
+            error(f"{r}: label mlops-ct-platform.dev/group is {group!r} but the file lives in group {path.parent.name!r}")
         archetype = (doc.get("metadata", {}).get("annotations") or {}).get(ARCHETYPE_ANNOTATION)
         if archetype is not None and archetype not in ARCHETYPES:
             error(f"{r}: unknown archetype {archetype!r}; known: {sorted(ARCHETYPES)} (docs/design/archetypes.md)")

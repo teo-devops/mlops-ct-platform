@@ -7,7 +7,7 @@ Reading order for someone new to the repository:
 3. [design/ct-loop.md](design/ct-loop.md) — the continuous-training loop step by step, triggers, drift policy
 4. [modules/](modules/README.md) — one card per platform module, including the documented gaps
 5. [decisions.md](decisions.md) — ADRs: why things are the way they are (read before "improving" anything)
-6. [case-study.md](case-study.md) — the Listing Engine case: symptoms → modules, ownership, SLOs
+6. [../use-cases/listing-engine/docs/](../use-cases/listing-engine/docs/) — the example use case: instance architecture, case study, runbook
 7. [design/profiles.md](design/profiles.md) — demo (kind) · prod (bare-metal) · aws, same modules
 8. [operations/runbook.md](operations/runbook.md) — day-to-day: retrain, promote, roll back, rotate, add a use case
 9. [operations/what-the-demo-does-not-prove.md](operations/what-the-demo-does-not-prove.md) — read before extrapolating
@@ -25,6 +25,6 @@ docs/
 ├── modules/             one card per module (implemented and gaps)
 ├── operations/          runbook, limitations of the demo
 ├── decisions.md         ADRs
-├── case-study.md        the motivating case
+│                        (use-case documents live with the use case: use-cases/<name>/docs/)
 └── roadmap.md
 ```

@@ -8,8 +8,8 @@
 #      holdout, registers, promotes: a commit bumps the served version
 #   5. Argo CD syncs, KServe rolls the predictor, the API reports the new version
 #
-#   REQUESTS=600 ./scripts/demo/09-induce-drift.sh
-. "$(dirname "${BASH_SOURCE[0]}")/../lib.sh"
+#   REQUESTS=600 ./use-cases/listing-engine/scripts/09-induce-drift.sh
+. "$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)/scripts/lib.sh"
 require kubectl curl python3 git docker
 require_kind_context
 API="${API:-http://listing-engine.localhost:8088}"

@@ -46,32 +46,46 @@ make down
 
 `make demo` chains the first seven. Every UI answers on `http://<name>.localhost:8088`.
 
-## What the demo proves
+## The platform, in one table
 
-* **No model is deployed by hand.** A model reaches serving only through the pipeline: the gate
-  (`evaluate`) compares the candidate with the current champion on the same held-out data; `promote`
-  sets the registry alias and **pushes a commit** that bumps the served version. Argo CD syncs it,
-  KServe rolls the predictor with readiness checks. Rollback = `make promote MODEL=fraud VERSION=1`
-  (the same step, another commit).
-* **Silent failure is caught by distributions, not by errors.** The API logs every prediction to the
-  artifact store; the drift monitor (Evidently, PSI) compares the champion's frozen training
-  reference with the live window every 10 minutes and, above the retrain threshold, submits the
-  pipeline itself. `make drift` shows the whole loop in ~5 minutes:
+| Contract | Module (pinned) | What a use case gets |
+|---|---|---|
+| artifact-store | MinIO | S3 buckets `datasets` / `models` / `predictions` and a least-privilege user per consumer |
+| model-registry | MLflow | runs, registered models, aliases `champion` / `challenger` / `previous` |
+| serving | KServe (Standard mode) | an `InferenceService` per model, pulled by version from the artifact store |
+| orchestration | Argo Workflows | the step contract run as a pipeline, schedules, RBAC for its namespace |
+| monitoring | kube-prometheus-stack + Pushgateway | scraping, generic CT alerting rules, the *CT Loop* dashboard |
+| model-monitoring | Evidently (`ctsteps drift`) | PSI against the frozen training reference, automatic retrain above threshold |
+| promotion | `ctsteps promote` + Argo CD | deployment = a commit; rollback = another commit |
 
-  ```
-  drift-categorizer  level=retrain max_psi=0.3285 rows=1205 retrain=ct-categorizer-drift-j7m77
-  ✓ ct-categorizer-drift-j7m77 Succeeded          gate: f1_macro improved by 0.1511 (0.99 vs 0.84)
-  46e44d1 ct: promote listing-engine/categorizer v2 (trigger=drift)
-  served versions after: categorizer/fraud = 2 1   (before: 1 1)
-  ```
-* **Degradation is a product decision.** When the fraud model is slow, down or fused (circuit
-  breaker), the API answers with explainable rules and the listing flow never blocks; the
-  categorizer is required and fails loud (503).
-* **Isolation is declared, not assumed.** `1 workload = 1 namespace = 1 AppProject = 1 Application`;
-  every workload ships its own NetworkPolicies; the smoke test proves a pod outside the API
-  namespace cannot reach the predictors.
-* **Same charts, different values.** `gitops/environments/demo` is what runs; `gitops/environments/prod` and
-  `gitops/environments/aws` show the same modules with production values (docs/design/profiles.md).
+Modules are self-contained directories under `gitops/environments/demo/platform/`; each has a card
+in `docs/modules/` saying what it promises, how to replace it and how to disable it. The parts of the
+reference architecture that are not implemented (Kafka, Feast, Katib, Great Expectations, Argo
+Rollouts) have cards too, with their contract and where they plug in.
+
+## The example use case: Listing Engine
+
+`use-cases/listing-engine/` — categorise a marketplace listing and flag fraud; two models, one API
+with graceful degradation, a synthetic data source with a "post-season" drift profile. It is the
+use case the `make` targets drive by default (`USE_CASE=listing-engine`), and it proves the loop:
+
+```
+$ make drift
+drift-categorizer  level=retrain max_psi=0.3285 rows=1205 retrain=ct-categorizer-drift-j7m77
+✓ ct-categorizer-drift-j7m77 Succeeded      gate: f1_macro improved by 0.1511 (0.99 vs 0.84)
+46e44d1 ct: promote listing-engine/categorizer v2 (trigger=drift)
+served versions after: categorizer/fraud = 2 1   (before: 1 1)
+```
+
+* **No model is deployed by hand** — only through the pipeline's gates and a promotion commit.
+* **Silent failure is caught by distributions**, not by errors: every prediction is logged, the
+  monitor compares it with the champion's training reference every 10 minutes.
+* **Degradation is a product decision**: the fraud check falls back to explainable rules, the
+  listing flow never blocks; the categorizer fails loud.
+* **Isolation is declared**: one namespace/AppProject/Application per workload, NetworkPolicies
+  shipped by each chart, verified by the smoke test.
+
+A second use case is a new directory with the same shape — see [use-cases/README.md](use-cases/README.md).
 
 ## Repository map
 
@@ -100,7 +114,7 @@ docs/                   design/ · modules/ · operations/ · decisions · case-
 * [docs/design/ct-loop.md](docs/design/ct-loop.md) — the loop step by step, with what each step reads and writes
 * [docs/modules/](docs/modules/) — one card per module, including the gaps (Kafka, Feast, Katib, Great Expectations, Argo Rollouts)
 * [docs/decisions.md](docs/decisions.md) — ADRs: why Argo Workflows and not Airflow in kind, sqlite, MinIO, push vs PR…
-* [docs/case-study.md](docs/case-study.md) — the Listing Engine case: symptoms → which module fixes what, SLOs, ownership
+* [use-cases/listing-engine/docs/](use-cases/listing-engine/docs/) — the example use case: instance architecture, case study, runbook
 * [docs/operations/what-the-demo-does-not-prove.md](docs/operations/what-the-demo-does-not-prove.md) — read this before extrapolating
 
 The GitOps control plane is inherited from [teo-devops/Argo-cd-Labs](https://github.com/teo-devops/Argo-cd-Labs);

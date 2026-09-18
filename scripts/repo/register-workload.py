@@ -112,7 +112,8 @@ def main() -> int:
         "PATH": args.path,
         "ARCHETYPE": args.archetype,
         "DESCRIPTION": args.description or f"{name}, confined to its namespace of the same name.",
-        "GROUP": args.team or f"teo-devops/{name}",
+        "GROUP": args.group,
+        "TEAM": args.team or f"teo-devops/{name}",
     }
     project = render(TEMPLATES / "workload-appproject.yaml", values)
     app = render(TEMPLATES / "workload-application.yaml", values)

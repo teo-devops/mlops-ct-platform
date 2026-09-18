@@ -2,9 +2,12 @@
 
 Given a listing (title, price), predict its **category** and whether it looks **fraudulent**
 (counterfeit, price anomaly). Two independent models behind one API with graceful degradation.
-Inspired by a marketplace hiring case study (docs/case-study.md); the data is synthetic.
+Inspired by a marketplace hiring case study (use-cases/listing-engine/docs/case-study.md); the data is synthetic.
 
 ```
+docs/       architecture of the instance, the case study, the runbook
+scripts/    06-build-images · 07-run-pipeline · 08-smoke · 09-induce-drift · promote · secrets
+            (steps 06-09 continue the platform's launch flow; `make` runs them with USE_CASE=listing-engine)
 plugin/     the `UseCase` implementation (data generator with a `drift` profile, schema, two
             scikit-learn pipelines, metrics) and the steps image: FROM ctsteps-base + this package
 api/        FastAPI orchestrator: parallel fan-out, per-model timeouts, circuit breaker + rules

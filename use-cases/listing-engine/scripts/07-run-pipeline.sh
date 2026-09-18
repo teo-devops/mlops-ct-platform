@@ -4,8 +4,8 @@
 # no separate "train" script — the pipeline is the only way a model gets to
 # serving. Prints the promotion commit the pipeline pushed.
 #
-#   MODELS="categorizer fraud" TRIGGER=manual PROFILE="" ./scripts/demo/07-run-pipeline.sh
-. "$(dirname "${BASH_SOURCE[0]}")/../lib.sh"
+#   MODELS="categorizer fraud" TRIGGER=manual PROFILE="" ./use-cases/listing-engine/scripts/07-run-pipeline.sh
+. "$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)/scripts/lib.sh"
 require kubectl
 require_kind_context
 

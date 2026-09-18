@@ -46,28 +46,47 @@ secret_upsert() {
     --dry-run=client -o yaml | kubectl apply -f - >/dev/null
 }
 
-wait_apps_healthy() {   # wait_apps_healthy <timeout-seconds> [app-name-regex]
-  local timeout="$1" filter="${2:-.*}" deadline now
+# wait_apps_healthy <timeout-seconds> [scope]
+#   scope "platform": every Application except use-case workloads (label
+#   mlops-ct-platform.dev/group other than "shared"); "all": everything;
+#   anything else: the Applications of that group (a use case).
+wait_apps_healthy() {
+  local timeout="$1" scope="${2:-all}" deadline now
   deadline=$(( $(date +%s) + timeout ))
   while true; do
     local pending
     pending="$(kubectl -n argocd get applications -o json 2>/dev/null \
       | python3 -c '
-import json,sys,re
-flt=re.compile(sys.argv[1])
+import json,sys
+scope=sys.argv[1]
 apps=json.load(sys.stdin)["items"]
 bad=[]
 for a in apps:
     n=a["metadata"]["name"]
-    if not flt.fullmatch(n): continue
+    group=(a["metadata"].get("labels") or {}).get("mlops-ct-platform.dev/group","")
+    if scope=="platform" and group not in ("","shared"): continue
+    if scope not in ("platform","all") and group!=scope: continue
     h=a.get("status",{}).get("health",{}).get("status","Unknown")
     s=a.get("status",{}).get("sync",{}).get("status","Unknown")
     if h!="Healthy" or s!="Synced": bad.append(f"{n}({s}/{h})")
-print(" ".join(bad))' "$filter")"
+print(" ".join(bad))' "$scope")"
     [[ -z "$pending" ]] && return 0
     now=$(date +%s)
     [[ $now -lt $deadline ]] || { echo "timed out waiting for: $pending" >&2; return 1; }
     printf '    waiting: %s\n' "$pending"
     sleep 15
   done
+}
+
+rand_hex() { openssl rand -hex 16 2>/dev/null || head -c 32 /dev/urandom | od -An -tx1 | tr -d ' \n'; }
+
+# Deliver the artifact-store credential of one consumer user into a namespace:
+#   minio_user_secret <namespace> <secret-name> <minio-user> <ENVPREFIX>
+# Reads the key minted by scripts/platform/03-secrets.sh (minio/minio-users).
+minio_user_secret() {
+  local ns="$1" name="$2" user="$3" prefix="$4" key
+  key="$(kubectl -n minio get secret minio-users -o jsonpath="{.data.${prefix}_SECRET_KEY}" 2>/dev/null | base64 -d || true)"
+  [[ -n "$key" ]] || die "no key for user ${user}: run scripts/platform/03-secrets.sh first"
+  secret_upsert "$ns" "$name" "AWS_ACCESS_KEY_ID=${user}" "AWS_SECRET_ACCESS_KEY=${key}"
+  info "✓ ${ns}/${name} (user ${user})"
 }

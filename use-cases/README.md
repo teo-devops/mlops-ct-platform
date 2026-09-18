@@ -7,6 +7,9 @@ promotion. One directory per use case, always with the same shape:
 ```
 use-cases/<name>/
 ├── README.md              what it predicts, how to try it, its models
+├── docs/                  architecture of the instance, case study, runbook — use-case docs live HERE, not in docs/
+├── scripts/               secrets.sh (out-of-band state) + the flow: 06-build-images, 07-run-pipeline, 08-smoke,
+│                          09-induce-drift, promote — `make` runs them with USE_CASE=<name>
 ├── plugin/                python package implementing ctsteps.contracts.UseCase
 │   ├── src/<package>/     usecase.py (ModelSpecs, ingest, schema, build_model, evaluate), data.py …
 │   ├── tests/
@@ -28,11 +31,13 @@ use-cases/<name>/
    `python3 scripts/repo/register-workload.py <name>-serving use-cases/<name>/workloads/serving --group <name>` (×3).
 4. Give the pipelines namespace its RBAC: add it to `controller.workflowNamespaces` in
    `gitops/environments/demo/platform/argo-workflows/values.yaml` and to its `manifests/namespaces.yaml`.
-5. Create its Secrets and its data-source ConfigMap before the first sync
-   (`scripts/platform/03-secrets.sh` is the place to extend).
-6. Build (`scripts/demo/06-build-images.sh`), commit, push. The first pipeline run promotes v1.
+5. Declare its artifact-store users in `workloads/minio/values.yaml` (`users:`) and its namespaces in
+   `networkPolicy.apiClients`; write `scripts/secrets.sh` delivering those keys into its namespaces
+   (`minio_user_secret` from `scripts/lib.sh`) — `scripts/platform/03-secrets.sh` runs it automatically.
+6. Write its flow scripts (`scripts/06-…09-…`, `promote.sh`) — copy the Listing Engine ones and change
+   names — then `USE_CASE=<name> make build pipeline smoke`.
 
-Nothing in the platform needs to know the use case's name beyond steps 3 and 4.
+The platform never names a use case: steps 3–5 are the only places it appears, all of them data.
 
 | Use case | What | Status |
 |---|---|---|

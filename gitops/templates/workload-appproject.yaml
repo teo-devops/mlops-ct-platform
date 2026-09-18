@@ -9,7 +9,7 @@
 #                All four equal; scripts/repo/validate-coherence.py checks it.
 #   REPO_URL     exact Git URL of the repository holding the manifests.
 #   DESCRIPTION  one line: what it is and which components it groups.
-#   GROUP        identity-provider group that operates it in the UI.
+#   TEAM         identity-provider group that operates it in the Argo CD UI.
 #
 # This template is NEUTRAL: it serves an API, a training pipeline, a shared
 # service or an internal tool alike. What changes between archetypes lives in
@@ -78,7 +78,7 @@ spec:
         - p, proj:NAME:developer, applications, sync, NAME/*, allow
         - p, proj:NAME:developer, logs, get, NAME/*, allow
       groups:
-        - GROUP
+        - TEAM
 
   # Warn (never delete) about resources living in the namespace that are not
   # declared in Git — the detector of clandestine `kubectl`.

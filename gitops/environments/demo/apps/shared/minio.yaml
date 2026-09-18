@@ -3,6 +3,8 @@ kind: Application
 metadata:
   name: minio
   namespace: argocd
+  labels:
+    mlops-ct-platform.dev/group: shared
   annotations:
     mlops-ct-platform.dev/archetype: stateful
   finalizers:

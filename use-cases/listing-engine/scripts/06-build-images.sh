@@ -2,7 +2,7 @@
 # Builds the use-case images and loads them into the kind nodes. No registry
 # in the demo: `kind load` + imagePullPolicy IfNotPresent. Rebuilding with the
 # same tag and reloading replaces the image; `kubectl rollout restart` picks it.
-. "$(dirname "${BASH_SOURCE[0]}")/../lib.sh"
+. "$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)/scripts/lib.sh"
 require docker kind git
 
 GIT_COMMIT="$(git -C "${REPO_ROOT}" rev-parse --short HEAD 2>/dev/null || echo unknown)"

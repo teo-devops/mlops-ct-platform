@@ -5,12 +5,11 @@
 # path. Order = the sync-waves of gitops/environments/demo/platform/kustomization.yaml.
 #
 #   ./scripts/platform/deploy-local.sh            # everything
-#   ./scripts/platform/deploy-local.sh use-case   # only the use-case workloads
+#   ./scripts/platform/deploy-local.sh use-cases  # only the use-case workloads
 . "$(dirname "${BASH_SOURCE[0]}")/../lib.sh"
 require helm kubectl
 require_kind_context
 P="${REPO_ROOT}/gitops/environments/demo/platform"
-UC="${REPO_ROOT}/use-cases/listing-engine/workloads"
 SCOPE="${1:-all}"
 
 # chart_version <module>  -> targetRevision of the module's Application
@@ -48,8 +47,10 @@ if [[ "$SCOPE" == "all" ]]; then
   hi observability observability "${REPO_ROOT}/workloads/observability" "" -f "${REPO_ROOT}/workloads/observability/values.yaml" -f "${REPO_ROOT}/workloads/observability/values-demo.yaml"
 fi
 
-step "Use-case workloads"
-for w in api serving pipelines; do
-  hi "listing-engine-$w" "listing-engine-$w" "$UC/$w" "" -f "$UC/$w/values.yaml" -f "$UC/$w/values-demo.yaml"
+step "Use-case workloads (every use-cases/*/workloads/* chart)"
+for chart in "${REPO_ROOT}"/use-cases/*/workloads/*/; do
+  [[ -f "${chart}/Chart.yaml" ]] || continue
+  uc="$(basename "$(dirname "$(dirname "${chart}")")")"; w="$(basename "${chart}")"
+  hi "${uc}-${w}" "${uc}-${w}" "${chart}" "" -f "${chart}/values.yaml" -f "${chart}/values-demo.yaml"
 done
 info "done — remember: nothing here is in Git until you commit it"

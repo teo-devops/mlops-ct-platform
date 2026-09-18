@@ -12,7 +12,7 @@ more into it than that.
 * **Progressive delivery** — promotion is a rolling update with readiness; canary traffic splitting
   needs a gateway (module gap: progressive-delivery).
 * **Backups** — nothing is backed up; the artifact store and the registry live on local-path volumes.
-* **Data at scale** — the pipeline trains on 6 000 synthetic rows; the same steps on millions of
+* **Data at scale** — the example use case trains on a few thousand synthetic rows; the same steps on millions of
   rows need the resources of the prod profile and, realistically, a feature store.
 * **Security hardening** — plain HTTP everywhere, demo passwords readable by anyone with `kubectl`,
   Argo Workflows server without auth. Fine for a laptop, nowhere else.

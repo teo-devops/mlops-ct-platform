@@ -5,7 +5,7 @@
 #   make secrets     namespaces + demo Secrets (never in Git)
 #   make bootstrap   Argo CD from the chart + root-app (scripts/platform/04-install.sh)
 #   make wait        wait until the platform modules are Synced/Healthy
-#   make build       build the use-case images and load them into kind
+#   make build       build the use-case images and load them into kind   (USE_CASE=listing-engine)
 #   make pipeline    run the continuous-training pipeline for every model
 #   make promote     promote (or roll back to) a version: make promote MODEL=fraud VERSION=2
 #   make smoke       end-to-end request + fallback drill + network-policy test
@@ -18,6 +18,11 @@
 SHELL := /usr/bin/env bash
 .DEFAULT_GOAL := help
 export CLUSTER ?= ct
+# The use case whose flow `make build/pipeline/promote/smoke/drift` runs. The
+# platform itself knows nothing about it: those targets delegate to
+# use-cases/$(USE_CASE)/scripts/. Any directory with those scripts works.
+USE_CASE ?= listing-engine
+UC := use-cases/$(USE_CASE)/scripts
 # python with the dev dependencies (make venv creates it)
 PY := $(if $(wildcard .venv-dev/bin/python),$(CURDIR)/.venv-dev/bin/python,python3)
 
@@ -31,11 +36,11 @@ up:         ; @scripts/cluster/02-up.sh
 secrets:    ; @scripts/platform/03-secrets.sh
 bootstrap:  ; @ASSUME_YES=1 scripts/platform/04-install.sh
 wait:       ; @scripts/platform/05-wait.sh
-build:      ; @scripts/demo/06-build-images.sh
-pipeline:   ; @scripts/demo/07-run-pipeline.sh
-promote:    ; @scripts/demo/promote.sh $(MODEL) $(VERSION) $(or $(TRIGGER),manual)
-smoke:      ; @scripts/demo/08-smoke.sh
-drift:      ; @scripts/demo/09-induce-drift.sh
+build:      ; @$(UC)/06-build-images.sh
+pipeline:   ; @$(UC)/07-run-pipeline.sh
+promote:    ; @$(UC)/promote.sh $(MODEL) $(VERSION) $(or $(TRIGGER),manual)
+smoke:      ; @$(UC)/08-smoke.sh
+drift:      ; @$(UC)/09-induce-drift.sh
 status:     ; @scripts/platform/status.sh
 down:       ; @scripts/cluster/10-down.sh
 deploy-local: ; @scripts/platform/deploy-local.sh
@@ -52,7 +57,7 @@ lint:
 	@if $(PY) -m ruff --version >/dev/null 2>&1; then $(PY) -m ruff check libs use-cases && $(PY) -m ruff format --check libs use-cases && echo "✓ ruff"; else echo "ruff not installed (make venv): skipping python lint"; fi
 
 test:
-	@for d in libs/ctsteps use-cases/listing-engine/plugin use-cases/listing-engine/api; do \
+	@for d in libs/ctsteps use-cases/*/plugin use-cases/*/api; do [ -f "$$d/pyproject.toml" ] || continue; \
 	  echo "== $$d"; (cd "$$d" && MLFLOW_DISABLE_AGENT_HINT=1 $(PY) -m pytest -q 2>&1 | tail -1) || exit 1; done
 
 venv:
