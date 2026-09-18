@@ -83,4 +83,4 @@ async def test_schema_validation(client, models, payload):
 async def test_metrics_exposed(client, models):
     await client.post("/v1/listings/analyze", json=LISTING)
     r = await client.get("/metrics")
-    assert "le_requests_total" in r.text and "le_upstream_latency_seconds" in r.text
+    assert "uc_requests_total" in r.text and "uc_upstream_latency_seconds" in r.text

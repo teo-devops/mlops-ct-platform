@@ -22,16 +22,16 @@ resp="$(analyze "$body")"; echo "    $resp" | head -c 600; echo
 info "✓ both models answered; served versions: categorizer v$(echo "$resp" | field 'd["category"]["model_version"]'), fraud v$(echo "$resp" | field 'd["fraud"]["model_version"]')"
 
 step "2. Fallback drill: fraud model down"
-before="$(curl -s "$API/metrics" | awk '/^le_fraud_fallback_total/ {s+=$2} END {print s+0}')"
+before="$(curl -s "$API/metrics" | awk '/^uc_fallback_total/ {s+=$2} END {print s+0}')"
 kubectl -n "$SNS" scale deploy/fraud-predictor --replicas=0 >/dev/null
 until [[ -z "$(kubectl -n "$SNS" get pods -l serving.kserve.io/inferenceservice=fraud -o name 2>/dev/null)" ]]; do sleep 2; done
 resp="$(analyze '{"title":"iPhone 15 Pro Max URGENT whatsapp","price":40}')"; echo "    $resp" | head -c 400; echo
 [[ "$(echo "$resp" | field 'd["fraud"]["source"]')" == "fallback" ]] || die "expected fallback"
 [[ "$(echo "$resp" | field 'd["fraud"]["is_suspicious"]')" == "True" ]] || die "rules should flag it"
 [[ "$(echo "$resp" | field 'd["category"]["source"]')" == "model" ]] || die "categorizer must still answer"
-after="$(curl -s "$API/metrics" | awk '/^le_fraud_fallback_total/ {s+=$2} END {print s+0}')"
-(( after > before )) || die "le_fraud_fallback_total did not increase ($before -> $after)"
-info "✓ degraded gracefully (le_fraud_fallback_total $before -> $after); restoring the model"
+after="$(curl -s "$API/metrics" | awk '/^uc_fallback_total/ {s+=$2} END {print s+0}')"
+(( after > before )) || die "uc_fallback_total did not increase ($before -> $after)"
+info "✓ degraded gracefully (uc_fallback_total $before -> $after); restoring the model"
 # KServe reconciles the Deployment back to minReplicas; nudge it and wait.
 kubectl -n "$SNS" scale deploy/fraud-predictor --replicas=1 >/dev/null
 kubectl -n "$SNS" wait pod -l serving.kserve.io/inferenceservice=fraud --for=condition=Ready --timeout=180s >/dev/null

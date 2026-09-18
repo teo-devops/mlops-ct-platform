@@ -139,12 +139,12 @@ def generate(seed: int, rows: int, profile: str | None = None) -> pd.DataFrame:
         if rng.random() < 0.5:
             words.append(rng.choice(vocab))
         median, sigma = PRICE[cat]
-        price = float(np.exp(rng.normal(np.log(median), sigma)))
         if drift:
-            price *= 0.25  # prices collapse (post-season)
+            median *= 0.25  # prices collapse (post-season): the whole market moves
+        price = float(np.exp(rng.normal(np.log(median), sigma)))
         is_fraud = False
         r = rng.random()
-        if r < 0.06:  # too cheap for what it claims to be
+        if r < 0.06:  # too cheap for what it claims to be — relative to the CURRENT market
             price = median * float(rng.uniform(0.02, 0.12))
             is_fraud = True
         elif r < 0.10:  # social-engineering wording

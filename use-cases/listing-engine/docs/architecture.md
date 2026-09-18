@@ -37,6 +37,12 @@ rules (`price_at_floor`, `price_below_category_floor` against per-category media
 model costs no latency budget. Every answer says which source produced the fraud verdict
 (`model` | `fallback`) and which version.
 
+Known limitation, on purpose: the rules use **static per-category medians** (chart values). When
+the market moves (the `drift` profile collapses prices ×0.25) the model retrains and adapts, the
+rules do not — they over-flag until someone recalibrates them. That is the honest trade-off of a
+fallback: predictable and explainable, not adaptive. A follow-up is to derive the medians from
+the champion's `reference.parquet` at promote time.
+
 ## Why the gate replays instead of A/B testing
 
 In a marketplace every listing is served once (non-replenishable inventory): there is no "same

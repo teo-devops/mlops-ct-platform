@@ -27,9 +27,9 @@ suspicious prices). The company and its data are not part of this repository; th
 
 | SLI | SLO | Where it is measured |
 |---|---|---|
-| API p99 latency (both models, combined) | < 300 ms | `http_request_duration_seconds` — panel "API latency", rule `ServingP99LatencyHigh` |
+| API p99 latency (both models, combined) | < 300 ms | `http_request_duration_seconds` — panel "API latency", rule `ServingP99LatencyHigh` (0.3 s). The per-model timeouts of the API (800 / 300 ms) are hard limits, deliberately wider than the SLO: they cap the damage, the SLO measures the norm |
 | API availability | 99.9 % monthly | `http_requests_total` 5xx ratio — rule `ServingErrorRatioHigh` |
-| Fraud fallback ratio | < 5 % (warn), < 20 % (page) | `le_fraud_fallback_total / le_requests_total` |
+| Fraud fallback ratio | < 5 % (warn), < 20 % (page) | `uc_fallback_total / uc_requests_total` — rules `ServingFallbackRatioHigh` / `ServingFallbackRatioCritical` |
 | Drift detection window | 30 min sliding window vs training reference, every 10 min | `ct_drift_psi` |
 | Drift policy (PSI) | < 0.2 none · 0.2–0.3 review · > 0.3 automatic retrain | rules `CTDriftWarning`, `CTDriftRetrainTriggered` |
 | Rollback time | < 2 min from decision to traffic on the previous version | `make promote MODEL=<m> VERSION=<previous>` → Argo CD sync → readiness |

@@ -8,8 +8,12 @@ rules:
   # The drift monitor must report at least every N seconds.
   driftMaxStalenessSeconds: 1800
   serving:
-    p99LatencySeconds: 0.5
+    # p99 of the use-case API (both models combined); the reference SLO is 300 ms
+    p99LatencySeconds: 0.3
     errorRatio: 0.05
+    # share of answers produced by a fallback instead of a model
+    fallbackRatioWarn: 0.05
+    fallbackRatioCritical: 0.2
 dashboards:
   enabled: true
   folder: mlops-ct-platform

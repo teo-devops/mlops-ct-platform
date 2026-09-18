@@ -356,7 +356,7 @@
    "targets": [
     {
      "refId": "A",
-     "expr": "sum by (use_case) (rate(le_requests_total{use_case=~\"$use_case\"}[5m]))",
+     "expr": "sum by (use_case) (rate(uc_requests_total{use_case=~\"$use_case\"}[5m]))",
      "legendFormat": "{{use_case}}"
     }
    ],
@@ -385,17 +385,17 @@
    "targets": [
     {
      "refId": "A",
-     "expr": "histogram_quantile(0.5, sum by (le) (rate(http_request_duration_seconds_bucket{handler=\"/v1/listings/analyze\"}[5m])))",
+     "expr": "histogram_quantile(0.5, sum by (le) (rate(http_request_duration_seconds_bucket{handler=~\"/v1/.*\"}[5m])))",
      "legendFormat": "p50"
     },
     {
      "refId": "B",
-     "expr": "histogram_quantile(0.95, sum by (le) (rate(http_request_duration_seconds_bucket{handler=\"/v1/listings/analyze\"}[5m])))",
+     "expr": "histogram_quantile(0.95, sum by (le) (rate(http_request_duration_seconds_bucket{handler=~\"/v1/.*\"}[5m])))",
      "legendFormat": "p95"
     },
     {
      "refId": "C",
-     "expr": "histogram_quantile(0.99, sum by (le) (rate(http_request_duration_seconds_bucket{handler=\"/v1/listings/analyze\"}[5m])))",
+     "expr": "histogram_quantile(0.99, sum by (le) (rate(http_request_duration_seconds_bucket{handler=~\"/v1/.*\"}[5m])))",
      "legendFormat": "p99"
     }
    ],
@@ -424,7 +424,7 @@
    "targets": [
     {
      "refId": "A",
-     "expr": "histogram_quantile(0.99, sum by (le, model) (rate(le_upstream_latency_seconds_bucket{use_case=~\"$use_case\"}[5m])))",
+     "expr": "histogram_quantile(0.99, sum by (le, model) (rate(uc_upstream_latency_seconds_bucket{use_case=~\"$use_case\"}[5m])))",
      "legendFormat": "{{model}}"
     }
    ],
@@ -439,7 +439,7 @@
   {
    "id": 14,
    "type": "timeseries",
-   "title": "Fraud fallback ratio",
+   "title": "Fallback ratio (answers by rules / requests)",
    "gridPos": {
     "h": 7,
     "w": 8,
@@ -453,7 +453,7 @@
    "targets": [
     {
      "refId": "A",
-     "expr": "sum(rate(le_fraud_fallback_total{use_case=~\"$use_case\"}[5m])) / sum(rate(le_requests_total{use_case=~\"$use_case\"}[5m]))",
+     "expr": "sum(rate(uc_fallback_total{use_case=~\"$use_case\"}[5m])) / sum(rate(uc_requests_total{use_case=~\"$use_case\"}[5m]))",
      "legendFormat": "fallback ratio"
     }
    ],
@@ -504,7 +504,7 @@
    "targets": [
     {
      "refId": "A",
-     "expr": "sum by (model, model_version) (rate(le_predictions_total{use_case=~\"$use_case\", source=\"model\"}[5m]))",
+     "expr": "sum by (model, model_version) (rate(uc_predictions_total{use_case=~\"$use_case\", source=\"model\"}[5m]))",
      "legendFormat": "{{model}} v{{model_version}}"
     }
    ],
@@ -519,7 +519,7 @@
   {
    "id": 16,
    "type": "stat",
-   "title": "Fraud circuit breaker (0 closed \u00b7 1 half-open \u00b7 2 open)",
+   "title": "Circuit breaker (0 closed \u00b7 1 half-open \u00b7 2 open)",
    "gridPos": {
     "h": 7,
     "w": 8,
@@ -533,7 +533,7 @@
    "targets": [
     {
      "refId": "A",
-     "expr": "le_circuit_state{use_case=~\"$use_case\"}",
+     "expr": "uc_circuit_state{use_case=~\"$use_case\"}",
      "legendFormat": "{{model}}"
     }
    ],
@@ -580,7 +580,7 @@
    "targets": [
     {
      "refId": "A",
-     "expr": "sum(rate(http_requests_total{handler=\"/v1/listings/analyze\", status=~\"5..\"}[5m])) / sum(rate(http_requests_total{handler=\"/v1/listings/analyze\"}[5m]))",
+     "expr": "sum(rate(http_requests_total{handler=~\"/v1/.*\", status=~\"5..\"}[5m])) / sum(rate(http_requests_total{handler=~\"/v1/.*\"}[5m]))",
      "legendFormat": "5xx"
     }
    ],
@@ -609,7 +609,7 @@
    "targets": [
     {
      "refId": "A",
-     "expr": "sum by (model) (rate(le_prediction_log_records_total{use_case=~\"$use_case\"}[5m]))",
+     "expr": "sum by (model) (rate(uc_prediction_log_records_total{use_case=~\"$use_case\"}[5m]))",
      "legendFormat": "{{model}}"
     }
    ],

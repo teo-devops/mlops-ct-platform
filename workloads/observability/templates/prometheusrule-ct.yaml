@@ -44,6 +44,19 @@ spec:
             summary: "A training pipeline failed in the last 30 minutes"
     - name: serving
       rules:
+        - alert: ServingFallbackRatioHigh
+          expr: sum by (use_case) (rate(uc_fallback_total[5m])) / sum by (use_case) (rate(uc_requests_total[5m])) > {{ .Values.rules.serving.fallbackRatioWarn }}
+          for: 5m
+          labels: {severity: warning}
+          annotations:
+            summary: "{{ "{{" }} $labels.use_case }}: more than {{ .Values.rules.serving.fallbackRatioWarn }} of answers come from a fallback"
+            description: "A model is slow, down or fused; the flow is degraded, not broken."
+        - alert: ServingFallbackRatioCritical
+          expr: sum by (use_case) (rate(uc_fallback_total[5m])) / sum by (use_case) (rate(uc_requests_total[5m])) > {{ .Values.rules.serving.fallbackRatioCritical }}
+          for: 5m
+          labels: {severity: critical}
+          annotations:
+            summary: "{{ "{{" }} $labels.use_case }}: more than {{ .Values.rules.serving.fallbackRatioCritical }} of answers come from a fallback"
         - alert: ServingP99LatencyHigh
           expr: histogram_quantile(0.99, sum by (le, use_case) (rate(http_request_duration_seconds_bucket{handler=~"/v1/.*"}[5m]))) > {{ .Values.rules.serving.p99LatencySeconds }}
           for: 5m

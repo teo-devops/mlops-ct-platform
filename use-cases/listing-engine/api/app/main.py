@@ -136,7 +136,7 @@ async def analyze(listing: ListingIn, request: Request):
     reasons: list[str] = []
     if source == "fallback":
         score, reasons = fraud_rules(listing.title, listing.price, category.label, settings)
-        metrics.FALLBACKS.labels(settings.use_case, reason or "unknown").inc()
+        metrics.FALLBACKS.labels(settings.use_case, "fraud", reason or "unknown").inc()
     fraud = Fraud(
         is_suspicious=score >= settings.fraud_threshold,
         score=round(score, 4),
