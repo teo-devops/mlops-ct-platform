@@ -25,11 +25,11 @@ jobs:
         run: python3 scripts/validate-coherence.py
       - name: Kustomize renders
         run: |
-          kubectl kustomize overlays/demo > /dev/null
-          kubectl kustomize bootstrap > /dev/null
+          kubectl kustomize gitops/environments/demo > /dev/null
+          kubectl kustomize gitops/bootstrap > /dev/null
       - name: Templates render
         run: |
-          python3 scripts/register-workload.py template-ci workloads/minio --archetype stateless --group ci/template --dry-run \
+          python3 scripts/register-workload.py template-ci workloads/minio --group shared --archetype stateless --team ci/template --dry-run \
             | python3 -c 'import sys,yaml; list(yaml.safe_load_all(sys.stdin))'
       - name: Helm lint (workload charts)
         run: |
@@ -44,8 +44,8 @@ jobs:
           helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
           helm repo add community-charts https://community-charts.github.io/helm-charts
           helm repo update
-          P=overlays/demo/platform
-          helm template argo-cd argo/argo-cd --version 10.2.2 -f config/argo-cd/values.yaml > /dev/null
+          P=gitops/environments/demo/platform
+          helm template argo-cd argo/argo-cd --version 10.2.2 -f gitops/argo-cd/values.yaml > /dev/null
           helm template cm jetstack/cert-manager --version v1.21.2 -f $P/cert-manager/values.yaml > /dev/null
           helm template mlflow community-charts/mlflow --version 1.11.7 -f $P/mlflow/values.yaml > /dev/null
           helm template wf argo/argo-workflows --version 2.0.6 -f $P/argo-workflows/values.yaml > /dev/null

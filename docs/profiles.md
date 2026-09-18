@@ -2,7 +2,7 @@
 
 Same modules, same contracts, same charts. What changes is the values — and who operates each piece.
 
-| Contract / concern | demo — `overlays/demo` (runs) | prod — bare-metal (values illustrative) | aws (values illustrative) |
+| Contract / concern | demo — `gitops/environments/demo` (runs) | prod — bare-metal (values illustrative) | aws (values illustrative) |
 |---|---|---|---|
 | Kubernetes | kind 1 cp + 2 workers, kindnet | kubeadm + Cilium eBPF | EKS + Karpenter |
 | GitOps engine | Argo CD single instance, admin only | Argo CD HA, SSO via Dex, RBAC per AppProject | same |
@@ -17,6 +17,6 @@ Same modules, same contracts, same charts. What changes is the values — and wh
 | Secrets | random, cluster-only, created by script | External Secrets / Vault | IRSA + Secrets Manager |
 | Backups | none | Velero → MinIO | Velero → S3 |
 
-`overlays/prod/` and `overlays/aws/` hold only READMEs and `values-prod.yaml` / `values-aws.yaml`
+`gitops/environments/prod/` and `gitops/environments/aws/` hold only READMEs and `values-prod.yaml` / `values-aws.yaml`
 files next to the charts that have profile-specific values. They are not reconciled by anything:
 they document the shape, they are not a second architecture.

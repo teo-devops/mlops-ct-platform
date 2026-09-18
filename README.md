@@ -16,12 +16,14 @@ platform never mentions it.
 
 | What you get | Where |
 |---|---|
-| GitOps control plane (Argo CD app-of-apps, one AppProject per workload) | `bootstrap/`, `config/`, `overlays/demo/` |
-| Platform modules: cert-manager, KServe, MLflow, Argo Workflows, Prometheus/Grafana, Pushgateway | `overlays/demo/platform/<module>/` |
+| GitOps control plane (Argo CD app-of-apps, one AppProject per workload) | `gitops/` — `bootstrap/`, `argo-cd/`, `templates/`, `environments/demo/` |
+| Platform modules: cert-manager, KServe, MLflow, Argo Workflows, Prometheus/Grafana, Pushgateway | `gitops/environments/demo/platform/<module>/` |
+| Workload registrations, grouped by owner (`shared/`, `<use-case>/`) | `gitops/environments/demo/{projects,apps}/<group>/` |
 | Shared workloads: MinIO with per-consumer users, CT alerting rules and dashboards | `workloads/` |
 | The step contract: pipeline steps as containers, orchestrator-agnostic | `libs/ctsteps/` |
 | Orchestrator adapters (Argo Workflows runs the demo; Airflow/KFP as reference) | `pipelines/` |
 | The example use case: plugin, API with graceful degradation, its three workloads | `use-cases/listing-engine/` |
+| kind cluster definition and the images preloaded into it | `cluster/` |
 | Docs: architecture, contracts, module cards, decisions, profiles (kind / bare-metal / AWS) | `docs/` |
 
 ## Quickstart (≈15 minutes on a laptop)
@@ -68,8 +70,28 @@ make down
 * **Isolation is declared, not assumed.** `1 workload = 1 namespace = 1 AppProject = 1 Application`;
   every workload ships its own NetworkPolicies; the smoke test proves a pod outside the API
   namespace cannot reach the predictors.
-* **Same charts, different values.** `overlays/demo` is what runs; `overlays/prod` and
-  `overlays/aws` show the same modules with production values (docs/profiles.md).
+* **Same charts, different values.** `gitops/environments/demo` is what runs; `gitops/environments/prod` and
+  `gitops/environments/aws` show the same modules with production values (docs/profiles.md).
+
+## Repository map
+
+```
+gitops/                 what Argo CD reconciles, and how it is bootstrapped
+  bootstrap/            root-app (applied once by scripts/20-install.sh)
+  argo-cd/values.yaml   the engine's single source of configuration
+  templates/            AppProject + Application templates for new workloads
+  environments/demo/    the environment that runs on kind (prod/ and aws/ are documented shapes)
+    platform/<module>/  one directory per platform module: pinned chart + values (+ manifests)
+    projects/<group>/   one AppProject per workload   ┐ groups: shared/, listing-engine/, …
+    apps/<group>/       one Application per workload  ┘ (scripts/register-workload.py --group)
+cluster/                kind.yaml and the image preload list
+workloads/              charts of the shared workloads (minio, observability)
+use-cases/<name>/       a use case: plugin (steps image), api, workloads/{api,serving,pipelines}
+libs/ctsteps/           the step contract (python package + CLI + tests)
+pipelines/              orchestrator adapters and notes
+scripts/                numbered in execution order; every path resolves from the repo root
+docs/                   start with architecture.md and contracts.md
+```
 
 ## Read next
 

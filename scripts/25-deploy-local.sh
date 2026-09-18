@@ -1,15 +1,15 @@
 #!/usr/bin/env bash
-# The development loop: the SAME charts and values as overlays/demo, applied
+# The development loop: the SAME charts and values as gitops/environments/demo, applied
 # with helm/kubectl directly from the working tree — no commit, no Argo CD.
 # Use it to iterate on a chart before pushing; `make bootstrap` is the real
-# path. Order = the sync-waves of overlays/demo/platform/kustomization.yaml.
+# path. Order = the sync-waves of gitops/environments/demo/platform/kustomization.yaml.
 #
 #   ./scripts/25-deploy-local.sh            # everything
 #   ./scripts/25-deploy-local.sh use-case   # only the use-case workloads
 . "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
 require helm kubectl
 require_kind_context
-P="${REPO_ROOT}/overlays/demo/platform"
+P="${REPO_ROOT}/gitops/environments/demo/platform"
 UC="${REPO_ROOT}/use-cases/listing-engine/workloads"
 SCOPE="${1:-all}"
 
@@ -27,7 +27,7 @@ hi() { local rel="$1" ns="$2" chart="$3" ver="$4"; shift 4
        fi; }
 
 if [[ "$SCOPE" == "all" ]]; then
-  step "Platform modules (helm, same values as overlays/demo/platform)"
+  step "Platform modules (helm, same values as gitops/environments/demo/platform)"
   for r in argo jetstack prometheus-community community-charts; do helm repo add "$r" \
     "$( [[ $r == argo ]] && echo https://argoproj.github.io/argo-helm || [[ $r == jetstack ]] && echo https://charts.jetstack.io || [[ $r == prometheus-community ]] && echo https://prometheus-community.github.io/helm-charts || echo https://community-charts.github.io/helm-charts )" >/dev/null 2>&1 || true; done
   helm repo update >/dev/null

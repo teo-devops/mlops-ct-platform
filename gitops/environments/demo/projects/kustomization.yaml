@@ -1,0 +1,17 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: argocd
+
+# One AppProject per workload, same groups as ../apps. Adding a line (here or
+# in a group) is the explicit act of granting a workload existence in the
+# cluster. AppProjects are written and reviewed by hand: they define
+# privilege boundaries. `platform.yaml` is the only cluster-scoped project.
+resources:
+  - platform.yaml
+  - listing-engine
+  - shared
+
+# AppProjects are created before the Applications that reference them.
+commonAnnotations:
+  argocd.argoproj.io/sync-wave: "0"

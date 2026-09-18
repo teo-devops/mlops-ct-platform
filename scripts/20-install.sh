@@ -15,7 +15,7 @@
 . "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
 require kubectl helm
 
-CHART_VERSION="10.2.2"   # -> Argo CD v3.4.6. Must match overlays/demo/argo-cd.yaml
+CHART_VERSION="10.2.2"   # -> Argo CD v3.4.6. Must match gitops/environments/demo/argo-cd.yaml
 NAMESPACE="argocd"
 PLATFORM_SECRET="repo-mlops-ct-platform"
 
@@ -57,7 +57,7 @@ helm template argo-cd argo/argo-cd \
   --version "${CHART_VERSION}" \
   --namespace "${NAMESPACE}" \
   --include-crds \
-  --values "${REPO_ROOT}/config/argo-cd/values.yaml" \
+  --values "${REPO_ROOT}/gitops/argo-cd/values.yaml" \
   | kubectl apply --server-side --force-conflicts -f - >/dev/null
 info "applied"
 
@@ -71,7 +71,7 @@ info "ready"
 
 # --- Phase 3: AppProjects and root-app -------------------------------------
 step "Phase 3: applying AppProjects and root-app"
-kubectl apply -k "${REPO_ROOT}/bootstrap" >/dev/null
+kubectl apply -k "${REPO_ROOT}/gitops/bootstrap" >/dev/null
 info "root-app applied; everything else arrives by reconciliation"
 
 cat <<EOT

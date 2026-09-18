@@ -26,13 +26,14 @@ except ImportError:  # pragma: no cover
     sys.exit("PyYAML missing:  pip install pyyaml")
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
-ENV = ROOT / "overlays" / "demo"
+GITOPS = ROOT / "gitops"
+ENV = GITOPS / "environments" / "demo"
 DIR_PROJECTS = ENV / "projects"
 DIR_APPS = ENV / "apps"
 DIR_PLATFORM = ENV / "platform"
 INSTALL_SH = ROOT / "scripts" / "20-install.sh"
 ENGINE_APP = ENV / "argo-cd.yaml"
-ROOT_APP = ROOT / "bootstrap" / "root-app.yaml"
+ROOT_APP = GITOPS / "bootstrap" / "root-app.yaml"
 EXPECTED_SERVER = "https://kubernetes.default.svc"
 ARCHETYPES = {"stateless", "batch", "stateful", "pipeline"}
 ARCHETYPE_ANNOTATION = "mlops-ct-platform.dev/archetype"
@@ -56,7 +57,27 @@ def resources_of(kustomization: pathlib.Path) -> set[str]:
 
 
 def yaml_files(directory: pathlib.Path) -> list[pathlib.Path]:
-    return sorted(p for p in directory.glob("*.yaml") if p.name != "kustomization.yaml")
+    """Manifests directly in `directory` and in its group subdirectories."""
+    return sorted(p for p in directory.glob("**/*.yaml") if p.name != "kustomization.yaml")
+
+
+def check_kustomize_wiring(directory: pathlib.Path) -> None:
+    """Every file must be reachable: root kustomization -> group -> file."""
+    root_listed = resources_of(directory / "kustomization.yaml")
+    for group in sorted(d for d in directory.iterdir() if d.is_dir()):
+        if group.name not in root_listed:
+            error(f"{rel(directory)}/kustomization.yaml: group {group.name!r} exists but is not listed")
+        kz = group / "kustomization.yaml"
+        if not kz.exists():
+            error(f"{rel(group)}: no kustomization.yaml")
+            continue
+        listed = resources_of(kz)
+        for f in sorted(group.glob("*.yaml")):
+            if f.name != "kustomization.yaml" and f.name not in listed:
+                error(f"{rel(kz)}: {f.name} missing; the manifest is not applied")
+    for f in sorted(directory.glob("*.yaml")):
+        if f.name != "kustomization.yaml" and f.name not in root_listed:
+            error(f"{rel(directory)}/kustomization.yaml: {f.name} missing; the manifest is not applied")
 
 
 def sources_of(spec: dict) -> list[dict]:
@@ -82,7 +103,7 @@ def rel(p: pathlib.Path) -> str:
 
 
 def check_template_markers() -> None:
-    """No marker of templates/ may survive in overlays/ (values, not comments)."""
+    """No marker of gitops/templates/ may survive in an environment (values, not comments)."""
     for directory in (DIR_PROJECTS, DIR_APPS):
         for path in yaml_files(directory):
             for value in scalars(load(path)):
@@ -129,7 +150,7 @@ def check_platform_modules(projects: dict[str, dict]) -> None:
     allowed = pspec.get("sourceRepos", [])
     for module in sorted(d for d in DIR_PLATFORM.iterdir() if d.is_dir()):
         if module.name not in listed:
-            error(f"overlays/demo/platform/kustomization.yaml: module {module.name!r} exists but is not listed (disabled?)")
+            error(f"gitops/environments/demo/platform/kustomization.yaml: module {module.name!r} exists but is not listed (disabled?)")
         app = module / "application.yaml"
         if not app.exists():
             error(f"{rel(module)}: no application.yaml")
@@ -164,8 +185,8 @@ def main() -> int:
     check_platform_repo()
     check_template_markers()
 
-    listed_projects = resources_of(DIR_PROJECTS / "kustomization.yaml")
-    listed_apps = resources_of(DIR_APPS / "kustomization.yaml")
+    check_kustomize_wiring(DIR_PROJECTS)
+    check_kustomize_wiring(DIR_APPS)
 
     projects: dict[str, dict] = {}
     for path in yaml_files(DIR_PROJECTS):
@@ -176,8 +197,6 @@ def main() -> int:
         name = doc.get("metadata", {}).get("name")
         if name != path.stem:
             error(f"{rel(path)}: metadata.name {name!r} != file name {path.stem!r}")
-        if path.name not in listed_projects:
-            error(f"overlays/demo/projects/kustomization.yaml: {path.name} missing; the AppProject is not applied")
         projects[name] = doc
 
     check_platform_modules(projects)
@@ -192,8 +211,6 @@ def main() -> int:
         name = doc.get("metadata", {}).get("name")
         if name != path.stem:
             error(f"{r}: metadata.name {name!r} != file name {path.stem!r}")
-        if path.name not in listed_apps:
-            error(f"overlays/demo/apps/kustomization.yaml: {path.name} missing; the Application is not applied")
 
         spec = doc.get("spec", {})
         project = spec.get("project")

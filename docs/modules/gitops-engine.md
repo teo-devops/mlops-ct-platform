@@ -3,7 +3,7 @@
 | | |
 |---|---|
 | **Contract** | Applications / AppProjects reconciled from Git |
-| **Demo implementation** | Argo CD (chart `argo/argo-cd`) managing itself via `overlays/demo/argo-cd.yaml` + `config/argo-cd/values.yaml` |
+| **Demo implementation** | Argo CD (chart `argo/argo-cd`) managing itself via `gitops/environments/demo/argo-cd.yaml` + `gitops/argo-cd/values.yaml` |
 | **Pinned version** | chart 10.2.2 (Argo CD v3.4.6) |
 | **Namespace** | argocd |
 | **Replace with** | Argo CD HA (prod); Flux would need a different app-of-apps layout |

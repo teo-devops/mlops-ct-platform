@@ -12,8 +12,8 @@
 | iterate on a chart without committing | `scripts/25-deploy-local.sh` on a cluster **without** Argo CD (`make up secrets`, skip `bootstrap`) |
 | rebuild the API or the steps image | `make build`, then `kubectl -n listing-engine-api rollout restart deploy/listing-engine-api` / next pipeline run picks the new image |
 | rotate a secret | delete it, `make secrets`, restart the consumer; for the Git credential also `scripts/credentials.sh add` |
-| add a use case | implement `UseCase`, build an image `FROM ctsteps-base`, copy the three workload charts, `python3 scripts/register-workload.py <name> <path>` ×3, add its namespace to `controller.workflowNamespaces` of the argo-workflows module, create its Secrets |
-| disable a module | remove its line from `overlays/demo/platform/kustomization.yaml` (prune deletes it) |
+| add a use case | implement `UseCase`, build an image `FROM ctsteps-base`, copy the three workload charts, `python3 scripts/register-workload.py <name> <path> --group <use-case>` ×3, add its namespace to `controller.workflowNamespaces` of the argo-workflows module, create its Secrets |
+| disable a module | remove its line from `gitops/environments/demo/platform/kustomization.yaml` (prune deletes it) |
 
 ## Things that look like failures and are not
 

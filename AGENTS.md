@@ -6,18 +6,18 @@ proposing changes; most "improvements" that look obvious were decided against, o
 
 ## The model, in one line each
 
-* **Contracts, not tools.** A module lives in `overlays/demo/platform/<module>/` and implements one
+* **Contracts, not tools.** A module lives in `gitops/environments/demo/platform/<module>/` and implements one
   contract. Replacing a tool means a new directory that honours the same contract; never wire two
   modules to each other's internals.
 * **Steps are containers.** `libs/ctsteps` is the pipeline; orchestrators are adapters in
   `pipelines/`. Do not put use-case logic in a step, do not put orchestration in a step.
 * **A use case is a plugin** (`use-cases/<name>/`): a `UseCase` implementation, an API, and its
-  workload charts. The platform never mentions a use case by name outside `overlays/demo/{projects,apps}`
+  workload charts. The platform never mentions a use case by name outside `gitops/environments/demo/{projects,apps}`
   and the `workflowNamespaces` list of the orchestration module.
 * **GitOps rules inherited from Argo-cd-Labs**: `1 workload = 1 namespace = 1 AppProject =
   1 Application` (= 1 directory here); AppProjects are written by hand and confine a workload to its
   namespace; cluster-scoped things belong to the `platform` project; nothing applied to the cluster
-  lives outside `overlays/<env>/`, and that directory never references `../..`.
+  lives outside `gitops/environments/<env>/`, and that directory never references `../..`.
 * **Secrets are never in Git.** No SOPS, no Sealed Secrets — do not propose them unless asked. They
   are created before the first sync by `scripts/15-demo-secrets.sh`. The same goes for the
   `ct-data-source` ConfigMap (state of the outside world).

@@ -11,7 +11,7 @@ step "kind cluster '${CLUSTER}'"
 if kind get clusters 2>/dev/null | grep -qx "${CLUSTER}"; then
   info "already exists; reusing"
 else
-  kind create cluster --name "${CLUSTER}" --config "${REPO_ROOT}/lab/kind.yaml"
+  kind create cluster --name "${CLUSTER}" --config "${REPO_ROOT}/cluster/kind.yaml"
 fi
 require_kind_context
 kubectl wait node --all --for=condition=Ready --timeout=180s >/dev/null
@@ -20,7 +20,7 @@ info "nodes: $(kubectl get nodes --no-headers | awk '{print $1"("$2")"}' | xargs
 step "Preloading images into the nodes"
 # Everything the platform modules and the use case pull. Preloading makes the
 # bootstrap deterministic and survives a flaky (or intercepted) network.
-mapfile -t IMAGES < "${REPO_ROOT}/lab/images.txt"
+mapfile -t IMAGES < "${REPO_ROOT}/cluster/images.txt"
 for img in "${IMAGES[@]}"; do
   [[ -z "$img" || "$img" == \#* ]] && continue
   if ! docker image inspect "$img" >/dev/null 2>&1; then
