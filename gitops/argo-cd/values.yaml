@@ -142,8 +142,13 @@ configs:
       #   g, my-org/data-science, proj:listing-engine-pipelines:developer
 
   secret:
-    # The chart generates `argocd-secret` with the admin password.
     createSecret: true
+    # DEMO credential: admin / admin-demo (bcrypt). Known on purpose so that the
+    # README can state it; rotate before exposing the UI anywhere:
+    #   htpasswd -nbBC 10 "" '<new>' | tr -d ':\n'   -> paste here, bump the mtime
+    # or `argocd account update-password`. Production: SSO (dex) and no admin.
+    argocdServerAdminPassword: "$2b$10$ZI9fMeqcUUx0MQLPssY3X.8Qecm3dl4SMlKgDixtb.yipxGHQYKeS"
+    argocdServerAdminPasswordMtime: "2026-09-18T00:00:00Z"
 
 ## --- Topology -------------------------------------------------------------
 # Single logical node. For HA: controller.replicas 2, redis-ha.enabled true

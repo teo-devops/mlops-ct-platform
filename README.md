@@ -51,6 +51,30 @@ make down        # 10
 `make demo` chains 02 → 08; `make prereqs` (01) checks the tools. Every UI answers on
 `http://<name>.localhost:8088`. Another use case runs the same flow with `USE_CASE=<name>`.
 
+## UIs and credentials
+
+Every UI is published by ingress-nginx on `http://<name>.localhost:8088` (browsers resolve
+`*.localhost` to 127.0.0.1, no `/etc/hosts` needed). `make status` prints this table with the live values.
+
+| UI | URL | User | Password | Notes |
+|---|---|---|---|---|
+| Argo CD | http://argocd.localhost:8088 | `admin` | `admin-demo` | bcrypt in `gitops/argo-cd/values.yaml` |
+| Argo Workflows | http://argo.localhost:8088 | — | — | no auth in the demo (`server.authModes: [server]`) |
+| MLflow | http://mlflow.localhost:8088 | — | — | no auth |
+| Grafana | http://grafana.localhost:8088 | `admin` | `admin-demo` | *CT Loop* dashboard under folder `mlops-ct-platform` |
+| Prometheus | http://prometheus.localhost:8088 | — | — | |
+| MinIO console | http://minio.localhost:8088 | `root` | `minio-demo` | buckets `datasets` · `models` · `predictions` · `mlflow` |
+| Listing Engine API | http://listing-engine.localhost:8088/docs | — | — | the example use case (OpenAPI UI) |
+
+> **These are demo defaults, deliberately known.** They exist so that a fresh laptop needs no
+> lookup; they are never in a Secret in Git (the scripts create them) but they are in this file.
+> Change them before the cluster is reachable by anyone else:
+> `MINIO_ROOT_PASSWORD=… GRAFANA_ADMIN_PASSWORD=… make secrets` (after deleting the two Secrets, then
+> restart `minio` and `kps-grafana`), and for Argo CD a new bcrypt hash in `gitops/argo-cd/values.yaml`
+> or `argocd account update-password`. Machine-to-machine keys (artifact-store users, the Git
+> token) are random or yours and never printed. Production: SSO and a secret manager
+> ([docs/design/secrets.md](docs/design/secrets.md)).
+
 ## The platform, in one table
 
 | Contract | Module (pinned) | What a use case gets |

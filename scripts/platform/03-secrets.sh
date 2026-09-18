@@ -6,7 +6,14 @@
 # workloads/minio/values.yaml) are minted here; each use case then copies the
 # keys it needs into its own namespaces with use-cases/<name>/scripts/secrets.sh,
 # which this script runs last. Idempotent: existing Secrets are kept.
+#
+# Human-facing passwords are KNOWN DEMO DEFAULTS (README, "UIs and credentials")
+# so that a fresh laptop needs no lookup; override them with the variables
+# below, and rotate them before the cluster is reachable by anyone else.
+# Machine-to-machine keys (artifact-store users) are always random.
 . "$(dirname "${BASH_SOURCE[0]}")/../lib.sh"
+MINIO_ROOT_PASSWORD="${MINIO_ROOT_PASSWORD:-minio-demo}"
+GRAFANA_ADMIN_PASSWORD="${GRAFANA_ADMIN_PASSWORD:-admin-demo}"
 require kubectl python3
 require_kind_context
 
@@ -20,7 +27,7 @@ info "minio mlflow observability"
 
 step "Artifact store: root credentials (namespace minio)"
 if exists minio minio-root; then info "kept"; else
-  secret_upsert minio minio-root MINIO_ROOT_USER=root "MINIO_ROOT_PASSWORD=$(rand_hex)"; info "created"
+  secret_upsert minio minio-root MINIO_ROOT_USER=root "MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD}"; info "created (root / \$MINIO_ROOT_PASSWORD)"
 fi
 
 step "Artifact store: one secret key per consumer user (workloads/minio/values.yaml)"
@@ -41,7 +48,7 @@ minio_user_secret mlflow mlflow-s3-credentials mlflow MLFLOW
 
 step "Grafana admin (namespace observability)"
 if exists observability grafana-admin; then info "kept"; else
-  secret_upsert observability grafana-admin admin-user=admin "admin-password=$(rand_hex)"; info "created"
+  secret_upsert observability grafana-admin admin-user=admin "admin-password=${GRAFANA_ADMIN_PASSWORD}"; info "created (admin / \$GRAFANA_ADMIN_PASSWORD)"
 fi
 
 step "Use cases"
@@ -52,4 +59,4 @@ for uc in "${REPO_ROOT}"/use-cases/*/scripts/secrets.sh; do
 done
 
 echo
-echo "Passwords live only in the cluster. Read them with: make status"
+echo "Demo credentials are the defaults documented in README.md (UIs and credentials); make status prints the live ones."

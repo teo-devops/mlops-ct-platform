@@ -17,7 +17,7 @@ The artifact-store **identities are platform property** (the access matrix is `u
 MinIO chart); a use case only receives the keys of the users it is allowed to use. Adding a use
 case = adding its users to that matrix and delivering them in its own `secrets.sh`.
 
-`make status` prints every password. In production the workload secrets come from a secret manager
+Human-facing passwords (Argo CD, Grafana, MinIO root) are **known demo defaults** listed in the README so a fresh laptop needs no lookup; machine keys are random. `make status` prints the live values. In production the workload secrets come from a secret manager
 (External Secrets, Vault) and the Git credential is a bot token scoped to one repository; in the
 aws profile S3 credentials disappear in favour of IRSA.
 
