@@ -166,6 +166,7 @@ mlops-ct-platform/
 * [docs/modules/](docs/modules/) — one card per module, including the gaps (Kafka, Feast, Katib, Great Expectations, Argo Rollouts)
 * [docs/decisions.md](docs/decisions.md) — ADRs: why Argo Workflows and not Airflow in kind, sqlite, MinIO, push vs PR…
 * [use-cases/listing-engine/docs/](use-cases/listing-engine/docs/) — the example use case: instance architecture, case study, runbook
+* [docs/study-guide.es.md](docs/study-guide.es.md) — study guide (Spanish): CT theory applied, the flows, every UI, exercises, expansion map
 * [docs/operations/what-the-demo-does-not-prove.md](docs/operations/what-the-demo-does-not-prove.md) — read this before extrapolating
 
 The GitOps control plane is inherited from [teo-devops/Argo-cd-Labs](https://github.com/teo-devops/Argo-cd-Labs);
