@@ -31,7 +31,7 @@ ENV = GITOPS / "environments" / "demo"
 DIR_PROJECTS = ENV / "projects"
 DIR_APPS = ENV / "apps"
 DIR_PLATFORM = ENV / "platform"
-INSTALL_SH = ROOT / "scripts" / "platform" / "install.sh"
+INSTALL_SH = ROOT / "scripts" / "platform" / "04-install.sh"
 ENGINE_APP = ENV / "argo-cd.yaml"
 ROOT_APP = GITOPS / "bootstrap" / "root-app.yaml"
 EXPECTED_SERVER = "https://kubernetes.default.svc"
@@ -246,7 +246,7 @@ def main() -> int:
 
         archetype = (doc.get("metadata", {}).get("annotations") or {}).get(ARCHETYPE_ANNOTATION)
         if archetype is not None and archetype not in ARCHETYPES:
-            error(f"{r}: unknown archetype {archetype!r}; known: {sorted(ARCHETYPES)} (docs/archetypes.md)")
+            error(f"{r}: unknown archetype {archetype!r}; known: {sorted(ARCHETYPES)} (docs/design/archetypes.md)")
 
         dest = spec.get("destination", {})
         ns, server = dest.get("namespace"), dest.get("server")

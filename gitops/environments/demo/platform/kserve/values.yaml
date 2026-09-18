@@ -1,6 +1,6 @@
 # kserve (kserve-resources) — demo profile.
 #
-# Contract implemented: "serving" (docs/contracts.md#serving). A model is an
+# Contract implemented: "serving" (docs/design/contracts.md#serving). A model is an
 # InferenceService pulling `storageUri` from the artifact store; the API talks
 # to `<name>-predictor.<namespace>.svc`.
 #

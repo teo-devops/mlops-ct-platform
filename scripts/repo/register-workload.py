@@ -136,7 +136,7 @@ def main() -> int:
 Left to do, and not done by this script:
   1. READ gitops/environments/demo/projects/{name}.yaml — it defines the privilege limits.
   2. If the workload needs a Secret TO START (a Job, a private image, S3
-     credentials), create it BEFORE merging: scripts/platform/secrets.sh.
+     credentials), create it BEFORE merging: scripts/platform/03-secrets.sh.
   3. Commit and push. Argo CD picks it up on the next reconciliation.
 """)
     return code

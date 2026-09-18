@@ -17,7 +17,7 @@ require() {
   for t in "$@"; do
     command -v "$t" >/dev/null 2>&1 || { echo "missing tool: $t" >&2; missing=1; }
   done
-  [[ $missing -eq 0 ]] || die "install the missing tools first (scripts/cluster/prereqs.sh)"
+  [[ $missing -eq 0 ]] || die "install the missing tools first (scripts/cluster/01-prereqs.sh)"
 }
 
 # Refuse to touch any cluster that is not the kind cluster of this repo.

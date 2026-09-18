@@ -7,4 +7,4 @@ for KServe, managed Postgres for MLflow, Alertmanager routes, Cilium NetworkPoli
 
 Workload charts already carry a `values-prod.yaml` with the profile-specific knobs
 (`workloads/*/values-prod.yaml`, `use-cases/*/workloads/*/values-prod.yaml`); the Application
-templates only swap `valueFiles`. See docs/profiles.md.
+templates only swap `valueFiles`. See docs/design/profiles.md.

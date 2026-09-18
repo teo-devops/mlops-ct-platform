@@ -5,7 +5,7 @@
 # The only imperative procedure of the project, run ONCE in the life of the
 # cluster. From phase 3 on, every change is a commit on main.
 #
-#   Usage:  ./scripts/platform/install.sh
+#   Usage:  ./scripts/platform/04-install.sh
 #   Env:    GIT_USER / GIT_TOKEN  read credential of the platform repository
 #           (defaults: teo-devops / `gh auth token`)
 #           ASSUME_YES=1          do not ask for confirmation

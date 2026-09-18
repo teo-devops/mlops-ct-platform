@@ -3,7 +3,7 @@
 #   make demo        everything: up secrets bootstrap wait build pipeline smoke
 #   make up          kind cluster + ingress-nginx + image preload
 #   make secrets     namespaces + demo Secrets (never in Git)
-#   make bootstrap   Argo CD from the chart + root-app (scripts/platform/install.sh)
+#   make bootstrap   Argo CD from the chart + root-app (scripts/platform/04-install.sh)
 #   make wait        wait until the platform modules are Synced/Healthy
 #   make build       build the use-case images and load them into kind
 #   make pipeline    run the continuous-training pipeline for every model
@@ -26,18 +26,18 @@ PY := $(if $(wildcard .venv-dev/bin/python),$(CURDIR)/.venv-dev/bin/python,pytho
 help:
 	@sed -n 's/^#   \(make [a-z-]*\) *\(.*\)/  \1\t\2/p' Makefile
 
-prereqs:    ; @scripts/cluster/prereqs.sh
-up:         ; @scripts/cluster/up.sh
-secrets:    ; @scripts/platform/secrets.sh
-bootstrap:  ; @ASSUME_YES=1 scripts/platform/install.sh
-wait:       ; @scripts/platform/wait.sh
-build:      ; @scripts/demo/build-images.sh
-pipeline:   ; @scripts/demo/run-pipeline.sh
+prereqs:    ; @scripts/cluster/01-prereqs.sh
+up:         ; @scripts/cluster/02-up.sh
+secrets:    ; @scripts/platform/03-secrets.sh
+bootstrap:  ; @ASSUME_YES=1 scripts/platform/04-install.sh
+wait:       ; @scripts/platform/05-wait.sh
+build:      ; @scripts/demo/06-build-images.sh
+pipeline:   ; @scripts/demo/07-run-pipeline.sh
 promote:    ; @scripts/demo/promote.sh $(MODEL) $(VERSION) $(or $(TRIGGER),manual)
-smoke:      ; @scripts/demo/smoke.sh
-drift:      ; @scripts/demo/induce-drift.sh
+smoke:      ; @scripts/demo/08-smoke.sh
+drift:      ; @scripts/demo/09-induce-drift.sh
 status:     ; @scripts/platform/status.sh
-down:       ; @scripts/cluster/down.sh
+down:       ; @scripts/cluster/10-down.sh
 deploy-local: ; @scripts/platform/deploy-local.sh
 
 demo: up secrets bootstrap wait build pipeline smoke

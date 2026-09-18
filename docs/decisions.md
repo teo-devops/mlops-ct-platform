@@ -17,7 +17,7 @@ the same URL; isolation comes from `destinations` only, which the validator enfo
 
 ### 3. Modules are directories with a contract, not a Helm umbrella chart
 Decoupling has to be visible in the tree. → `gitops/environments/demo/platform/<module>/{application,values}`;
-disabling a module is deleting a line; contracts are written down in docs/contracts.md and the
+disabling a module is deleting a line; contracts are written down in docs/design/contracts.md and the
 step CLI. → Some duplication between profiles (`values.yaml` per profile per module) in exchange
 for zero coupling between modules.
 

@@ -1,6 +1,6 @@
 # argo-workflows — demo profile.
 #
-# Contract implemented: "orchestration" (docs/contracts.md#orchestration).
+# Contract implemented: "orchestration" (docs/design/contracts.md#orchestration).
 # The pipeline steps are containers with a fixed contract (libs/ctsteps); Argo
 # Workflows is the adapter that runs them in the demo. Airflow / Kubeflow
 # Pipelines adapters of the same steps live in pipelines/adapters/.

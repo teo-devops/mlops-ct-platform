@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Creates the namespaces and the Secrets of the demo BEFORE the first sync.
 #
-# Secrets are never declared in Git (docs/secrets.md). Two things force this
+# Secrets are never declared in Git (docs/design/secrets.md). Two things force this
 # order: the MinIO provisioning Job needs the user secret keys the moment it
 # runs, and the InferenceServices need their S3 credentials on the first
 # attempt. Idempotent: existing Secrets are kept (rotation = delete + rerun).

@@ -9,7 +9,7 @@
 #   REPO_URL    same exact URL as in `sourceRepos` of the AppProject.
 #   PATH        directory with the manifests (a Helm chart or plain YAML),
 #               e.g. workloads/minio or use-cases/listing-engine/workloads/api
-#   ARCHETYPE   stateless | batch | stateful | pipeline   (docs/archetypes.md)
+#   ARCHETYPE   stateless | batch | stateful | pipeline   (docs/design/archetypes.md)
 #
 # Inherited from teo-devops/Argo-cd-Labs.
 # ============================================================================

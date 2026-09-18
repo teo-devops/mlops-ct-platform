@@ -1,7 +1,7 @@
 # Instructions for AI assistants working on this repository
 
 You are helping on **mlops-ct-platform**: a tool-agnostic MLOps platform demonstrating a closed
-continuous-training loop on kind. Read `docs/contracts.md` and `docs/decisions.md` before
+continuous-training loop on kind. Read `docs/design/contracts.md` and `docs/decisions.md` before
 proposing changes; most "improvements" that look obvious were decided against, on purpose.
 
 ## The model, in one line each
@@ -19,7 +19,7 @@ proposing changes; most "improvements" that look obvious were decided against, o
   namespace; cluster-scoped things belong to the `platform` project; nothing applied to the cluster
   lives outside `gitops/environments/<env>/`, and that directory never references `../..`.
 * **Secrets are never in Git.** No SOPS, no Sealed Secrets — do not propose them unless asked. They
-  are created before the first sync by `scripts/platform/secrets.sh`. The same goes for the
+  are created before the first sync by `scripts/platform/03-secrets.sh`. The same goes for the
   `ct-data-source` ConfigMap (state of the outside world).
 * **The deployment is a commit.** Models reach serving only through `ctsteps promote` bumping
   `models.<model>.version` in the profile values of the serving and API charts. Do not add

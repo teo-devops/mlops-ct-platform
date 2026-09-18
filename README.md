@@ -71,13 +71,13 @@ make down
   every workload ships its own NetworkPolicies; the smoke test proves a pod outside the API
   namespace cannot reach the predictors.
 * **Same charts, different values.** `gitops/environments/demo` is what runs; `gitops/environments/prod` and
-  `gitops/environments/aws` show the same modules with production values (docs/profiles.md).
+  `gitops/environments/aws` show the same modules with production values (docs/design/profiles.md).
 
 ## Repository map
 
 ```
 gitops/                 what Argo CD reconciles, and how it is bootstrapped
-  bootstrap/            root-app (applied once by scripts/platform/install.sh)
+  bootstrap/            root-app (applied once by scripts/platform/04-install.sh)
   argo-cd/values.yaml   the engine's single source of configuration
   templates/            AppProject + Application templates for new workloads
   environments/demo/    the environment that runs on kind (prod/ and aws/ are documented shapes)
@@ -86,22 +86,22 @@ gitops/                 what Argo CD reconciles, and how it is bootstrapped
     apps/<group>/       one Application per workload  ┘ (scripts/repo/register-workload.py --group)
 cluster/                kind.yaml and the image preload list
 workloads/              charts of the shared workloads (minio, observability)
-use-cases/<name>/       a use case: plugin (steps image), api, workloads/{api,serving,pipelines}
+use-cases/<name>/       a use case: plugin (steps image), api, workloads/{api,serving,pipelines} (use-cases/README.md = how to add one)
 libs/ctsteps/           the step contract (python package + CLI + tests)
 pipelines/              orchestrator adapters and notes
-scripts/                cluster/ · platform/ · demo/ · repo/ — see scripts/README.md; paths resolve from the repo root
-docs/                   start with architecture.md and contracts.md
+scripts/                launch flow numbered 01→10 across cluster/ · platform/ · demo/; repo/ = tooling (scripts/README.md)
+docs/                   design/ · modules/ · operations/ · decisions · case-study · roadmap (docs/README.md = reading order)
 ```
 
 ## Read next
 
-* [docs/architecture.md](docs/architecture.md) — domains, the synchronous and asynchronous paths, network
-* [docs/contracts.md](docs/contracts.md) — the six contracts and the step CLI
-* [docs/ct-loop.md](docs/ct-loop.md) — the loop step by step, with what each step reads and writes
+* [docs/design/architecture.md](docs/design/architecture.md) — domains, the synchronous and asynchronous paths, network
+* [docs/design/contracts.md](docs/design/contracts.md) — the six contracts and the step CLI
+* [docs/design/ct-loop.md](docs/design/ct-loop.md) — the loop step by step, with what each step reads and writes
 * [docs/modules/](docs/modules/) — one card per module, including the gaps (Kafka, Feast, Katib, Great Expectations, Argo Rollouts)
 * [docs/decisions.md](docs/decisions.md) — ADRs: why Argo Workflows and not Airflow in kind, sqlite, MinIO, push vs PR…
 * [docs/case-study.md](docs/case-study.md) — the Listing Engine case: symptoms → which module fixes what, SLOs, ownership
-* [docs/what-the-demo-does-not-prove.md](docs/what-the-demo-does-not-prove.md) — read this before extrapolating
+* [docs/operations/what-the-demo-does-not-prove.md](docs/operations/what-the-demo-does-not-prove.md) — read this before extrapolating
 
 The GitOps control plane is inherited from [teo-devops/Argo-cd-Labs](https://github.com/teo-devops/Argo-cd-Labs);
 the artifact store from [teo-devops/minIO-docker](https://github.com/teo-devops/minIO-docker).

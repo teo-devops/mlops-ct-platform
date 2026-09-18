@@ -63,4 +63,4 @@ kindnet in the demo, by Cilium in the prod profile. DNS egress to `kube-system` 
 `1 workload = 1 namespace = 1 AppProject = 1 Application` (= 1 directory of this monorepo). A
 workload's AppProject may read only this repository and write only its own namespace; it may not
 create RBAC. Everything cluster-scoped — CRDs, webhooks, ClusterRoles, the RBAC that pipelines
-need — belongs to the `platform` project. Secrets are never in Git (docs/secrets.md).
+need — belongs to the `platform` project. Secrets are never in Git (docs/design/secrets.md).

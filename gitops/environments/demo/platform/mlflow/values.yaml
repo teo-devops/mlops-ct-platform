@@ -1,13 +1,13 @@
 # mlflow — demo profile.
 #
-# Contract implemented: "model-registry" (docs/contracts.md#model-registry):
+# Contract implemented: "model-registry" (docs/design/contracts.md#model-registry):
 # MLFLOW_TRACKING_URI=http://mlflow.mlflow.svc.cluster.local, registered
 # models with aliases `champion` / `challenger`.
 #
 # Backend store: sqlite on a PVC (manifests/pvc.yaml). The chart's Postgres
 # subchart points at the frozen bitnamilegacy images; a single-replica
 # tracking server is enough for the demo. The prod profile uses a managed
-# Postgres (docs/profiles.md).
+# Postgres (docs/design/profiles.md).
 strategy:
   # One pod at a time: sqlite + ReadWriteOnce volume.
   type: Recreate
@@ -18,7 +18,7 @@ artifactRoot:
     enabled: true
     bucket: mlflow
     # Credentials of the MinIO user `mlflow` (read/write on bucket mlflow).
-    # Created by scripts/platform/secrets.sh, never in Git.
+    # Created by scripts/platform/03-secrets.sh, never in Git.
     existingSecret:
       name: mlflow-s3-credentials
       keyOfAccessKeyId: AWS_ACCESS_KEY_ID

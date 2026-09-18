@@ -52,7 +52,7 @@ def simple(step: str, model: str):
 @dsl.pipeline(name="ct-pipeline")
 def ct_pipeline(model: str = "categorizer", trigger: str = "manual"):
     # Environment (S3, MLflow, credentials) is injected with kfp-kubernetes
-    # (`use_secret_as_env`, `set_env`) exactly as in docs/contracts.md.
+    # (`use_secret_as_env`, `set_env`) exactly as in docs/design/contracts.md.
     i = simple(step="ingest", model=model)
     v = simple(step="validate", model=model).after(i)
     p = simple(step="preprocess", model=model).after(v)

@@ -48,8 +48,8 @@ spec:
       - group: ''
         kind: Secret
         name: argocd-initial-admin-secret
-      # Demo credentials created by scripts/platform/secrets.sh before the
-      # first sync (docs/secrets.md). Never declared in Git.
+      # Demo credentials created by scripts/platform/03-secrets.sh before the
+      # first sync (docs/design/secrets.md). Never declared in Git.
       - group: ''
         kind: Secret
         name: demo-*

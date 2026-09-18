@@ -11,7 +11,7 @@ namespace: argocd
 #
 # Disabling a module = removing its line here. Replacing a tool = replacing
 # the directory, as long as the new one honours the same contract
-# (docs/contracts.md). Sync-waves (in each application.yaml):
+# (docs/design/contracts.md). Sync-waves (in each application.yaml):
 #   1  cert-manager, gateway-api-crds
 #   2  kserve-crd, mlflow, argo-workflows, kube-prometheus-stack, pushgateway
 #   3  kserve (needs cert-manager webhooks + CRDs)

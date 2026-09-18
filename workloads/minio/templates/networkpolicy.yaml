@@ -1,6 +1,6 @@
 {{- if .Values.networkPolicy.enabled }}
 # NetworkPolicies of the artifact store. The platform does not impose them;
-# each workload limits itself (docs/architecture.md#network). Pod ports, not
+# each workload limits itself (docs/design/architecture.md#network). Pod ports, not
 # Service ports.
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
