@@ -8,7 +8,7 @@ useCase: listing-engine
 artifactStore:
   bucket: models
   # Secret with AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY of the `models-reader`
-  # user, created by scripts/15-demo-secrets.sh (never in Git). Endpoint,
+  # user, created by scripts/platform/secrets.sh (never in Git). Endpoint,
   # region and scheme are the cluster-wide defaults of the KServe module.
   secretName: models-s3-credentials
 

@@ -3,7 +3,7 @@
 #   make demo        everything: up secrets bootstrap wait build pipeline smoke
 #   make up          kind cluster + ingress-nginx + image preload
 #   make secrets     namespaces + demo Secrets (never in Git)
-#   make bootstrap   Argo CD from the chart + root-app (scripts/20-install.sh)
+#   make bootstrap   Argo CD from the chart + root-app (scripts/platform/install.sh)
 #   make wait        wait until the platform modules are Synced/Healthy
 #   make build       build the use-case images and load them into kind
 #   make pipeline    run the continuous-training pipeline for every model
@@ -26,27 +26,27 @@ PY := $(if $(wildcard .venv-dev/bin/python),$(CURDIR)/.venv-dev/bin/python,pytho
 help:
 	@sed -n 's/^#   \(make [a-z-]*\) *\(.*\)/  \1\t\2/p' Makefile
 
-prereqs:    ; @scripts/00-check-prereqs.sh
-up:         ; @scripts/10-kind-up.sh
-secrets:    ; @scripts/15-demo-secrets.sh
-bootstrap:  ; @ASSUME_YES=1 scripts/20-install.sh
-wait:       ; @scripts/30-wait-platform.sh
-build:      ; @scripts/35-build-images.sh
-pipeline:   ; @scripts/40-run-pipeline.sh
-promote:    ; @scripts/45-promote.sh $(MODEL) $(VERSION) $(or $(TRIGGER),manual)
-smoke:      ; @scripts/50-smoke.sh
-drift:      ; @scripts/55-induce-drift.sh
-status:     ; @scripts/60-status.sh
-down:       ; @scripts/99-down.sh
-deploy-local: ; @scripts/25-deploy-local.sh
+prereqs:    ; @scripts/cluster/prereqs.sh
+up:         ; @scripts/cluster/up.sh
+secrets:    ; @scripts/platform/secrets.sh
+bootstrap:  ; @ASSUME_YES=1 scripts/platform/install.sh
+wait:       ; @scripts/platform/wait.sh
+build:      ; @scripts/demo/build-images.sh
+pipeline:   ; @scripts/demo/run-pipeline.sh
+promote:    ; @scripts/demo/promote.sh $(MODEL) $(VERSION) $(or $(TRIGGER),manual)
+smoke:      ; @scripts/demo/smoke.sh
+drift:      ; @scripts/demo/induce-drift.sh
+status:     ; @scripts/platform/status.sh
+down:       ; @scripts/cluster/down.sh
+deploy-local: ; @scripts/platform/deploy-local.sh
 
 demo: up secrets bootstrap wait build pipeline smoke
 
 render:
-	@scripts/render.sh rendered
+	@scripts/repo/render.sh rendered
 
 lint:
-	@python3 scripts/validate-coherence.py
+	@python3 scripts/repo/validate-coherence.py
 	@kubectl kustomize gitops/environments/demo > /dev/null && kubectl kustomize gitops/bootstrap > /dev/null && echo "✓ kustomize renders"
 	@for c in workloads/*/ use-cases/*/workloads/*/; do [ -f "$$c/Chart.yaml" ] && helm lint "$$c" -f "$$c/values.yaml" -f "$$c/values-demo.yaml" --quiet && echo "✓ helm lint $$c"; done; true
 	@if $(PY) -m ruff --version >/dev/null 2>&1; then $(PY) -m ruff check libs use-cases && $(PY) -m ruff format --check libs use-cases && echo "✓ ruff"; else echo "ruff not installed (make venv): skipping python lint"; fi

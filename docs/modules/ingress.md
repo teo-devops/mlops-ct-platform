@@ -3,7 +3,7 @@
 | | |
 |---|---|
 | **Contract** | HTTP entry point `*.localhost:8088` |
-| **Demo implementation** | ingress-nginx installed by `scripts/10-kind-up.sh` (kind provider manifest), not by Argo CD |
+| **Demo implementation** | ingress-nginx installed by `scripts/cluster/up.sh` (kind provider manifest), not by Argo CD |
 | **Pinned version** | controller-v1.12.1 |
 | **Namespace** | ingress-nginx |
 | **Replace with** | MetalLB + ingress-nginx or a Gateway API implementation (prod), ALB (aws) |

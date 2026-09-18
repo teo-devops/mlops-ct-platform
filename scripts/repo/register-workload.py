@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Registers a workload from the templates: two files and two kustomization lines.
 
-    Usage:  python3 scripts/register-workload.py <name> <path> --group <group> [options]
+    Usage:  python3 scripts/repo/register-workload.py <name> <path> --group <group> [options]
 
       name          workload name = AppProject = Application = namespace
       path          directory in this repository with its manifests
@@ -34,7 +34,7 @@ import re
 import subprocess
 import sys
 
-ROOT = pathlib.Path(__file__).resolve().parent.parent
+ROOT = pathlib.Path(__file__).resolve().parents[2]  # scripts/repo/<this> -> repo root
 GITOPS = ROOT / "gitops"
 TEMPLATES = GITOPS / "templates"
 ENV = GITOPS / "environments" / "demo"
@@ -131,12 +131,12 @@ def main() -> int:
         add_to_kustomization(base / "kustomization.yaml", args.group)
     print(f"✓ {dst_project.relative_to(ROOT)}\n✓ {dst_app.relative_to(ROOT)}\n✓ wired into the {args.group!r} group\n")
 
-    code = subprocess.run([sys.executable, str(ROOT / "scripts" / "validate-coherence.py")]).returncode
+    code = subprocess.run([sys.executable, str(ROOT / "scripts" / "repo" / "validate-coherence.py")]).returncode
     print(f"""
 Left to do, and not done by this script:
   1. READ gitops/environments/demo/projects/{name}.yaml — it defines the privilege limits.
   2. If the workload needs a Secret TO START (a Job, a private image, S3
-     credentials), create it BEFORE merging: scripts/15-demo-secrets.sh.
+     credentials), create it BEFORE merging: scripts/platform/secrets.sh.
   3. Commit and push. Argo CD picks it up on the next reconciliation.
 """)
     return code

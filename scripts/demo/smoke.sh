@@ -3,7 +3,7 @@
 #   1. a real request answered by both models
 #   2. the fraud model is taken down -> the rules fallback answers, the flow never blocks
 #   3. NetworkPolicies: a pod outside the API namespace cannot reach the predictors
-. "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
+. "$(dirname "${BASH_SOURCE[0]}")/../lib.sh"
 require kubectl curl python3
 require_kind_context
 API="${API:-http://listing-engine.localhost:8088}"

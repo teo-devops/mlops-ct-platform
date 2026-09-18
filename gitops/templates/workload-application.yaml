@@ -3,7 +3,7 @@
 #
 # Usage: copy to `gitops/environments/demo/apps/<name>.yaml`, replace the markers and add
 #        the file to `gitops/environments/demo/apps/kustomization.yaml` — or let
-#        `scripts/register-workload.py` do it.
+#        `scripts/repo/register-workload.py` do it.
 #
 #   NAME        same as in the AppProject and the namespace.
 #   REPO_URL    same exact URL as in `sourceRepos` of the AppProject.

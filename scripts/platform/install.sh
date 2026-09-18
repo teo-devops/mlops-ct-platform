@@ -5,14 +5,14 @@
 # The only imperative procedure of the project, run ONCE in the life of the
 # cluster. From phase 3 on, every change is a commit on main.
 #
-#   Usage:  ./scripts/20-install.sh
+#   Usage:  ./scripts/platform/install.sh
 #   Env:    GIT_USER / GIT_TOKEN  read credential of the platform repository
 #           (defaults: teo-devops / `gh auth token`)
 #           ASSUME_YES=1          do not ask for confirmation
 #
 # Idempotent. Inherited from teo-devops/Argo-cd-Labs scripts/install.sh.
 #
-. "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
+. "$(dirname "${BASH_SOURCE[0]}")/../lib.sh"
 require kubectl helm
 
 CHART_VERSION="10.2.2"   # -> Argo CD v3.4.6. Must match gitops/environments/demo/argo-cd.yaml

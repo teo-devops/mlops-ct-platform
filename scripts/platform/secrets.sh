@@ -5,7 +5,7 @@
 # order: the MinIO provisioning Job needs the user secret keys the moment it
 # runs, and the InferenceServices need their S3 credentials on the first
 # attempt. Idempotent: existing Secrets are kept (rotation = delete + rerun).
-. "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
+. "$(dirname "${BASH_SOURCE[0]}")/../lib.sh"
 require kubectl
 require_kind_context
 

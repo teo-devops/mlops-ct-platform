@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Shared helpers for the scripts. Source it: `. "$(dirname "$0")/lib.sh"`.
+# Shared helpers for the scripts. Source it from a script in a subfolder:
+#   . "$(dirname "${BASH_SOURCE[0]}")/../lib.sh"
 set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -16,7 +17,7 @@ require() {
   for t in "$@"; do
     command -v "$t" >/dev/null 2>&1 || { echo "missing tool: $t" >&2; missing=1; }
   done
-  [[ $missing -eq 0 ]] || die "install the missing tools first (scripts/00-check-prereqs.sh)"
+  [[ $missing -eq 0 ]] || die "install the missing tools first (scripts/cluster/prereqs.sh)"
 }
 
 # Refuse to touch any cluster that is not the kind cluster of this repo.

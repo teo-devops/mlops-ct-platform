@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Checks the tools and the network conditions the demo needs.
-. "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
+. "$(dirname "${BASH_SOURCE[0]}")/../lib.sh"
 
 step "Tools"
 ok=1

@@ -15,7 +15,7 @@ __pycache__/
 dist/
 build/
 
-# Output of scripts/render.sh
+# Output of scripts/repo/render.sh
 rendered/
 
 # Local artefacts of the demo (never commit models or datasets)

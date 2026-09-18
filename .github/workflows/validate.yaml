@@ -22,14 +22,14 @@ jobs:
           python3 -c 'import yaml' 2>/dev/null || pip install --quiet pyyaml
           command -v kubectl >/dev/null || { curl -sLo kubectl https://dl.k8s.io/release/v1.34.0/bin/linux/amd64/kubectl; chmod +x kubectl; sudo mv kubectl /usr/local/bin/; }
       - name: Coherence of the GitOps tree
-        run: python3 scripts/validate-coherence.py
+        run: python3 scripts/repo/validate-coherence.py
       - name: Kustomize renders
         run: |
           kubectl kustomize gitops/environments/demo > /dev/null
           kubectl kustomize gitops/bootstrap > /dev/null
       - name: Templates render
         run: |
-          python3 scripts/register-workload.py template-ci workloads/minio --group shared --archetype stateless --team ci/template --dry-run \
+          python3 scripts/repo/register-workload.py template-ci workloads/minio --group shared --archetype stateless --team ci/template --dry-run \
             | python3 -c 'import sys,yaml; list(yaml.safe_load_all(sys.stdin))'
       - name: Helm lint (workload charts)
         run: |
@@ -54,4 +54,4 @@ jobs:
           helm template kserve oci://ghcr.io/kserve/charts/kserve-resources --version v0.20.0 -f $P/kserve/values.yaml > /dev/null
           helm template rt oci://ghcr.io/kserve/charts/kserve-runtime-configs --version v0.20.0 -f $P/kserve-runtimes/values.yaml > /dev/null
       - name: Shell syntax
-        run: for f in scripts/*.sh; do bash -n "$f"; done
+        run: for f in scripts/lib.sh scripts/*/*.sh; do bash -n "$f"; done

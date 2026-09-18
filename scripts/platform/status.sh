@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # One screen with everything: Applications, workloads, models, URLs, passwords.
-. "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
+. "$(dirname "${BASH_SOURCE[0]}")/../lib.sh"
 require kubectl
 require_kind_context
 

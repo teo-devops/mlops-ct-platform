@@ -3,10 +3,10 @@
 #
 # Usage: copy to `gitops/environments/demo/projects/<name>.yaml`, replace the markers and
 #        add the file to `gitops/environments/demo/projects/kustomization.yaml` — or let
-#        `scripts/register-workload.py` do it.
+#        `scripts/repo/register-workload.py` do it.
 #
 #   NAME         workload name = AppProject name = namespace = file name.
-#                All four equal; scripts/validate-coherence.py checks it.
+#                All four equal; scripts/repo/validate-coherence.py checks it.
 #   REPO_URL     exact Git URL of the repository holding the manifests.
 #   DESCRIPTION  one line: what it is and which components it groups.
 #   GROUP        identity-provider group that operates it in the UI.

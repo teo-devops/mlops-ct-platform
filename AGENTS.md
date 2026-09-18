@@ -19,7 +19,7 @@ proposing changes; most "improvements" that look obvious were decided against, o
   namespace; cluster-scoped things belong to the `platform` project; nothing applied to the cluster
   lives outside `gitops/environments/<env>/`, and that directory never references `../..`.
 * **Secrets are never in Git.** No SOPS, no Sealed Secrets — do not propose them unless asked. They
-  are created before the first sync by `scripts/15-demo-secrets.sh`. The same goes for the
+  are created before the first sync by `scripts/platform/secrets.sh`. The same goes for the
   `ct-data-source` ConfigMap (state of the outside world).
 * **The deployment is a commit.** Models reach serving only through `ctsteps promote` bumping
   `models.<model>.version` in the profile values of the serving and API charts. Do not add
@@ -41,6 +41,6 @@ proposing changes; most "improvements" that look obvious were decided against, o
 ## Before you finish a change
 
 `make validate` (coherence validator, kustomize, helm lint, ruff, pytest) must pass. If you change
-a chart, `scripts/render.sh rendered` shows what Argo CD would apply. If you change a step, the
+a chart, `scripts/repo/render.sh rendered` shows what Argo CD would apply. If you change a step, the
 tests in `libs/ctsteps/tests` cover the whole pipeline against a fake S3 and a local MLflow — extend
 them. Never commit models, datasets or `.venv*`.

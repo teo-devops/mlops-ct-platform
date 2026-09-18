@@ -1,4 +1,4 @@
-# Images preloaded into the kind nodes by scripts/10-kind-up.sh (one per line).
+# Images preloaded into the kind nodes by scripts/cluster/up.sh (one per line).
 # Keep in sync with the pinned chart versions of gitops/environments/demo/platform.
 # --- engine + ingress
 quay.io/argoproj/argocd:v3.4.6

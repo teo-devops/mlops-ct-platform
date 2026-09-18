@@ -6,7 +6,7 @@ a marker left behind or a name that does not match between AppProject and
 Application. Argo CD detects it — it refuses the sync — but in the cluster,
 after the merge. This detects it in the PR.
 
-    Usage:  python3 scripts/validate-coherence.py
+    Usage:  python3 scripts/repo/validate-coherence.py
     Exit code 1 on any incoherence.
 
 Inherited from teo-devops/Argo-cd-Labs scripts/validar-coherencia.py and
@@ -25,13 +25,13 @@ try:
 except ImportError:  # pragma: no cover
     sys.exit("PyYAML missing:  pip install pyyaml")
 
-ROOT = pathlib.Path(__file__).resolve().parent.parent
+ROOT = pathlib.Path(__file__).resolve().parents[2]  # scripts/repo/<this> -> repo root
 GITOPS = ROOT / "gitops"
 ENV = GITOPS / "environments" / "demo"
 DIR_PROJECTS = ENV / "projects"
 DIR_APPS = ENV / "apps"
 DIR_PLATFORM = ENV / "platform"
-INSTALL_SH = ROOT / "scripts" / "20-install.sh"
+INSTALL_SH = ROOT / "scripts" / "platform" / "install.sh"
 ENGINE_APP = ENV / "argo-cd.yaml"
 ROOT_APP = GITOPS / "bootstrap" / "root-app.yaml"
 EXPECTED_SERVER = "https://kubernetes.default.svc"

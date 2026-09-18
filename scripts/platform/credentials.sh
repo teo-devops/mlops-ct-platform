@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 # Repository credential of Argo CD (one Secret of type `repository`, exact URL).
 #
-#   ./scripts/credentials.sh status   what Argo CD has vs what the tree needs
-#   ./scripts/credentials.sh add      create/rotate it (GIT_USER / GIT_TOKEN or gh)
-#   ./scripts/credentials.sh remove   delete it (when the repository goes public)
-#   ./scripts/credentials.sh admin    print the Argo CD admin password
-. "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
+#   ./scripts/platform/credentials.sh status   what Argo CD has vs what the tree needs
+#   ./scripts/platform/credentials.sh add      create/rotate it (GIT_USER / GIT_TOKEN or gh)
+#   ./scripts/platform/credentials.sh remove   delete it (when the repository goes public)
+#   ./scripts/platform/credentials.sh admin    print the Argo CD admin password
+. "$(dirname "${BASH_SOURCE[0]}")/../lib.sh"
 require kubectl
 SECRET="repo-mlops-ct-platform"
 case "${1:-status}" in

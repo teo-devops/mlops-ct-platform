@@ -4,8 +4,8 @@
 # the objects that end up in the apiserver — this is the "rendered manifests"
 # pattern by hand. CI publishes the diff.
 #
-#   Usage:  ./scripts/render.sh <output-dir>
-. "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
+#   Usage:  ./scripts/repo/render.sh <output-dir>
+. "$(dirname "${BASH_SOURCE[0]}")/../lib.sh"
 OUT="${1:?usage: $0 <output-dir>}"
 mkdir -p "${OUT}"
 kubectl kustomize "${REPO_ROOT}/gitops/environments/demo" > "${OUT}/01-control-plane.yaml"

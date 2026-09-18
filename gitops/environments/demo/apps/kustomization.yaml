@@ -7,7 +7,7 @@ namespace: argocd
 #   shared/          platform-wide workloads (artifact store, alerting rules)
 #   <use-case>/      the workloads of one use case
 # Registering a workload = one file in its group and one line in the group's
-# kustomization.yaml (scripts/register-workload.py does both). A new group =
+# kustomization.yaml (scripts/repo/register-workload.py does both). A new group =
 # a directory with its own kustomization.yaml plus one line here.
 #
 # Plain Applications instead of an ApplicationSet, on purpose: workloads are

@@ -4,9 +4,9 @@
 # Use it to iterate on a chart before pushing; `make bootstrap` is the real
 # path. Order = the sync-waves of gitops/environments/demo/platform/kustomization.yaml.
 #
-#   ./scripts/25-deploy-local.sh            # everything
-#   ./scripts/25-deploy-local.sh use-case   # only the use-case workloads
-. "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
+#   ./scripts/platform/deploy-local.sh            # everything
+#   ./scripts/platform/deploy-local.sh use-case   # only the use-case workloads
+. "$(dirname "${BASH_SOURCE[0]}")/../lib.sh"
 require helm kubectl
 require_kind_context
 P="${REPO_ROOT}/gitops/environments/demo/platform"

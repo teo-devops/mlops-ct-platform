@@ -2,7 +2,7 @@
 # Creates the kind cluster, installs ingress-nginx and preloads the images the
 # platform pulls, so that the GitOps bootstrap does not wait on the network.
 # Idempotent. Pattern from teo-devops/Argo-cd-Labs lab/levantar.sh.
-. "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
+. "$(dirname "${BASH_SOURCE[0]}")/../lib.sh"
 require docker kind kubectl curl
 
 INGRESS_NGINX="https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.12.1/deploy/static/provider/kind/deploy.yaml"

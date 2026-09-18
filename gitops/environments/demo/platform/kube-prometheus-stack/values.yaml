@@ -39,7 +39,7 @@ prometheus:
     paths: ["/"]
     pathType: Prefix
 grafana:
-  # Admin credentials come from a Secret created by scripts/15-demo-secrets.sh.
+  # Admin credentials come from a Secret created by scripts/platform/secrets.sh.
   admin:
     existingSecret: grafana-admin
     userKey: admin-user

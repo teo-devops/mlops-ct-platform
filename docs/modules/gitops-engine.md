@@ -9,4 +9,4 @@
 | **Replace with** | Argo CD HA (prod); Flux would need a different app-of-apps layout |
 | **Disable** | not applicable — it is the engine |
 
-Installed once by `scripts/20-install.sh` (four phases: credential, chart, wait for CRDs, root-app); from then on it upgrades itself from the same values file. Two additions over the inherited values: a Lua health check for `Application` resources so that sync-waves between modules actually order them, and declarative Helm repositories (OCI for KServe). Dex is off; RBAC is ready for it.
+Installed once by `scripts/platform/install.sh` (four phases: credential, chart, wait for CRDs, root-app); from then on it upgrades itself from the same values file. Two additions over the inherited values: a Lua health check for `Application` resources so that sync-waves between modules actually order them, and declarative Helm repositories (OCI for KServe). Dex is off; RBAC is ready for it.

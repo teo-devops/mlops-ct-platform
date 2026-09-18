@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 # Promote a registered model version by hand — or roll back to a previous one.
-#   ./scripts/45-promote.sh <model> <version> [trigger]
+#   ./scripts/demo/promote.sh <model> <version> [trigger]
 # It runs the same `promote` step as the pipeline: registry alias + one commit
 # bumping the served version. Rollback = promote the previous version.
-. "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
+. "$(dirname "${BASH_SOURCE[0]}")/../lib.sh"
 require kubectl
 require_kind_context
 MODEL="${1:?model}"; VERSION="${2:?version}"; TRIGGER="${3:-manual}"

@@ -77,19 +77,19 @@ make down
 
 ```
 gitops/                 what Argo CD reconciles, and how it is bootstrapped
-  bootstrap/            root-app (applied once by scripts/20-install.sh)
+  bootstrap/            root-app (applied once by scripts/platform/install.sh)
   argo-cd/values.yaml   the engine's single source of configuration
   templates/            AppProject + Application templates for new workloads
   environments/demo/    the environment that runs on kind (prod/ and aws/ are documented shapes)
     platform/<module>/  one directory per platform module: pinned chart + values (+ manifests)
     projects/<group>/   one AppProject per workload   ┐ groups: shared/, listing-engine/, …
-    apps/<group>/       one Application per workload  ┘ (scripts/register-workload.py --group)
+    apps/<group>/       one Application per workload  ┘ (scripts/repo/register-workload.py --group)
 cluster/                kind.yaml and the image preload list
 workloads/              charts of the shared workloads (minio, observability)
 use-cases/<name>/       a use case: plugin (steps image), api, workloads/{api,serving,pipelines}
 libs/ctsteps/           the step contract (python package + CLI + tests)
 pipelines/              orchestrator adapters and notes
-scripts/                numbered in execution order; every path resolves from the repo root
+scripts/                cluster/ · platform/ · demo/ · repo/ — see scripts/README.md; paths resolve from the repo root
 docs/                   start with architecture.md and contracts.md
 ```
 

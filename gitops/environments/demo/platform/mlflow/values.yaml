@@ -18,7 +18,7 @@ artifactRoot:
     enabled: true
     bucket: mlflow
     # Credentials of the MinIO user `mlflow` (read/write on bucket mlflow).
-    # Created by scripts/15-demo-secrets.sh, never in Git.
+    # Created by scripts/platform/secrets.sh, never in Git.
     existingSecret:
       name: mlflow-s3-credentials
       keyOfAccessKeyId: AWS_ACCESS_KEY_ID

@@ -30,7 +30,7 @@ promote:
   authorEmail: ct-pipeline@mlops-ct-platform.local
 
 # The upstream data source. In the demo the use case generates its data; the
-# ConfigMap below (created by scripts/15-demo-secrets.sh, NOT in Git — it is
+# ConfigMap below (created by scripts/platform/secrets.sh, NOT in Git — it is
 # state of the outside world, like a Secret) tells it which "world" to
 # generate: `profile: ""` (normal) or `profile: drift` (post-season).
 dataSource:

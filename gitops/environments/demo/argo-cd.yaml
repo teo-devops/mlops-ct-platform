@@ -8,7 +8,7 @@
 # the same versioned file.
 #
 # Upgrading Argo CD = changing `targetRevision` here, in a PR. install.sh must
-# carry the same version (scripts/validate-coherence.py checks it).
+# carry the same version (scripts/repo/validate-coherence.py checks it).
 #
 # Inherited from teo-devops/Argo-cd-Labs.
 # ============================================================================
