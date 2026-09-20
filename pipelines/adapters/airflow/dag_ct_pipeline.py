@@ -15,12 +15,12 @@ from airflow.operators.python import ShortCircuitOperator
 from airflow.providers.cncf.kubernetes.operators.pod import KubernetesPodOperator
 from kubernetes.client import V1EnvFromSource, V1EnvVar, V1SecretEnvSource
 
-IMAGE = "listing-engine-steps:0.1.0"
-NAMESPACE = "listing-engine-pipelines"
+IMAGE = "automated-listing-engine-steps:0.1.0"
+NAMESPACE = "automated-listing-engine-pipelines"
 MODEL = "categorizer"
 
 ENV = [
-    V1EnvVar("CT_USE_CASE", "listing_engine:use_case"),
+    V1EnvVar("CT_USE_CASE", "automated_listing_engine:use_case"),
     V1EnvVar("S3_ENDPOINT_URL", "http://minio.minio.svc.cluster.local:9000"),
     V1EnvVar("MLFLOW_S3_ENDPOINT_URL", "http://minio.minio.svc.cluster.local:9000"),
     V1EnvVar("MLFLOW_TRACKING_URI", "http://mlflow.mlflow.svc.cluster.local"),

@@ -65,9 +65,9 @@ networkPolicy:
   # consumers above.
   apiClients:
     - mlflow
-    - listing-engine-serving
-    - listing-engine-pipelines
-    - listing-engine-api
+    - automated-listing-engine-serving
+    - automated-listing-engine-pipelines
+    - automated-listing-engine-api
   # Namespace of the ingress controller (console + host port-forward path).
   ingressNamespace: ingress-nginx
   observabilityNamespace: observability

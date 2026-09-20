@@ -6,8 +6,9 @@
 # cluster. From phase 3 on, every change is a commit on main.
 #
 #   Usage:  ./scripts/platform/04-install.sh
-#   Env:    GIT_USER / GIT_TOKEN  read credential of the platform repository
-#           (defaults: teo-devops / `gh auth token`)
+#   Env:    GIT_USER / GIT_TOKEN  read credential of the platform repository —
+#           only for a PRIVATE fork; the public repository needs none
+#           (defaults: teo-devops / `gh auth token`; GIT_TOKEN= skips it)
 #           ASSUME_YES=1          do not ask for confirmation
 #
 # Idempotent. Inherited from teo-devops/Argo-cd-Labs scripts/install.sh.
@@ -26,17 +27,20 @@ if [[ "${ASSUME_YES:-0}" != "1" ]]; then
 fi
 
 # --- Phase 0: namespace and the credential of the platform repository ------
-# This Secret cannot be in Git: Argo CD needs it to clone the repo that would
-# contain it. Without it root-app sits at `sync: Unknown` with `health:
-# Healthy` — the failure that goes unnoticed if you only look at that column.
+# The repository is public: Argo CD clones it anonymously and this Secret is
+# optional. A private fork needs it, and it cannot be in Git (Argo CD needs it
+# to clone the repo that would contain it): without it root-app sits at
+# `sync: Unknown` with `health: Healthy` — the failure that goes unnoticed if
+# you only look at that column. Set GIT_TOKEN= (empty) to skip it explicitly.
 step "Phase 0: namespace and platform repository credential"
 kubectl create namespace "${NAMESPACE}" --dry-run=client -o yaml | kubectl apply -f - >/dev/null
 GIT_USER="${GIT_USER:-teo-devops}"
-GIT_TOKEN="${GIT_TOKEN:-$(gh auth token 2>/dev/null || true)}"
+GIT_TOKEN="${GIT_TOKEN-$(gh auth token 2>/dev/null || true)}"
 if kubectl -n "${NAMESPACE}" get secret "${PLATFORM_SECRET}" >/dev/null 2>&1 && [[ -z "${GIT_TOKEN}" ]]; then
   info "Secret ${PLATFORM_SECRET} exists and no GIT_TOKEN given: kept"
+elif [[ -z "${GIT_TOKEN}" ]]; then
+  info "no GIT_TOKEN: no repository credential (fine for the public repository; a private fork needs one)"
 else
-  [[ -n "${GIT_TOKEN}" ]] || die "GIT_TOKEN is required while the repository is private (or 'gh auth login')"
   kubectl -n "${NAMESPACE}" create secret generic "${PLATFORM_SECRET}" \
     --from-literal=type=git \
     --from-literal=url="${PLATFORM_REPO}" \

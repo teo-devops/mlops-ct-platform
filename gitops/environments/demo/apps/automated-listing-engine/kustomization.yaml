@@ -1,0 +1,7 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+# The Automated Listing Engine use case (charts under use-cases/automated-listing-engine/workloads/).
+resources:
+  - automated-listing-engine-api.yaml
+  - automated-listing-engine-pipelines.yaml
+  - automated-listing-engine-serving.yaml

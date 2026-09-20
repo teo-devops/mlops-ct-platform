@@ -3,7 +3,7 @@
 Grouped by purpose; the scripts of the **launch flow carry a continuous number (01 → 10)** so the
 order is visible in any file listing, and the `Makefile` runs the same order (`make help`).
 Steps 01–05 and 10 are the platform's; **06–09 belong to the use case** (`use-cases/<name>/scripts/`)
-and `make` runs them for `USE_CASE=<name>` (default `listing-engine`). The platform never names a use case.
+and `make` runs them for `USE_CASE=<name>` (default `automated-listing-engine`). The platform never names a use case.
 Unnumbered scripts are on-demand tools. Every script resolves paths from the repository root
 through `lib.sh` (`REPO_ROOT`), so they run from anywhere, and every one refuses to touch a
 kubectl context other than `kind-ct`.

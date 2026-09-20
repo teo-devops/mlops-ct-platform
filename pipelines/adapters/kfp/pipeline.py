@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from kfp import dsl
 
-IMAGE = "listing-engine-steps:0.1.0"
+IMAGE = "automated-listing-engine-steps:0.1.0"
 
 
 def _step(name: str, extra: list[str], outputs: dict[str, str]) -> dsl.ContainerSpec:

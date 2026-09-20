@@ -9,7 +9,7 @@ namespace: argocd
 # privilege boundaries. `platform.yaml` is the only cluster-scoped project.
 resources:
   - platform.yaml
-  - listing-engine
+  - automated-listing-engine
   - shared
 
 # AppProjects are created before the Applications that reference them.

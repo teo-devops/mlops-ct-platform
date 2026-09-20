@@ -23,7 +23,7 @@ same commit, so `model_version` in every answer follows.
 The gate never looks at live traffic: candidate and champion score the **same held-out, labelled
 data**, so the comparison is exact, reproducible and cheap, and it works for use cases where live
 A/B testing is impossible or meaningless (the example use case is one: see its
-[architecture](../../use-cases/listing-engine/docs/architecture.md)). Progressive delivery
+[architecture](../../use-cases/automated-listing-engine/docs/architecture.md)). Progressive delivery
 (module gap) is the complement for what offline replay cannot see: latency, integration.
 
 ## Triggers

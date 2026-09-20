@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: automated-listing-engine-api
+  labels:
+    {{- include "api.labels" . | nindent 4 }}
+data:
+  ALE_USE_CASE: automated-listing-engine
+  ALE_CATEGORIZER_URL: http://categorizer-predictor.{{ .Values.serving.namespace }}.svc.cluster.local/v1/models/categorizer:predict
+  ALE_FRAUD_URL: http://fraud-predictor.{{ .Values.serving.namespace }}.svc.cluster.local/v1/models/fraud:predict
+  ALE_CATEGORIZER_VERSION: {{ .Values.models.categorizer.version | quote }}
+  ALE_FRAUD_VERSION: {{ .Values.models.fraud.version | quote }}
+  ALE_CATEGORIZER_LABELS: '{{ .Values.serving.categorizerLabels | splitList "," | toJson }}'
+  ALE_CATEGORIZER_TIMEOUT: {{ .Values.serving.categorizerTimeout | quote }}
+  ALE_FRAUD_TIMEOUT: {{ .Values.serving.fraudTimeout | quote }}
+  ALE_PREDICTION_LOG_ENABLED: {{ .Values.predictionLog.enabled | quote }}
+  ALE_PREDICTION_LOG_BUCKET: {{ .Values.predictionLog.bucket }}
+  ALE_S3_ENDPOINT_URL: {{ .Values.predictionLog.s3EndpointUrl }}
+  AWS_DEFAULT_REGION: us-east-1

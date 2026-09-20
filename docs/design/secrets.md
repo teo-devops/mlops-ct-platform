@@ -9,7 +9,7 @@ InferenceServices need their credentials on the first attempt), by scripts that 
 
 | Layer | What | Created by |
 |---|---|---|
-| Argo CD operation | `argocd/repo-mlops-ct-platform` (read token of this repository while it is private), `argocd-initial-admin-secret` | `scripts/platform/04-install.sh` phase 0 / Argo CD; rotate with `scripts/platform/credentials.sh add` |
+| Argo CD operation | `argocd/repo-mlops-ct-platform` (read token of the repository — only needed by a private fork, the public repository is cloned anonymously), `argocd-initial-admin-secret` | `scripts/platform/04-install.sh` phase 0 / Argo CD; rotate with `scripts/platform/credentials.sh add` |
 | Platform | `minio/minio-root`; `minio/minio-users` (one secret key per consumer user declared in `workloads/minio/values.yaml`); `mlflow/mlflow-s3-credentials`; `observability/grafana-admin` | `scripts/platform/03-secrets.sh` |
 | Use case | its namespaces; the artifact-store credentials of its consumers (copied from `minio/minio-users` with `minio_user_secret` from `scripts/lib.sh`); its Git credential for `promote`; any data-source state | `use-cases/<name>/scripts/secrets.sh`, run last by `03-secrets.sh` |
 
@@ -21,4 +21,4 @@ Human-facing passwords (Argo CD, Grafana, MinIO root) are **known demo defaults*
 (External Secrets, Vault) and the Git credential is a bot token scoped to one repository; in the
 aws profile S3 credentials disappear in favour of IRSA.
 
-Example: [use-cases/listing-engine/docs/architecture.md](../../use-cases/listing-engine/docs/architecture.md#artifact-store-identities-used).
+Example: [use-cases/automated-listing-engine/docs/architecture.md](../../use-cases/automated-listing-engine/docs/architecture.md#artifact-store-identities-used).

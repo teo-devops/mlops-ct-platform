@@ -1,0 +1,8 @@
+apiVersion: v2
+name: automated-listing-engine-pipelines
+description: >-
+  Continuous-training pipeline of the Automated Listing Engine on Argo Workflows: the
+  ctsteps contract as a WorkflowTemplate, a weekly safety-net schedule and the
+  drift monitor that retrains on demand.
+type: application
+version: 0.1.0

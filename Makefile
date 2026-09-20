@@ -5,7 +5,7 @@
 #   make secrets     namespaces + demo Secrets (never in Git)
 #   make bootstrap   Argo CD from the chart + root-app (scripts/platform/04-install.sh)
 #   make wait        wait until the platform modules are Synced/Healthy
-#   make build       build the use-case images and load them into kind   (USE_CASE=listing-engine)
+#   make build       build the use-case images and load them into kind   (USE_CASE=automated-listing-engine)
 #   make pipeline    run the continuous-training pipeline for every model
 #   make promote     promote (or roll back to) a version: make promote MODEL=fraud VERSION=2
 #   make smoke       end-to-end request + fallback drill + network-policy test
@@ -21,7 +21,7 @@ export CLUSTER ?= ct
 # The use case whose flow `make build/pipeline/promote/smoke/drift` runs. The
 # platform itself knows nothing about it: those targets delegate to
 # use-cases/$(USE_CASE)/scripts/. Any directory with those scripts works.
-USE_CASE ?= listing-engine
+USE_CASE ?= automated-listing-engine
 UC := use-cases/$(USE_CASE)/scripts
 # python with the dev dependencies (make venv creates it)
 PY := $(if $(wildcard .venv-dev/bin/python),$(CURDIR)/.venv-dev/bin/python,python3)
@@ -62,6 +62,6 @@ test:
 
 venv:
 	python3 -m venv .venv-dev && .venv-dev/bin/pip install -q --upgrade pip \
-	  && .venv-dev/bin/pip install -q -e "libs/ctsteps[dev]" -e "use-cases/listing-engine/plugin[dev]" -e "use-cases/listing-engine/api[dev]"
+	  && .venv-dev/bin/pip install -q -e "libs/ctsteps[dev]" -e "use-cases/automated-listing-engine/plugin[dev]" -e "use-cases/automated-listing-engine/api[dev]"
 
 validate: lint test

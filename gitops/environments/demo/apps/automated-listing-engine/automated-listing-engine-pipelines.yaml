@@ -1,0 +1,53 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: automated-listing-engine-pipelines
+  namespace: argocd
+  labels:
+    mlops-ct-platform.dev/group: automated-listing-engine
+  annotations:
+    mlops-ct-platform.dev/archetype: pipeline
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  # The AppProject is the boundary. Never `default`: it restricts nothing.
+  project: automated-listing-engine-pipelines
+
+  source:
+    repoURL: 'https://github.com/teo-devops/mlops-ct-platform.git'
+    targetRevision: main
+    path: use-cases/automated-listing-engine/workloads/pipelines
+    # For a Helm chart the demo profile is values.yaml + values-demo.yaml.
+    # Other profiles (prod, aws) only swap this list.
+    helm:
+      valueFiles:
+        - values.yaml
+        - values-demo.yaml
+
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: automated-listing-engine-pipelines
+
+  syncPolicy:
+    automated:
+      # selfHeal from day one: reverts any `kubectl edit`.
+      # On a `batch` workload it means DELETING A FINISHED JOB RE-RUNS IT.
+      selfHeal: true
+      # prune NO at birth: while the workload stabilises, a short render must
+      # not delete live resources. Enabling it is a one-line PR. When enabled,
+      # resources that must never die (PVCs) carry
+      # `argocd.argoproj.io/sync-options: Prune=false` in the chart.
+      prune: false
+    syncOptions:
+      # Argo CD creates the destination namespace; the chart declares none.
+      - CreateNamespace=true
+      - ServerSideApply=true
+    managedNamespaceMetadata:
+      labels:
+        app.kubernetes.io/managed-by: argocd
+    retry:
+      limit: 3
+      backoff:
+        duration: 30s
+        factor: 2
+        maxDuration: 10m

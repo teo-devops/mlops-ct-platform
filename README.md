@@ -10,9 +10,9 @@ ingest → validate (gate) → train → evaluate champion/challenger (gate) →
 
 Every tool sits behind a **contract** — artifact store, model registry, serving, orchestration,
 monitoring, model monitoring — and is a self-contained, pinned **module** that can be swapped or
-disabled without touching anything else. The example use case, the *Listing Engine* (categorise a
-marketplace listing and flag fraud, inspired by a real hiring case study), is a **plugin**: the
-platform never mentions it.
+disabled without touching anything else. The example use case, the *Automated Listing Engine*
+(ALE: categorise a marketplace listing and flag fraud, inspired by a real hiring case study of a
+second-hand marketplace), is a **plugin**: the platform never mentions it.
 
 | What you get | Where |
 |---|---|
@@ -25,12 +25,13 @@ platform never mentions it.
 | Platform scripts: cluster lifecycle, bootstrap, operations, repo tooling | `scripts/` |
 | kind cluster definition and the images preloaded into it | `cluster/` |
 | Platform docs: architecture, contracts, the loop, module cards, decisions, profiles, runbook | `docs/` |
-| The example use case: plugin, API, three workloads, **its own docs, scripts and secrets** | `use-cases/listing-engine/` |
+| The example use case: plugin, API, three workloads, **its own docs, scripts and secrets** | `use-cases/automated-listing-engine/` |
 
 ## Quickstart (≈15 minutes on a laptop)
 
 Requirements: Docker, kind ≥ 0.31, kubectl, helm ≥ 3.14, python ≥ 3.11 with PyYAML, `gh` logged in
-(the repository is private for now; Argo CD needs a read token) — `make prereqs` checks them.
+(Argo CD reads the repository anonymously, but the promote step pushes the deployment commit to it,
+so on your fork you need a token that can write) — `make prereqs` checks them.
 
 ```bash
 # platform (scripts/cluster, scripts/platform)
@@ -38,7 +39,7 @@ make up          # 02  kind cluster + ingress-nginx + image preload (~5 min)
 make secrets     # 03  platform identities and Secrets, then each use case's (random, cluster-only, never in Git)
 make bootstrap   # 04  Argo CD from the chart, then root-app: everything else arrives by GitOps
 make wait        # 05  platform modules Synced/Healthy
-# the use case (use-cases/$USE_CASE/scripts, default listing-engine)
+# the use case (use-cases/$USE_CASE/scripts, default automated-listing-engine)
 make build       # 06  use-case images -> kind
 make pipeline    # 07  first run of the CT pipeline for every model: version 0 -> 1
 make smoke       # 08  real request, fallback drill, network-policy probe
@@ -64,7 +65,7 @@ Every UI is published by ingress-nginx on `http://<name>.localhost:8088` (browse
 | Grafana | http://grafana.localhost:8088 | `admin` | `admin-demo` | *CT Loop* dashboard under folder `mlops-ct-platform` |
 | Prometheus | http://prometheus.localhost:8088 | — | — | |
 | MinIO console | http://minio.localhost:8088 | `root` | `minio-demo` | buckets `datasets` · `models` · `predictions` · `mlflow` |
-| Listing Engine API | http://listing-engine.localhost:8088/docs | — | — | the example use case (OpenAPI UI) |
+| Automated Listing Engine API | http://automated-listing-engine.localhost:8088/docs | — | — | the example use case (OpenAPI UI) |
 
 > **These are demo defaults, deliberately known.** They exist so that a fresh laptop needs no
 > lookup; they are never in a Secret in Git (the scripts create them) but they are in this file.
@@ -92,17 +93,17 @@ in `docs/modules/` saying what it promises, how to replace it and how to disable
 reference architecture that are not implemented (Kafka, Feast, Katib, Great Expectations, Argo
 Rollouts) have cards too, with their contract and where they plug in.
 
-## The example use case: Listing Engine
+## The example use case: Automated Listing Engine (ALE)
 
-`use-cases/listing-engine/` — categorise a marketplace listing and flag fraud; two models, one API
+`use-cases/automated-listing-engine/` — categorise a marketplace listing and flag fraud; two models, one API
 with graceful degradation, a synthetic data source with a "post-season" drift profile. It is the
-use case the `make` targets drive by default (`USE_CASE=listing-engine`), and it proves the loop:
+use case the `make` targets drive by default (`USE_CASE=automated-listing-engine`), and it proves the loop:
 
 ```
 $ make drift
 drift-categorizer  level=retrain max_psi=0.3285 rows=1205 retrain=ct-categorizer-drift-j7m77
 ✓ ct-categorizer-drift-j7m77 Succeeded      gate: f1_macro improved by 0.1511 (0.99 vs 0.84)
-46e44d1 ct: promote listing-engine/categorizer v2 (trigger=drift)
+46e44d1 ct: promote automated-listing-engine/categorizer v2 (trigger=drift)
 served versions after: categorizer/fraud = 2 1   (before: 1 1)
 ```
 
@@ -142,7 +143,7 @@ mlops-ct-platform/
 │   ├── platform/                             03-secrets · 04-install · 05-wait · status · credentials · deploy-local
 │   └── repo/                                 validate-coherence.py · register-workload.py · render.sh
 ├── use-cases/                                one directory per use case (use-cases/README.md = how to add one)
-│   └── listing-engine/
+│   └── automated-listing-engine/
 │       ├── README.md
 │       ├── docs/                             architecture of the instance · case-study · runbook
 │       ├── scripts/                          secrets · 06-build-images · 07-run-pipeline · 08-smoke · 09-induce-drift · promote
@@ -165,7 +166,7 @@ mlops-ct-platform/
 * [scripts/README.md](scripts/README.md) — every script, its `make` target and the launch order
 * [docs/modules/](docs/modules/) — one card per module, including the gaps (Kafka, Feast, Katib, Great Expectations, Argo Rollouts)
 * [docs/decisions.md](docs/decisions.md) — ADRs: why Argo Workflows and not Airflow in kind, sqlite, MinIO, push vs PR…
-* [use-cases/listing-engine/docs/](use-cases/listing-engine/docs/) — the example use case: instance architecture, case study, runbook
+* [use-cases/automated-listing-engine/docs/](use-cases/automated-listing-engine/docs/) — the example use case: instance architecture, case study, runbook
 * [docs/study-guide.es.md](docs/study-guide.es.md) — study guide (Spanish): CT theory applied, the flows, every UI, exercises, expansion map
 * [docs/operations/what-the-demo-does-not-prove.md](docs/operations/what-the-demo-does-not-prove.md) — read this before extrapolating
 

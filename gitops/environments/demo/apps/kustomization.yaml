@@ -15,7 +15,7 @@ namespace: argocd
 # AppProjects — it would automate the harmless half of the registration and
 # leave the dangerous half by hand. See docs/decisions.md.
 resources:
-  - listing-engine
+  - automated-listing-engine
   - shared
 
 # Wave 5: after every platform module.

@@ -1,6 +1,0 @@
-apiVersion: v2
-name: listing-engine-api
-description: Listing Engine API — orchestrates categorisation and fraud inference with graceful degradation.
-type: application
-version: 0.1.0
-appVersion: "0.1.0"

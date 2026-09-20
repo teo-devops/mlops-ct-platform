@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
 # Repository credential of Argo CD (one Secret of type `repository`, exact URL).
+# The public repository needs none; a private fork does.
 #
 #   ./scripts/platform/credentials.sh status   what Argo CD has vs what the tree needs
 #   ./scripts/platform/credentials.sh add      create/rotate it (GIT_USER / GIT_TOKEN or gh)
-#   ./scripts/platform/credentials.sh remove   delete it (when the repository goes public)
+#   ./scripts/platform/credentials.sh remove   delete it (e.g. after a fork goes public)
 #   ./scripts/platform/credentials.sh admin    print the Argo CD admin password
 . "$(dirname "${BASH_SOURCE[0]}")/../lib.sh"
 require kubectl

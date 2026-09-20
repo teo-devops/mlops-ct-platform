@@ -1,8 +1,8 @@
 # Runbook (platform)
 
 Use-case specific commands live with the use case (e.g.
-[use-cases/listing-engine/docs/runbook.md](../../use-cases/listing-engine/docs/runbook.md)).
-`make` targets that operate a use case take `USE_CASE=<name>` (default `listing-engine`).
+[use-cases/automated-listing-engine/docs/runbook.md](../../use-cases/automated-listing-engine/docs/runbook.md)).
+`make` targets that operate a use case take `USE_CASE=<name>` (default `automated-listing-engine`).
 
 | I want to… | Do |
 |---|---|
@@ -28,8 +28,8 @@ Use-case specific commands live with the use case (e.g.
 
 ## Things that are failures
 
-* `root-app` OutOfSync with `failed to list refs`: the Git credential is missing or expired →
-  `scripts/platform/credentials.sh add`.
+* `root-app` OutOfSync with `failed to list refs`: on a private fork the Git credential is missing
+  or expired → `scripts/platform/credentials.sh add`.
 * An InferenceService stuck with `storage-initializer` errors other than "No model found": check
   the consumer's S3 Secret and the MinIO policy of its user (`kubectl -n minio logs job/minio-setup`).
 * `promote` failing with `could not push`: the token cannot write to the repository.

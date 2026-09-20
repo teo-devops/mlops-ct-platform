@@ -25,7 +25,7 @@ use-cases/<name>/
 
 1. `plugin/`: implement `UseCase` (only scikit-learn built-ins in the estimators), add tests, a
    `Dockerfile` `FROM ctsteps-base:<version>`.
-2. `workloads/`: copy the three charts of `listing-engine/workloads/` and change names, image,
+2. `workloads/`: copy the three charts of `automated-listing-engine/workloads/` and change names, image,
    models and buckets in their `values*.yaml`.
 3. Register the workloads into their own group:
    `python3 scripts/repo/register-workload.py <name>-serving use-cases/<name>/workloads/serving --group <name>` (×3).
@@ -34,11 +34,11 @@ use-cases/<name>/
 5. Declare its artifact-store users in `workloads/minio/values.yaml` (`users:`) and its namespaces in
    `networkPolicy.apiClients`; write `scripts/secrets.sh` delivering those keys into its namespaces
    (`minio_user_secret` from `scripts/lib.sh`) — `scripts/platform/03-secrets.sh` runs it automatically.
-6. Write its flow scripts (`scripts/06-…09-…`, `promote.sh`) — copy the Listing Engine ones and change
+6. Write its flow scripts (`scripts/06-…09-…`, `promote.sh`) — copy the Automated Listing Engine ones and change
    names — then `USE_CASE=<name> make build pipeline smoke`.
 
 The platform never names a use case: steps 3–5 are the only places it appears, all of them data.
 
 | Use case | What | Status |
 |---|---|---|
-| [listing-engine](listing-engine/README.md) | categorise a marketplace listing and flag fraud | runs the demo |
+| [automated-listing-engine](automated-listing-engine/README.md) | categorise a marketplace listing and flag fraud | runs the demo |

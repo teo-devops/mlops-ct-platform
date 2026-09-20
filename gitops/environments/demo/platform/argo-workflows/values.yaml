@@ -19,7 +19,7 @@ controller:
   # Namespaces where Workflows run. The chart creates the `argo-workflow`
   # ServiceAccount + Role + RoleBinding in each of them.
   workflowNamespaces:
-    - listing-engine-pipelines
+    - automated-listing-engine-pipelines
   metricsConfig:
     enabled: true
   serviceMonitor:

@@ -1,0 +1,46 @@
+image:
+  repository: automated-listing-engine-api
+  tag: 0.1.0
+  pullPolicy: IfNotPresent
+replicas: 1
+
+# --- the serving contract this API consumes ---------------------------------
+serving:
+  namespace: automated-listing-engine-serving
+  categorizerLabels: "books,electronics,fashion,home,kids,sports"
+  categorizerTimeout: "0.8"
+  fraudTimeout: "0.3"
+
+# The versions currently served, for lineage. The pipeline's promote step
+# bumps `models.<model>.version` here AND in ../serving/values-<profile>.yaml
+# in the same commit: one commit = one release, API and predictor together.
+models:
+  categorizer:
+    version: "0"
+  fraud:
+    version: "0"
+
+predictionLog:
+  enabled: true
+  bucket: predictions
+  s3EndpointUrl: http://minio.minio.svc.cluster.local:9000
+  # Secret with AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY of the `api-writer` user
+  secretName: api-s3-credentials
+
+resources:
+  requests: {cpu: 100m, memory: 128Mi}
+  limits: {memory: 512Mi}
+
+ingress:
+  enabled: false
+  className: nginx
+  host: automated-listing-engine.localhost
+
+serviceMonitor:
+  enabled: true
+
+networkPolicy:
+  enabled: true
+  ingressNamespace: ingress-nginx
+  observabilityNamespace: observability
+  artifactStoreNamespace: minio

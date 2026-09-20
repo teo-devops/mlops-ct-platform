@@ -18,7 +18,7 @@ step "GitHub credential (Argo CD reads a private repository)"
 if [[ -n "${GIT_TOKEN:-}" ]]; then
   info "GIT_TOKEN provided"
 elif gh auth status >/dev/null 2>&1; then
-  info "gh is logged in: install.sh will use 'gh auth token'"
+  info "gh is logged in: the promote step (and a private fork's Argo CD) will use 'gh auth token'"
 else
   echo "    ✗ neither GIT_TOKEN nor 'gh auth login'"; ok=0
 fi

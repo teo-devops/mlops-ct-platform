@@ -139,7 +139,7 @@ configs:
       # --- Who holds each role ------------------------------------------------
       # Local accounts (configs.cm.accounts.*) or OIDC groups once Dex is on:
       #   g, alice, role:platform
-      #   g, my-org/data-science, proj:listing-engine-pipelines:developer
+      #   g, my-org/data-science, proj:automated-listing-engine-pipelines:developer
 
   secret:
     createSecret: true
