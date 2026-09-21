@@ -78,6 +78,9 @@ spec:
             --min-rows {{ .Values.drift.minRows }}
             --pushgateway {{ .Values.drift.pushgateway }}
             --workflow-template ct-pipeline
+            {{- if .Values.eventBus.enabled }}
+            --source kafka --bootstrap {{ .Values.eventBus.bootstrap }} --topic {{ .Values.eventBus.topic }}
+            {{- end }}
         env:
           {{- include "pipelines.stepEnv" . | nindent 10 }}
         envFrom:

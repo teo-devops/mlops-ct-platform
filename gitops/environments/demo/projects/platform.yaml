@@ -26,6 +26,7 @@ spec:
     - 'https://prometheus-community.github.io/helm-charts'
     - 'https://github.com/kubernetes-sigs/gateway-api.git'
     - 'https://airflow.apache.org'
+    - 'https://charts.redpanda.com'
 
   destinations:
     - server: 'https://kubernetes.default.svc'

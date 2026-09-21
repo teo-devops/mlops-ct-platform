@@ -23,7 +23,7 @@ from evidently.presets import DataDriftPreset
 from mlflow import MlflowClient
 from prometheus_client import CollectorRegistry, Gauge, push_to_gateway
 
-from ctsteps import io_s3, registry, result
+from ctsteps import io_kafka, io_s3, registry, result
 from ctsteps.steps.common import Context
 
 PREDICTION_COLUMN = "prediction"
@@ -157,6 +157,9 @@ def run(
     pushgateway: str,
     workflow_template: str,
     dry_run: bool,
+    source: str = "s3",
+    bootstrap: str = "",
+    topic: str = "predictions",
 ) -> dict:
     registry.setup(ctx.settings.mlflow_tracking_uri, ctx.use_case.name, ctx.spec.name)
     client = MlflowClient()
@@ -170,8 +173,14 @@ def run(
     reference = io_s3.get_parquet(ctx.s3, reference_uri)
 
     since = datetime.now(UTC) - timedelta(minutes=window_minutes)
-    uris = [u for u, _ in io_s3.list_objects(ctx.s3, ctx.predictions_prefix(), newer_than=since)]
-    current = io_s3.read_jsonl(ctx.s3, uris) if uris else pd.DataFrame()
+    if source == "kafka":
+        # event-bus contract: the same records, read from the topic by timestamp
+        current = io_kafka.read_window(bootstrap, topic, since, model=ctx.spec.name)
+    else:
+        uris = [
+            u for u, _ in io_s3.list_objects(ctx.s3, ctx.predictions_prefix(), newer_than=since)
+        ]
+        current = io_s3.read_jsonl(ctx.s3, uris) if uris else pd.DataFrame()
     # Only predictions made by the champion count: a just-promoted version
     # must not be judged on traffic served by its predecessor.
     if len(current) and "model_version" in current.columns:
@@ -214,6 +223,7 @@ def run(
         psi=psi,
         rows=rows,
         window_minutes=window_minutes,
+        source=source,
         champion_version=int(champ.version),
         retrain_submitted=submitted or "",
     )

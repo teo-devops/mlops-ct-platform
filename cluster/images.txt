@@ -39,3 +39,7 @@ registry.k8s.io/git-sync/git-sync:v4.4.2
 postgres:16.10-alpine
 # XCom sidecar of the KubernetesPodOperator (cncf provider 10.17.1 in the image)
 alpine:3.23.4
+# --- Redpanda v26.2.2 (chart 26.2.3) — OPT-IN module; harmless to preload when off
+docker.redpanda.com/redpandadata/redpanda:v26.2.2
+docker.redpanda.com/redpandadata/redpanda-operator:v26.2.3
+docker.redpanda.com/redpandadata/console:v3.9.0

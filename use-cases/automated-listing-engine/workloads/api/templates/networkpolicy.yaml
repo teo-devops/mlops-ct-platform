@@ -72,4 +72,13 @@ spec:
               kubernetes.io/metadata.name: {{ .Values.networkPolicy.artifactStoreNamespace }}
       ports:
         - {protocol: TCP, port: 9000}
+    {{- if .Values.eventBus.enabled }}
+    # prediction records -> event bus
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: {{ .Values.eventBus.namespace }}
+      ports:
+        - {protocol: TCP, port: {{ .Values.eventBus.port }}}
+    {{- end }}
 {{- end }}

@@ -33,7 +33,7 @@ A/B testing is impossible or meaningless (the example use case is one: see its
 | `bootstrap` / `manual` | `make pipeline`, `make promote` | first run, experiments, rollback |
 | `cron` | `CronWorkflow ct-weekly-<model>` | Monday 03:00 — the safety net against stale data |
 | `drift` | `CronWorkflow ct-drift` → `ctsteps drift` | every 10 min; submits `ct-pipeline` when PSI > 0.3 and no run for that model is in flight |
-| event-driven | *gap* — Airflow sensor / Kafka consumer on a new data partition | docs/modules/orchestration.md |
+| event-driven | *gap* — Airflow sensor / consumer of the event bus on a new data partition | docs/modules/orchestration.md, docs/modules/event-bus.md |
 
 ## Drift policy
 

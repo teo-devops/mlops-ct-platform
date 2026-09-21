@@ -1,0 +1,49 @@
+# Platform module: redpanda — see docs/modules/event-bus.md
+# OPT-IN implementation of the event-bus contract (the demo's prediction log
+# lives on the artifact store, decisions.md #5/#14). Enabled by listing
+# `redpanda` in ../kustomization.yaml. Upstream chart + values from this
+# repository. Pinned.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: redpanda
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: platform
+  sources:
+    - repoURL: https://charts.redpanda.com
+      chart: redpanda
+      targetRevision: 26.2.3   # Redpanda v26.2.2, Console v3.9.0
+      helm:
+        releaseName: redpanda
+        valueFiles:
+          - $values/gitops/environments/demo/platform/redpanda/values.yaml
+    # Extra manifests of this module: the topics of the contract, provisioned
+    # by a PostSync Job (the chart manages brokers, not topics).
+    - repoURL: 'https://github.com/teo-devops/mlops-ct-platform.git'
+      targetRevision: main
+      path: gitops/environments/demo/platform/redpanda/manifests
+    - repoURL: 'https://github.com/teo-devops/mlops-ct-platform.git'
+      targetRevision: main
+      ref: values
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: redpanda
+  syncPolicy:
+    automated:
+      selfHeal: true
+      prune: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
+      - RespectIgnoreDifferences=true
+    retry:
+      limit: 10
+      backoff:
+        duration: 15s
+        factor: 2
+        maxDuration: 3m

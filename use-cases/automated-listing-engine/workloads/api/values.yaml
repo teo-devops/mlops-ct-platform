@@ -27,6 +27,16 @@ predictionLog:
   # Secret with AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY of the `api-writer` user
   secretName: api-s3-credentials
 
+# Event bus (opt-in platform module `redpanda`, docs/modules/event-bus.md): the
+# same prediction records published to a topic next to the S3 log. Off unless
+# the module is enabled; then flip `enabled` here (values-<profile>.yaml).
+eventBus:
+  enabled: false
+  bootstrap: redpanda.redpanda.svc.cluster.local:9093
+  topic: predictions
+  namespace: redpanda
+  port: 9093
+
 resources:
   requests: {cpu: 100m, memory: 128Mi}
   limits: {memory: 512Mi}

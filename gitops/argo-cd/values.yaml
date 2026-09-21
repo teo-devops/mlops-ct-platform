@@ -114,6 +114,10 @@ configs:
       type: helm
       name: apache-airflow
       url: https://airflow.apache.org
+    redpanda:
+      type: helm
+      name: redpanda
+      url: https://charts.redpanda.com
 
   # ==========================================================================
   # RBAC — designed to grow from "admin only" to several users without redoing

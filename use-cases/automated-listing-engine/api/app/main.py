@@ -23,6 +23,7 @@ from app import __version__, metrics
 from app.breaker import CircuitBreaker
 from app.clients import KServeClient, ModelError
 from app.config import settings
+from app.event_bus import EventBus
 from app.fallback import fraud_rules
 from app.logging_setup import configure
 from app.prediction_log import PredictionLog
@@ -48,14 +49,21 @@ async def lifespan(app: FastAPI):
         flush_records=settings.prediction_log_flush_records,
     )
     app.state.plog.start()
+    app.state.bus = EventBus(
+        bootstrap=settings.event_bus_bootstrap,
+        topic=settings.event_bus_topic,
+        use_case=settings.use_case,
+    )
     log.info(
         "api_started",
         version=__version__,
         categorizer=settings.categorizer_version,
         fraud=settings.fraud_version,
+        event_bus=app.state.bus.enabled,
     )
     yield
     app.state.plog.stop()
+    app.state.bus.stop()
     await app.state.client.aclose()
 
 
@@ -158,8 +166,16 @@ async def analyze(listing: ListingIn, request: Request):
         "price": listing.price,
         "title_len": len(listing.title),
     }
+    # the same record goes to the prediction log (artifact store) and, when the
+    # event-bus module is on, to the topic
     plog: PredictionLog = request.app.state.plog
-    plog.record(
+    bus: EventBus = request.app.state.bus
+
+    def emit(model: str, record: dict) -> None:
+        plog.record(model, record)
+        bus.record(model, record)
+
+    emit(
         "categorizer",
         {
             **base,
@@ -171,7 +187,7 @@ async def analyze(listing: ListingIn, request: Request):
         },
     )
     if source == "model":
-        plog.record(
+        emit(
             "fraud",
             {
                 **base,

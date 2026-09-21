@@ -10,6 +10,7 @@ user ──HTTP──▶ ingress-nginx ──▶ automated-listing-engine-api �
                                      ├── fraud slow/down/fused ──▶ rules fallback (never blocks)
                                      ├── categorizer down ──▶ 503 (required)
                                      └── every prediction ──▶ s3://predictions/automated-listing-engine/<model>/…
+                                                         (+ topic `predictions` when the event-bus module is on)
 ```
 
 | Workload | Namespace | Chart | What it holds |

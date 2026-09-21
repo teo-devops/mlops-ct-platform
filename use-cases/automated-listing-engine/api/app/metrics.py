@@ -35,3 +35,9 @@ LOG_FLUSHED = Counter(
     ["use_case", "model"],
 )
 LOG_ERRORS = Counter("uc_prediction_log_errors_total", "Prediction-log flush errors", ["use_case"])
+BUS_RECORDS = Counter(
+    "uc_event_bus_records_total",
+    "Prediction records delivered to the event bus",
+    ["use_case", "model"],
+)
+BUS_ERRORS = Counter("uc_event_bus_errors_total", "Event-bus produce/delivery errors", ["use_case"])

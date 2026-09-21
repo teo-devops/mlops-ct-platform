@@ -52,6 +52,14 @@ spec:
             matchLabels:
               kubernetes.io/metadata.name: {{ .Values.networkPolicy.observabilityNamespace }}
       ports: [{protocol: TCP, port: 9091}]
+    {{- if .Values.eventBus.enabled }}
+    # drift monitor -> event bus
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: {{ .Values.eventBus.namespace }}
+      ports: [{protocol: TCP, port: {{ .Values.eventBus.port }}}]
+    {{- end }}
     # Kubernetes API (Argo executor reports task results; drift creates Workflows)
     - to:
         - ipBlock: {cidr: 0.0.0.0/0, except: [10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16]}

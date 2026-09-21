@@ -59,6 +59,15 @@ resources:
   requests: {cpu: 250m, memory: 512Mi}
   limits: {cpu: "2", memory: 2Gi}
 
+# Event bus (opt-in platform module `redpanda`): when enabled the drift monitor
+# reads its live window from the topic instead of the S3 prediction log.
+eventBus:
+  enabled: false
+  bootstrap: redpanda.redpanda.svc.cluster.local:9093
+  topic: predictions
+  namespace: redpanda
+  port: 9093
+
 networkPolicy:
   enabled: true
   artifactStoreNamespace: minio

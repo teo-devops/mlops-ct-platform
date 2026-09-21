@@ -17,7 +17,7 @@ second-hand marketplace), is a **plugin**: the platform never mentions it.
 | What you get | Where |
 |---|---|
 | GitOps control plane (Argo CD app-of-apps, one AppProject per workload) | `gitops/` — `bootstrap/`, `argo-cd/`, `templates/`, `environments/demo/` |
-| Platform modules: cert-manager, KServe, MLflow, Argo Workflows, Prometheus/Grafana, Pushgateway (+ Airflow, opt-in) | `gitops/environments/demo/platform/<module>/` |
+| Platform modules: cert-manager, KServe, MLflow, Argo Workflows, Prometheus/Grafana, Pushgateway (+ Airflow and Redpanda, opt-in) | `gitops/environments/demo/platform/<module>/` |
 | Workload registrations, grouped by owner (`shared/`, `<use-case>/`) | `gitops/environments/demo/{projects,apps}/<group>/` |
 | Shared workloads: MinIO with per-consumer users, CT alerting rules and the *CT Loop* dashboard | `workloads/` |
 | The step contract: pipeline steps as containers, orchestrator-agnostic | `libs/ctsteps/` |
@@ -86,6 +86,7 @@ Every UI is published by ingress-nginx on `http://<name>.localhost:8088` (browse
 | orchestration | Argo Workflows (Airflow opt-in) | the step contract run as a pipeline, schedules, RBAC for its namespace |
 | monitoring | kube-prometheus-stack + Pushgateway | scraping, generic CT alerting rules, the *CT Loop* dashboard |
 | model-monitoring | Evidently (`ctsteps drift`) | PSI against the frozen training reference, automatic retrain above threshold |
+| event-bus (opt-in) | Redpanda | the prediction records on a Kafka topic: the monitor reads its window from it; Strimzi in production |
 | promotion | `ctsteps promote` + Argo CD | deployment = a commit; rollback = another commit |
 
 Modules are self-contained directories under `gitops/environments/demo/platform/`; each has a card

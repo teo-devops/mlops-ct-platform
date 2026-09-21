@@ -77,3 +77,12 @@ module (`platform/airflow/`: chart 1.22.0 on `LocalExecutor`, own Postgres becau
 in the platform kustomization is commented; the DAG mirrors the WorkflowTemplate step by step and was run
 end-to-end, promote included. → Enabling it is uncomment + `make secrets` + commit; the drift monitor keeps
 submitting Argo Workflows, so Airflow sits next to Argo rather than replacing it (docs/modules/airflow.md).
+
+### 14. Redpanda as the demo event bus, Strimzi as the production one
+#5 keeps the prediction log on S3 because a bus adds a stateful system to the demo. The bus is now an
+opt-in module, and the smallest Kafka-protocol broker is a single Redpanda pod: no JVM, no quorum, no
+operator, official chart. → `platform/redpanda/` (topics by a PostSync Job, like MinIO's buckets), a
+producer in the API next to the S3 log, `ctsteps drift --source kafka`; both switched by `eventBus.enabled`
+in the use case's charts; S3 stays the batch source of truth. → What is proven is the contract (bootstrap
+URL + topic), not the broker: Kafka via Strimzi is documented as the more robust production choice with the
+manifests that would replace the module (docs/modules/event-bus.md).

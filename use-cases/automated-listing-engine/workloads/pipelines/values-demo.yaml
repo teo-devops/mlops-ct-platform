@@ -2,3 +2,6 @@
 # relies on `make pipeline` and on the drift monitor.
 data:
   rows: 6000
+# opt-in event-bus module on: the drift monitor reads its window from the topic
+eventBus:
+  enabled: true

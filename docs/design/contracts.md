@@ -10,6 +10,7 @@ A contract is what a module promises to the rest of the platform. Swap the tool,
 | **orchestration** | runs `ctsteps <step>` containers in order, passes three scalars between them (`mlflow_run_id`, `promote`, `version`), triggers on schedule and on demand | Argo Workflows (`WorkflowTemplate ct-pipeline`) | pipelines, drift monitor |
 | **monitoring** | Prometheus scrapes every ServiceMonitor/PodMonitor/PrometheusRule; batch jobs push to the Pushgateway; Grafana loads any ConfigMap labelled `grafana_dashboard: "1"` | kube-prometheus-stack + pushgateway | everything |
 | **model-monitoring** | series `ct_drift_psi{use_case,model,column}`, `ct_drift_detected`, `ct_drift_window_rows`, `ct_drift_last_run_timestamp_seconds`; policy PSI <0.2 ok · 0.2–0.3 warn · >0.3 retrain; retrain = one Workflow from `ct-pipeline` with `trigger=drift` | `ctsteps drift` (Evidently) on a CronWorkflow | rules, dashboards, pipeline |
+| **event-bus** (opt-in) | topic `predictions` on a Kafka-protocol bootstrap URL; one record per prediction, the prediction log's JSON document, keyed by model; topics provisioned by the platform | Redpanda single node (`platform/redpanda`); prod: Kafka via Strimzi | API producer, `ctsteps drift --source kafka` |
 | **promotion** | the deployment is a commit: bump `models.<model>.version` in the profile values of the serving and API charts; rollback is another commit | `ctsteps promote` (git push; `pr` mode documented) | Argo CD |
 
 ## The api-metrics contract (what a use-case API exposes)
@@ -26,6 +27,7 @@ in its chart adds the `use_case` label):
 | `uc_fallback_total` | `use_case, model, reason` | answers produced by a fallback instead of a model |
 | `uc_circuit_state` | `use_case, model` | 0 closed · 1 half-open · 2 open |
 | `uc_prediction_log_records_total`, `uc_prediction_log_errors_total` | `use_case[, model]` | the prediction log feeding the drift monitor |
+| `uc_event_bus_records_total`, `uc_event_bus_errors_total` | `use_case[, model]` | optional: records delivered to / lost by the event bus when the module is on |
 | `http_request_duration_seconds` (histogram) | `handler` under `/v1/…` | request latency (any instrumentation library) |
 
 ## The step contract (`libs/ctsteps`)

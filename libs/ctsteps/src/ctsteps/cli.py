@@ -88,6 +88,13 @@ def build_parser() -> argparse.ArgumentParser:
         ),
     )
     s.add_argument("--workflow-template", default=os.environ.get("CT_WORKFLOW_TEMPLATE", ""))
+    # where the live window comes from: the prediction log on the artifact store
+    # (default) or the event-bus topic (docs/modules/event-bus.md)
+    s.add_argument(
+        "--source", choices=["s3", "kafka"], default=os.environ.get("CT_DRIFT_SOURCE", "s3")
+    )
+    s.add_argument("--bootstrap", default=os.environ.get("CT_EVENT_BUS_BOOTSTRAP", ""))
+    s.add_argument("--topic", default=os.environ.get("CT_EVENT_BUS_TOPIC", "predictions"))
     s.add_argument("--dry-run", action="store_true")
     return p
 
@@ -117,6 +124,9 @@ def main(argv: list[str] | None = None) -> int:
     elif args.step == "drift":
         drift.run(
             ctx,
+            source=args.source,
+            bootstrap=args.bootstrap,
+            topic=args.topic,
             window_minutes=args.window_minutes,
             warn=args.warn,
             retrain=args.retrain,

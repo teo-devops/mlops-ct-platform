@@ -62,5 +62,9 @@ class Settings(BaseSettings):
     prediction_log_flush_records: int = 200
     s3_endpoint_url: str = ""
 
+    # event bus (opt-in): the same records published to a Kafka topic; empty = off
+    event_bus_bootstrap: str = ""
+    event_bus_topic: str = "predictions"
+
 
 settings = Settings()

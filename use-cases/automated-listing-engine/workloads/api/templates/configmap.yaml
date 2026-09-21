@@ -16,4 +16,8 @@ data:
   ALE_PREDICTION_LOG_ENABLED: {{ .Values.predictionLog.enabled | quote }}
   ALE_PREDICTION_LOG_BUCKET: {{ .Values.predictionLog.bucket }}
   ALE_S3_ENDPOINT_URL: {{ .Values.predictionLog.s3EndpointUrl }}
+  {{- if .Values.eventBus.enabled }}
+  ALE_EVENT_BUS_BOOTSTRAP: {{ .Values.eventBus.bootstrap }}
+  ALE_EVENT_BUS_TOPIC: {{ .Values.eventBus.topic }}
+  {{- end }}
   AWS_DEFAULT_REGION: us-east-1
