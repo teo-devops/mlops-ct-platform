@@ -10,7 +10,7 @@ that admit only its namespaces; nothing in it names another use case (the valida
 use-cases/<name>/
 ├── usecase.yaml           what the platform's flow scripts need: package, models, API host/path/sample,
 │                          the model that may degrade, the drift profile — the only file scripts read
-├── README.md              what it predicts, how to try it, its models
+├── README.md              Quick start · Play · Models · Layout — the same shape in every use case
 ├── docs/                  architecture of the instance, runbook (use-case docs live HERE, not in docs/)
 ├── plugin/                python package implementing ctsteps.contracts.UseCase
 │   ├── src/<package>/     usecase.py (ModelSpecs, ingest, schema, build_model, evaluate), data.py

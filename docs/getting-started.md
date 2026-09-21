@@ -5,6 +5,8 @@ Three ways in. Pick yours; every command is `make <something>` from the reposito
 
 ## 1. I want to see the loop run (15 minutes)
 
+The README's *Quick start* is this section in short; the use case's README (*Play*) has the requests.
+
 ```bash
 make prereqs     # tools, credentials, network, memory — and what the demo will deploy
 make demo        # kind cluster → platform → example use case → smoke test → status
