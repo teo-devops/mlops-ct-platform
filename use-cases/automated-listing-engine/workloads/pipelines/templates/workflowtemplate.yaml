@@ -144,6 +144,8 @@ spec:
           - name: version
       outputs:
         parameters:
+          - name: result
+            valueFrom: {path: /tmp/outputs/result.json, default: "{}"}
           - name: commit
             valueFrom: {path: /tmp/outputs/commit, default: ""}
       container:
