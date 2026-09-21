@@ -64,6 +64,10 @@ bad=[]
 for a in apps:
     n=a["metadata"]["name"]
     group=(a["metadata"].get("labels") or {}).get("mlops-ct-platform.dev/group","")
+    # root-app aggregates EVERY child, use cases included: before `make build` and
+    # the first pipeline run those are legitimately Degraded, so the app-of-apps
+    # only counts when everything is being waited for.
+    if scope=="platform" and n=="root-app": continue
     if scope=="platform" and group not in ("","shared"): continue
     if scope not in ("platform","all") and group!=scope: continue
     h=a.get("status",{}).get("health",{}).get("status","Unknown")
