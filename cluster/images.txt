@@ -43,3 +43,6 @@ alpine:3.23.4
 docker.redpanda.com/redpandadata/redpanda:v26.2.2
 docker.redpanda.com/redpandadata/redpanda-operator:v26.2.3
 docker.redpanda.com/redpandadata/console:v3.9.0
+# --- Argo Rollouts v1.10.0 (chart 2.43.2) — OPT-IN module
+quay.io/argoproj/argo-rollouts:v1.10.0
+quay.io/argoproj/kubectl-argo-rollouts:v1.10.0

@@ -11,7 +11,7 @@ All `make` targets below assume `USE_CASE=automated-listing-engine` (the default
 | watch drift | Grafana → *CT Loop* (`use_case=automated-listing-engine`); Prometheus `ct_drift_psi{use_case="automated-listing-engine"}` |
 | run the closed loop on purpose | `make drift` (flips `ct-data-source` to `drift`, sends 600 post-season listings, runs the monitor, waits for the retrain, the commit and the new version) |
 | reset the world after `make drift` | `kubectl -n automated-listing-engine-pipelines create configmap ct-data-source --from-literal=profile= --dry-run=client -o yaml \| kubectl apply -f -` |
-| rebuild the API or the steps image | `make build`, then `kubectl -n automated-listing-engine-api rollout restart deploy/automated-listing-engine-api`; the next pipeline run picks the new steps image |
+| rebuild the API or the steps image | `make build`, then `kubectl -n automated-listing-engine-api rollout restart deploy/automated-listing-engine-api` (with `rollout.enabled`: `kubectl argo rollouts restart automated-listing-engine-api`, or bump the ConfigMap); the next pipeline run picks the new steps image |
 | call the API | `curl -s -X POST http://automated-listing-engine.localhost:8088/v1/listings/analyze -H 'content-type: application/json' -d '{"title":"iPhone 13 Pro","price":450}'` |
 | prove degradation | `make smoke` (scales `fraud-predictor` to 0, expects `fraud.source == "fallback"`, restores it) |
 | rotate its secrets | delete them in `automated-listing-engine-*` namespaces, `scripts/secrets.sh`, restart the consumers |

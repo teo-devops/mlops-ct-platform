@@ -1,0 +1,56 @@
+# The analysis every canary is judged with. Platform property: it reads the
+# api-metrics contract (docs/design/contracts.md) by `use_case` and restricts
+# the series to the canary pods (`rollouts-pod-template-hash` is in the pod
+# name), with the thresholds of the SLO rules in workloads/observability.
+# A use case references it from its Rollout and passes two arguments:
+#   use-case      its label
+#   canary-hash   valueFrom: podTemplateHashValue: Latest
+# Windows are short (2m) because a canary step lasts minutes, not hours; with
+# no traffic at all a ratio is 0 and the step passes — send traffic while a
+# canary runs, or add a min-traffic measurement in production.
+apiVersion: argoproj.io/v1alpha1
+kind: ClusterAnalysisTemplate
+metadata:
+  name: ct-slo
+spec:
+  args:
+    - name: use-case
+    - name: canary-hash
+    - name: prometheus
+      value: http://kps-prometheus.observability.svc.cluster.local:9090
+  metrics:
+    # ServingErrorRatioHigh: 5xx over all requests (rule: > 0.02 for 5m)
+    - name: error-ratio
+      interval: 30s
+      count: 4
+      failureLimit: 1
+      successCondition: result[0] < 0.02
+      provider:
+        prometheus:
+          address: "{{args.prometheus}}"
+          query: |
+            (sum(rate(http_requests_total{use_case="{{args.use-case}}", pod=~".*{{args.canary-hash}}.*", status=~"5.."}[2m])) or vector(0))
+            / clamp_min(sum(rate(http_requests_total{use_case="{{args.use-case}}", pod=~".*{{args.canary-hash}}.*"}[2m])), 1e-9)
+    # ServingP99LatencyHigh: p99 of the /v1 handlers (rule: > 0.3s)
+    - name: p99-latency
+      interval: 30s
+      count: 4
+      failureLimit: 1
+      successCondition: result[0] < 0.3
+      provider:
+        prometheus:
+          address: "{{args.prometheus}}"
+          query: |
+            histogram_quantile(0.99, sum by (le) (rate(http_request_duration_seconds_bucket{use_case="{{args.use-case}}", pod=~".*{{args.canary-hash}}.*", handler=~"/v1/.*"}[2m]))) or vector(0)
+    # ServingFallbackRatioCritical: answers produced by a fallback (rule: > 0.2)
+    - name: fallback-ratio
+      interval: 30s
+      count: 4
+      failureLimit: 1
+      successCondition: result[0] < 0.2
+      provider:
+        prometheus:
+          address: "{{args.prometheus}}"
+          query: |
+            (sum(rate(uc_fallback_total{use_case="{{args.use-case}}", pod=~".*{{args.canary-hash}}.*"}[2m])) or vector(0))
+            / clamp_min(sum(rate(uc_requests_total{use_case="{{args.use-case}}", pod=~".*{{args.canary-hash}}.*"}[2m])), 1e-9)

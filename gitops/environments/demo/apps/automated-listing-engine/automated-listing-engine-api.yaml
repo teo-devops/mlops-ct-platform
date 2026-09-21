@@ -28,6 +28,14 @@ spec:
     server: 'https://kubernetes.default.svc'
     namespace: automated-listing-engine-api
 
+  # Progressive delivery: the Rollouts controller stamps `rollouts-pod-template-hash`
+  # on the stable/canary Service selectors; not drift.
+  ignoreDifferences:
+    - group: ''
+      kind: Service
+      jqPathExpressions:
+        - .spec.selector."rollouts-pod-template-hash"
+
   syncPolicy:
     automated:
       # selfHeal from day one: reverts any `kubectl edit`.
@@ -42,6 +50,7 @@ spec:
       # Argo CD creates the destination namespace; the chart declares none.
       - CreateNamespace=true
       - ServerSideApply=true
+      - RespectIgnoreDifferences=true
     managedNamespaceMetadata:
       labels:
         app.kubernetes.io/managed-by: argocd

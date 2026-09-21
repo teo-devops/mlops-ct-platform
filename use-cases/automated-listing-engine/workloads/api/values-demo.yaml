@@ -7,3 +7,6 @@ models:
     version: "2"
   fraud:
     version: "2"
+# opt-in progressive delivery on (docs/modules/progressive-delivery.md)
+rollout:
+  enabled: true

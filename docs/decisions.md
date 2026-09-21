@@ -94,3 +94,12 @@ namespace, the API carried the Kafka producer and the platform's metric names. �
 by `CT_*` env) and `orchestrators/airflow/ct_dags.py` as a factory over `use-cases/*/workloads/pipelines/values*.yaml`
 and the Applications' namespaces. → A second use case gets pipelines on Argo *and* Airflow and a bus
 by declaring values; the example use case runs the demo on the S3 log with both modules off.
+
+### 16. Argo Rollouts canaries the API, not the model
+The roadmap asked for progressive delivery with an analysis on the CT rules. On kind there is no mesh and
+KServe runs in Standard mode (#8): the predictor switches by rolling update. → An opt-in module
+(`platform/argo-rollouts`: controller, dashboard, ingress-nginx traffic routing, `ClusterAnalysisTemplate
+ct-slo` on the api-metrics contract restricted to the canary pods) and a `rollout.enabled` switch in the
+use case's api chart that renders a `Rollout` instead of the `Deployment`. → What is protected is the
+API surface after a promotion (latency, errors, fallbacks) with automatic abort; the model canary stays a
+prod-profile concern (KServe Serverless `canaryTrafficPercent`), documented, not faked.

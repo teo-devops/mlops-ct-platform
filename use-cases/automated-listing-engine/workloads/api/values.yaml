@@ -37,6 +37,20 @@ eventBus:
   namespace: redpanda
   port: 9093
 
+# Progressive delivery (opt-in platform module `argo-rollouts`,
+# docs/modules/progressive-delivery.md): render a Rollout instead of the
+# Deployment. Requires `ingress.enabled` (nginx canary weights on it). The
+# `analysis` step runs the platform's ClusterAnalysisTemplate on this use case.
+rollout:
+  enabled: false
+  analysisTemplate: ct-slo
+  steps:
+    - setWeight: 20
+    - pause: {duration: 30s}   # let the canary receive traffic and be scraped
+    - analysis
+    - setWeight: 50
+    - pause: {duration: 30s}
+
 resources:
   requests: {cpu: 100m, memory: 128Mi}
   limits: {memory: 512Mi}

@@ -44,7 +44,7 @@ code="$(kubectl run np-probe --rm -i --restart=Never --image=curlimages/curl:8.1
   -s -o /dev/null -m 5 -w '%{http_code}' "$url" 2>/dev/null || true)"
 [[ "$code" == "000" || -z "$code" ]] || die "predictor reachable from default namespace (HTTP $code)"
 info "✓ blocked from namespace default"
-code="$(kubectl -n automated-listing-engine-api exec deploy/automated-listing-engine-api -- python -c "import httpx;print(httpx.get('$url',timeout=5).status_code)" 2>/dev/null)"
+code="$(kubectl -n automated-listing-engine-api exec "$(kubectl -n automated-listing-engine-api get pod -l app.kubernetes.io/name=automated-listing-engine-api -o name | head -1)" -- python -c "import httpx;print(httpx.get('$url',timeout=5).status_code)" 2>/dev/null)"
 [[ "$code" == "200" ]] || die "predictor not reachable from the API pod (got '$code')"
 info "✓ reachable from the API namespace"
 

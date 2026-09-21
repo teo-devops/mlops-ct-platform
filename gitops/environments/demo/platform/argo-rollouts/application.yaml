@@ -1,0 +1,49 @@
+# Platform module: argo-rollouts — see docs/modules/progressive-delivery.md
+# OPT-IN implementation of the progressive-delivery contract (the demo ships
+# with rolling updates, decisions.md #12/#16). Enabled by listing
+# `argo-rollouts` in ../kustomization.yaml. Upstream chart + values from this
+# repository. Pinned.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: argo-rollouts
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: platform
+  sources:
+    - repoURL: https://argoproj.github.io/argo-helm
+      chart: argo-rollouts
+      targetRevision: 2.43.2   # Argo Rollouts v1.10.0
+      helm:
+        releaseName: argo-rollouts
+        valueFiles:
+          - $values/gitops/environments/demo/platform/argo-rollouts/values.yaml
+    # Extra manifests of this module: the analysis every use case's canary is
+    # judged with (a ClusterAnalysisTemplate on the platform's SLO series).
+    - repoURL: 'https://github.com/teo-devops/mlops-ct-platform.git'
+      targetRevision: main
+      path: gitops/environments/demo/platform/argo-rollouts/manifests
+    - repoURL: 'https://github.com/teo-devops/mlops-ct-platform.git'
+      targetRevision: main
+      ref: values
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: argo-rollouts
+  syncPolicy:
+    automated:
+      selfHeal: true
+      prune: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
+      - RespectIgnoreDifferences=true
+    retry:
+      limit: 10
+      backoff:
+        duration: 15s
+        factor: 2
+        maxDuration: 3m

@@ -1,3 +1,4 @@
+{{- if not .Values.rollout.enabled }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -10,50 +11,66 @@ spec:
     matchLabels:
       app.kubernetes.io/name: automated-listing-engine-api
   template:
-    metadata:
-      labels:
-        {{- include "api.labels" . | nindent 8 }}
-      annotations:
-        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
-    spec:
-      serviceAccountName: automated-listing-engine-api
-      securityContext:
-        runAsNonRoot: true
-        runAsUser: 10001
-        seccompProfile: {type: RuntimeDefault}
-      containers:
-        - name: api
-          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
-          imagePullPolicy: {{ .Values.image.pullPolicy }}
-          ports:
-            - name: http
-              containerPort: 8000
-          envFrom:
-            - configMapRef:
-                name: automated-listing-engine-api
-            {{- if .Values.predictionLog.enabled }}
-            - secretRef:
-                name: {{ .Values.predictionLog.secretName }}
-            {{- end }}
-          readinessProbe:
-            httpGet: {path: /readyz, port: http}
-            periodSeconds: 5
-          livenessProbe:
-            httpGet: {path: /healthz, port: http}
-            initialDelaySeconds: 10
-            periodSeconds: 20
-          resources:
-            {{- toYaml .Values.resources | nindent 12 }}
-          securityContext:
-            allowPrivilegeEscalation: false
-            readOnlyRootFilesystem: true
-            capabilities: {drop: [ALL]}
-          volumeMounts:
-            - name: tmp
-              mountPath: /tmp
-      volumes:
-        - name: tmp
-          emptyDir: {}
+    {{- include "api.podTemplate" . | nindent 4 }}
+{{- else }}
+# Progressive delivery (opt-in argo-rollouts platform module, docs/modules/progressive-delivery.md):
+# the same pod template as a Rollout. ingress-nginx splits traffic between the
+# stable and the canary Service by weight; between steps the platform's
+# ClusterAnalysisTemplate judges the canary pods on the SLO series; a failed
+# analysis aborts and traffic returns to the stable ReplicaSet.
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+metadata:
+  name: automated-listing-engine-api
+  labels:
+    {{- include "api.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicas }}
+  revisionHistoryLimit: 3
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: automated-listing-engine-api
+  template:
+    {{- include "api.podTemplate" . | nindent 4 }}
+  strategy:
+    canary:
+      stableService: automated-listing-engine-api
+      canaryService: automated-listing-engine-api-canary
+      trafficRouting:
+        nginx:
+          stableIngress: automated-listing-engine-api
+      steps:
+        {{- range .Values.rollout.steps }}
+        {{- if eq (toString .) "analysis" }}
+        - analysis:
+            templates:
+              - templateName: {{ $.Values.rollout.analysisTemplate }}
+                clusterScope: true
+            args:
+              - name: use-case
+                value: automated-listing-engine
+              - name: canary-hash
+                valueFrom:
+                  podTemplateHashValue: Latest
+        {{- else }}
+        - {{ toYaml . | nindent 10 | trim }}
+        {{- end }}
+        {{- end }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: automated-listing-engine-api-canary
+  labels:
+    {{- include "api.labels" . | nindent 4 }}
+spec:
+  selector:
+    app.kubernetes.io/name: automated-listing-engine-api
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
+{{- end }}
 ---
 apiVersion: v1
 kind: ServiceAccount

@@ -1,0 +1,52 @@
+# argo-rollouts — demo profile. OPT-IN module (docs/modules/progressive-delivery.md).
+#
+# Contract implemented: "progressive-delivery" (docs/design/contracts.md): a
+# workload declares a `Rollout` with a canary strategy; the platform provides
+# the controller, the traffic routing (ingress-nginx canary weights, no mesh)
+# and the analysis that judges the canary — `ClusterAnalysisTemplate ct-slo`
+# in manifests/, on the same SLO series the alerting rules use. A failing
+# analysis aborts the rollout: traffic returns to the stable ReplicaSet.
+installCRDs: true
+keepCRDs: true
+
+controller:
+  replicas: 1
+  resources:
+    requests: {cpu: 50m, memory: 128Mi}
+    limits: {memory: 512Mi}
+  metrics:
+    enabled: true
+    serviceMonitor:
+      enabled: true
+      additionalLabels: {}
+
+# Traffic-router RBAC: only what kind has.
+providerRBAC:
+  enabled: true
+  providers:
+    istio: false
+    smi: false
+    ambassador: false
+    awsLoadBalancerController: false
+    awsAppMesh: false
+    traefik: false
+    apisix: false
+    contour: false
+    glooPlatform: false
+    gatewayAPI: false
+
+# The dashboard, read-only, at http://rollouts.localhost:8088 (no auth in the demo).
+dashboard:
+  enabled: true
+  readonly: true
+  resources:
+    requests: {cpu: 20m, memory: 64Mi}
+    limits: {memory: 256Mi}
+  ingress:
+    enabled: true
+    ingressClassName: nginx
+    hosts:
+      - rollouts.localhost
+    paths:
+      - /
+    pathType: Prefix
