@@ -7,7 +7,7 @@
 | **Pinned version** | chart 2.43.2 (Argo Rollouts v1.10.0) |
 | **Namespace** | argo-rollouts (controller, dashboard); Rollouts in each workload's namespace |
 | **Producers / consumers** | the use case's api chart renders a `Rollout` instead of its `Deployment` when `rollout.enabled` (steps: 20 % → pause → analysis → 50 % → pause → 100 %); its Application ignores the `rollouts-pod-template-hash` the controller stamps on the Service selectors |
-| **Enable** | uncomment `- argo-rollouts` in `gitops/environments/demo/platform/kustomization.yaml`, commit; then `rollout.enabled: true` in the use case's `workloads/api/values-demo.yaml`, commit. Nothing out of band |
+| **Enable** | uncomment `- argo-rollouts` in `gitops/environments/demo/platform/kustomization.yaml`, commit; then `rollout.enabled: true` in the use case's `workloads/api/values-demo.yaml`, commit. The use case's Application has `prune: false`: delete the old Deployment by hand once (`kubectl -n <uc>-api delete deploy <uc>-api`), otherwise both serve. Nothing out of band |
 | **Disable** | `rollout.enabled: false` (back to a Deployment) and comment the line |
 | **In the demo** | off: rolling update with readiness, rollback = `make promote` to the previous version (decisions.md #12) |
 

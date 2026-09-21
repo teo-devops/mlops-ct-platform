@@ -25,6 +25,7 @@ spec:
       ports:
         - name: http
           containerPort: 8000
+          protocol: TCP    # explicit: Argo CD cannot default it on a Rollout (CRD)
       envFrom:
         - configMapRef:
             name: automated-listing-engine-api

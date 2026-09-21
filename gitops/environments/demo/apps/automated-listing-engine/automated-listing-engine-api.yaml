@@ -35,6 +35,10 @@ spec:
       kind: Service
       jqPathExpressions:
         - .spec.selector."rollouts-pod-template-hash"
+    - group: argoproj.io
+      kind: Rollout
+      jsonPointers:
+        - /metadata/annotations/rollout.argoproj.io~1revision
 
   syncPolicy:
     automated:
