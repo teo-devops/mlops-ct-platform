@@ -19,9 +19,10 @@ step "Pods not Running/Completed"
 kubectl get pods -A --no-headers 2>/dev/null | grep -vE "Running|Completed" || info "none"
 
 step "URLs (http://<name>.localhost:8088)"
-printf '    %-16s %s\n' "Argo CD" "http://argocd.localhost:8088  admin / $(kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath='{.data.password}' 2>/dev/null | base64 -d)"
+# The admin password is the bcrypt in gitops/argo-cd/values.yaml (README: admin-demo), not argocd-initial-admin-secret.
+printf '    %-16s %s\n' "Argo CD" "http://argocd.localhost:8088  admin / admin-demo (gitops/argo-cd/values.yaml)"
 printf '    %-16s %s\n' "Argo Workflows" "http://argo.localhost:8088"
-kubectl get ns airflow >/dev/null 2>&1 && printf '    %-16s %s\n' "Airflow" "http://airflow.localhost:8088  (opt-in module)"
+kubectl -n argocd get application airflow >/dev/null 2>&1 && printf '    %-16s %s\n' "Airflow" "http://airflow.localhost:8088  (opt-in module)"
 printf '    %-16s %s\n' "MLflow" "http://mlflow.localhost:8088"
 printf '    %-16s %s\n' "Grafana" "http://grafana.localhost:8088  admin / $(kubectl -n observability get secret grafana-admin -o jsonpath='{.data.admin-password}' 2>/dev/null | base64 -d)"
 printf '    %-16s %s\n' "Prometheus" "http://prometheus.localhost:8088"
