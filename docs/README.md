@@ -13,8 +13,6 @@ Reading order for someone new to the repository:
 9. [operations/what-the-demo-does-not-prove.md](operations/what-the-demo-does-not-prove.md) — read before extrapolating
 10. [roadmap.md](roadmap.md) — what is next
 
-Study guide (Spanish): [study-guide.es.md](study-guide.es.md) — CT theory applied to this repo, the flows, what to look at in each UI, exercises, and the expansion map (Kafka, Feast, Rollouts, Airflow, AWS).
-
 Reference: [design/secrets.md](design/secrets.md) (out-of-band state), [design/archetypes.md](design/archetypes.md)
 (workload archetypes under GitOps), [../scripts/README.md](../scripts/README.md) (scripts and their `make` targets),
 [../pipelines/README.md](../pipelines/README.md) (orchestrator adapters), [../use-cases/README.md](../use-cases/README.md)
@@ -26,7 +24,6 @@ docs/
 ├── design/              how the platform is built: architecture, contracts, ct-loop, profiles, secrets, archetypes
 ├── modules/             one card per module (implemented and gaps)
 ├── operations/          runbook, limitations of the demo
-├── study-guide.es.md    study guide (Spanish): theory, flows, UIs, exercises, expansion
 ├── decisions.md         ADRs
 │                        (use-case documents live with the use case: use-cases/<name>/docs/)
 └── roadmap.md

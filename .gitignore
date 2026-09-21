@@ -22,3 +22,7 @@ rendered/
 *.joblib
 *.parquet
 outputs/
+
+# Personal study notes, kept out of the public repository (local / private notes repo)
+docs/study-guide*.md
+docs/notes/

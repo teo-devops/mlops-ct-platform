@@ -18,7 +18,7 @@ sold once, so there is no "same item" to A/B test on), extreme seasonality (post
 and traffic spikes at predictable hours (Sunday evenings).
 
 **The challenge** is not only to fix the technical debt but to establish a sustainable MLOps
-practice. Four questions, answered in [docs/study-guide.es.md §12](../../../docs/study-guide.es.md):
+practice. Four questions; the sections below and the platform docs answer them:
 
 1. **Strategic roadmap and prioritisation** — a phased plan (stabilise → scale → govern) that
    balances rapid impact with long-term reliability and cost.
