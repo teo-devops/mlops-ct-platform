@@ -61,7 +61,9 @@ def discover() -> list[dict]:
             values = _merge(values, yaml.safe_load(profile.read_text()) or {})
         name = values["useCase"]
         app = REPO / "gitops/environments" / ENV / "apps" / name / f"{name}-pipelines.yaml"
-        deployed = yaml.safe_load((REPO / "gitops/environments" / ENV / "apps" / "kustomization.yaml").read_text())
+        deployed = yaml.safe_load(
+            (REPO / "gitops/environments" / ENV / "apps" / "kustomization.yaml").read_text()
+        )
         if not app.exists() or name not in (deployed.get("resources") or []):
             continue  # declared but not deployed here (opt-in use case)
         namespace = yaml.safe_load(app.read_text())["spec"]["destination"]["namespace"]
