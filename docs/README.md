@@ -1,6 +1,9 @@
 # Documentation
 
-Reading order for someone new to the repository:
+**Using it:** [getting-started.md](getting-started.md) — three ways in (see the loop · bring your use case ·
+operate the platform) — and [commands.md](commands.md) — every `make` command, its variables and what it touches.
+
+**Understanding it**, in reading order:
 
 1. [design/architecture.md](design/architecture.md) — the four domains, the synchronous and asynchronous paths, namespaces and network
 2. [design/contracts.md](design/contracts.md) — the six contracts every module honours, and the step CLI

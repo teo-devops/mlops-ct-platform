@@ -28,49 +28,31 @@ second-hand marketplace), is a **plugin**: the platform never mentions it.
 | Platform docs: architecture, contracts, the loop, module cards, decisions, profiles, runbook | `docs/` |
 | The use cases: `usecase.yaml`, plugin, API, three charts, docs — isolated from each other; `make new-use-case` scaffolds one | `use-cases/automated-listing-engine/` |
 
-## What the demo deploys, and how to trim it
-
-The demo is **the core** — GitOps engine, cert-manager, KServe, MLflow, Argo Workflows,
-Prometheus/Grafana + Pushgateway, MinIO, the CT rules — plus **the use cases listed** in
-`gitops/environments/demo/{apps,projects}/kustomization.yaml` (the example use case; `delivery-eta`
-is opt-in) and **the opt-in modules listed** in `platform/kustomization.yaml` (Airflow, Redpanda, Argo
-Rollouts: off). Nothing that is off is preloaded, secreted or synced:
+## Start
 
 ```bash
-make module                          # what is on / opt-in
-make module ENABLE=airflow COMMIT=1  # a module: line, images, out-of-band state, hook, commit
-make use-case                        # which use cases the demo deploys
-make use-case ENABLE=delivery-eta COMMIT=1
-make demo USE_CASE=delivery-eta      # refuses a use case the demo does not deploy
+make prereqs   # tools, credentials, network, memory — and what the demo will deploy
+make demo      # cluster → platform → example use case → smoke → status   (≈15 min, ~8 GiB)
+make drift     # the world changes → drift → retrain → promotion commit → new version served
+make down
 ```
 
-Argo CD deploys what `main` says, so enabling is a commit (`COMMIT=1` does it). ~8 GiB for the core
-with one use case; each opt-in module adds 0.5–1.5 GiB.
+`make` lists every command; **[docs/getting-started.md](docs/getting-started.md)** has the three
+ways in (see the loop · bring your use case · operate the platform) and
+**[docs/commands.md](docs/commands.md)** the reference. Requirements: Docker, kind ≥ 0.31, kubectl,
+helm ≥ 3.14, python ≥ 3.11 with PyYAML, `gh` logged in (the promote step pushes the deployment commit).
 
-## Quickstart (≈15 minutes on a laptop)
-
-Requirements: Docker, kind ≥ 0.31, kubectl, helm ≥ 3.14, python ≥ 3.11 with PyYAML, `gh` logged in
-(Argo CD reads the repository anonymously, but the promote step pushes the deployment commit to it,
-so on your fork you need a token that can write) — `make prereqs` checks them.
+The demo deploys **the core** plus the **use cases** and **opt-in modules** listed in
+`gitops/environments/demo/` — nothing that is off is preloaded, secreted or synced. Argo CD deploys
+what `main` says, so enabling is a commit (`COMMIT=1` does it):
 
 ```bash
-# platform (scripts/cluster, scripts/platform)
-make up          # 02  kind cluster + ingress-nginx + image preload of the ENABLED modules (~5 min)
-make secrets     # 03  platform identities and Secrets, then each use case's (random, cluster-only, never in Git)
-make bootstrap   # 04  Argo CD from the chart, then root-app: everything else arrives by GitOps
-make wait        # 05  platform modules Synced/Healthy
-# one use case (scripts/use-case/, reads use-cases/$USE_CASE/usecase.yaml; default automated-listing-engine)
-make build       # 06  use-case images -> kind
-make pipeline    # 07  first run of the CT pipeline for every model: version 0 -> 1
-make smoke       # 08  real request, fallback drill, network-policy probe
-make drift       # 09  the world changes -> drift -> retrain -> promote commit -> new version served
-# any time
-make status      #     Applications, served models, pipelines, URLs and passwords
-make down        # 10
+make module                          # Airflow, Redpanda, Argo Rollouts: opt-in, off by default
+make module ENABLE=airflow COMMIT=1
+make use-case                        # the example use case is deployed; delivery-eta is opt-in
+make use-case ENABLE=delivery-eta COMMIT=1 && USE_CASE=delivery-eta make build pipeline smoke drift
+make new-use-case NAME=churn MODELS=risk   # your own: rendered, registered, working
 ```
-
-`make demo` chains 02 → 08; `make prereqs` (01) checks the tools. Every UI answers on
-`http://<name>.localhost:8088`. Another use case runs the same flow with `USE_CASE=<name>`.
 
 ## UIs and credentials
 

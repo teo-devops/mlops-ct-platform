@@ -35,3 +35,18 @@ Use-case specific commands live with the use case (e.g.
 * `promote` failing with `could not push`: the token cannot write to the repository.
 * A platform Application Degraded after a change: `make render` and compare; `make lint` catches
   most tree-level mistakes before they reach the cluster.
+
+## Symptom → cause → fix
+
+| Symptom | Cause | Fix |
+|---|---|---|
+| every Application `Unknown`, `failed to list refs … x509` | WARP (Cloudflare Gateway) intercepts TLS inside the nodes | `warp-cli disconnect`, then `kubectl -n argocd annotate application root-app argocd.argoproj.io/refresh=hard --overwrite` |
+| `make prereqs` ✗ port 8088 | another kind cluster or process owns the ingress port | stop it (`kind delete cluster --name <other>`) |
+| `make wait` never ends on `root-app(Synced/Degraded)` | a use case's workloads are Degraded before their first pipeline | expected before `make build pipeline`; `wait` ignores root-app in the platform scope |
+| `pip install` fails inside `docker build` (`name resolution`) | the builder has no DNS on this machine | `DOCKER_BUILD_HOST_NETWORK=1` (default) — `make prereqs` probes it |
+| predictor `Init:CrashLoopBackOff`, `No model found` | version `"0"` or an empty bucket: nothing published yet | `make pipeline` (first run bootstraps v1) |
+| `evaluate` fails with `AccessDenied` after moving a use case to other buckets | the registry's `serving_uri` / `reference_uri` point at the old bucket | migrate the objects and re-tag, or reset the use case's registered models |
+| API 503 right after disabling Argo Rollouts | the Service still selects `rollouts-pod-template-hash` | `make module DISABLE=argo-rollouts` runs the hook; by hand: patch the selector out |
+| a retry of an aborted canary fails again immediately | the 2-minute rate window still contains the outage | wait two minutes, retry |
+| `make build/pipeline/smoke`: "use case not deployed by the demo" | its group is opt-in (commented) in `apps/` and `projects/` | `make use-case ENABLE=<uc> COMMIT=1` |
+| `promote` fails with `could not push` | the token in `pipeline-git-credentials` cannot write | `gh auth login` with a token that can push, `make secrets` |
