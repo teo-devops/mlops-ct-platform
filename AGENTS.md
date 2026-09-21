@@ -10,7 +10,11 @@ proposing changes; most "improvements" that look obvious were decided against, o
   contract. Replacing a tool means a new directory that honours the same contract; never wire two
   modules to each other's internals.
 * **Steps are containers.** `libs/ctsteps` is the pipeline; orchestrators are adapters in
-  `pipelines/`. Do not put use-case logic in a step, do not put orchestration in a step.
+  `orchestrators/` that read a use case's pipelines values as data. Do not put use-case logic in a
+  step, do not put orchestration in a step, do not name a use case in an adapter.
+* **The serving side has a library too.** `libs/ctserve` is what a use-case API owes the platform
+  (`uc_*` metrics, `Telemetry.emit`, circuit breaker). Where a prediction record goes (S3 log, event
+  bus) is platform configuration (`CT_*` env from the chart), never API code.
 * **A use case is a plugin** (`use-cases/<name>/`): a `UseCase` implementation, an API, its workload
   charts, **its own docs, scripts and secrets**. The platform never mentions a use case by name except
   as data: its group under `gitops/environments/demo/{projects,apps}/`, its users/namespaces in the MinIO

@@ -18,7 +18,7 @@ from datetime import UTC, datetime
 
 import structlog
 
-from app import metrics
+from ctserve import metrics
 
 log = structlog.get_logger()
 

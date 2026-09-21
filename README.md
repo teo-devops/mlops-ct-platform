@@ -21,7 +21,8 @@ second-hand marketplace), is a **plugin**: the platform never mentions it.
 | Workload registrations, grouped by owner (`shared/`, `<use-case>/`) | `gitops/environments/demo/{projects,apps}/<group>/` |
 | Shared workloads: MinIO with per-consumer users, CT alerting rules and the *CT Loop* dashboard | `workloads/` |
 | The step contract: pipeline steps as containers, orchestrator-agnostic | `libs/ctsteps/` |
-| Orchestrator adapters (Argo Workflows runs the demo; Airflow exercised as an opt-in module; KFP as reference) | `pipelines/` |
+| The serving-side contract for use-case APIs: `uc_*` metrics, prediction log, event bus, circuit breaker | `libs/ctserve/` |
+| Orchestrator adapters (Argo Workflows runs the demo; Airflow exercised as an opt-in module; KFP as reference) | `orchestrators/` |
 | Platform scripts: cluster lifecycle, bootstrap, operations, repo tooling | `scripts/` |
 | kind cluster definition and the images preloaded into it | `cluster/` |
 | Platform docs: architecture, contracts, the loop, module cards, decisions, profiles, runbook | `docs/` |
@@ -136,12 +137,14 @@ mlops-ct-platform/
 │       ├── prod/ · aws/                      documented shapes of the same tree (docs/design/profiles.md)
 ├── cluster/                                  kind.yaml and the image preload list
 ├── workloads/                                charts of the shared workloads: minio, observability
-├── libs/ctsteps/                             the step contract: python package + `ctsteps` CLI + tests + base image
-├── pipelines/                                orchestrator adapters (argo/ notes; adapters/airflow, adapters/kfp as reference)
+├── libs/
+│   ├── ctsteps/                              the step contract: python package + `ctsteps` CLI + tests + base image
+│   └── ctserve/                              the serving-side contract for use-case APIs (Telemetry, metrics, breaker) + base image
+├── orchestrators/                            orchestrator adapters: argo/ (notes) · airflow/ (DAG factory, exercised) · kfp/ (reference)
 ├── scripts/                                  platform scripts; launch flow numbered 01 → 10 (scripts/README.md)
 │   ├── lib.sh                                shared helpers; every path resolves from the repo root
 │   ├── cluster/                              01-prereqs · 02-up · 10-down
-│   ├── platform/                             03-secrets · 04-install · 05-wait · status · credentials · deploy-local
+│   ├── platform/                             03-secrets · 04-install (+ credential) · 05-wait · status
 │   └── repo/                                 validate-coherence.py · register-workload.py · render.sh
 ├── use-cases/                                one directory per use case (use-cases/README.md = how to add one)
 │   └── automated-listing-engine/
@@ -149,7 +152,7 @@ mlops-ct-platform/
 │       ├── docs/                             architecture of the instance · case-study · runbook
 │       ├── scripts/                          secrets · 06-build-images · 07-run-pipeline · 08-smoke · 09-induce-drift · promote
 │       ├── plugin/                           the UseCase implementation + the steps image (FROM ctsteps-base)
-│       ├── api/                              FastAPI orchestrator with graceful degradation + tests
+│       ├── api/                              FastAPI: fan-out, fallback rules, schemas (telemetry/metrics from libs/ctserve) + tests
 │       └── workloads/                        api/ · serving/ · pipelines/ — one Helm chart per workload
 └── docs/                                     platform documentation (docs/README.md = reading order)
     ├── design/                               architecture · contracts · ct-loop · profiles · secrets · archetypes

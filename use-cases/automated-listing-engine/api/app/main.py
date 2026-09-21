@@ -16,17 +16,14 @@ from contextlib import asynccontextmanager
 from datetime import UTC, datetime
 
 import structlog
+from ctserve import CircuitBreaker, Telemetry, configure_logging, metrics
 from fastapi import FastAPI, HTTPException, Request
 from prometheus_fastapi_instrumentator import Instrumentator
 
-from app import __version__, metrics
-from app.breaker import CircuitBreaker
+from app import __version__
 from app.clients import KServeClient, ModelError
 from app.config import settings
-from app.event_bus import EventBus
 from app.fallback import fraud_rules
-from app.logging_setup import configure
-from app.prediction_log import PredictionLog
 from app.schemas import Analysis, Category, Fraud, Lineage, ListingIn
 
 log = structlog.get_logger()
@@ -35,35 +32,23 @@ STATE = {"closed": 0, "half-open": 1, "open": 2}
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    configure(settings.git_commit, settings.use_case)
+    configure_logging(settings.git_commit, settings.use_case)
     app.state.client = KServeClient(settings.use_case)
     app.state.breaker = CircuitBreaker(
         settings.breaker_failure_threshold, settings.breaker_reset_seconds
     )
-    app.state.plog = PredictionLog(
-        enabled=settings.prediction_log_enabled,
-        bucket=settings.prediction_log_bucket,
-        use_case=settings.use_case,
-        endpoint_url=settings.s3_endpoint_url,
-        flush_seconds=settings.prediction_log_flush_seconds,
-        flush_records=settings.prediction_log_flush_records,
-    )
-    app.state.plog.start()
-    app.state.bus = EventBus(
-        bootstrap=settings.event_bus_bootstrap,
-        topic=settings.event_bus_topic,
-        use_case=settings.use_case,
-    )
+    # where predictions go (S3 log, event bus) is the platform's decision: CT_* env
+    app.state.telemetry = Telemetry.from_env(settings.use_case)
+    app.state.telemetry.start()
     log.info(
         "api_started",
         version=__version__,
         categorizer=settings.categorizer_version,
         fraud=settings.fraud_version,
-        event_bus=app.state.bus.enabled,
+        telemetry=app.state.telemetry.sinks,
     )
     yield
-    app.state.plog.stop()
-    app.state.bus.stop()
+    app.state.telemetry.stop()
     await app.state.client.aclose()
 
 
@@ -166,16 +151,8 @@ async def analyze(listing: ListingIn, request: Request):
         "price": listing.price,
         "title_len": len(listing.title),
     }
-    # the same record goes to the prediction log (artifact store) and, when the
-    # event-bus module is on, to the topic
-    plog: PredictionLog = request.app.state.plog
-    bus: EventBus = request.app.state.bus
-
-    def emit(model: str, record: dict) -> None:
-        plog.record(model, record)
-        bus.record(model, record)
-
-    emit(
+    telemetry: Telemetry = request.app.state.telemetry
+    telemetry.emit(
         "categorizer",
         {
             **base,
@@ -187,7 +164,7 @@ async def analyze(listing: ListingIn, request: Request):
         },
     )
     if source == "model":
-        emit(
+        telemetry.emit(
             "fraud",
             {
                 **base,

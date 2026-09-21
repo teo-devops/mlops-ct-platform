@@ -15,6 +15,12 @@ A contract is what a module promises to the rest of the platform. Swap the tool,
 
 ## The api-metrics contract (what a use-case API exposes)
 
+`libs/ctserve` implements this contract for any use-case API: `ctserve.metrics` (the series below),
+`ctserve.Telemetry.from_env(use_case)` (prediction log + event bus, configured by the platform's
+`CT_PREDICTION_LOG_ENABLED` / `CT_PREDICTIONS_BUCKET` / `S3_ENDPOINT_URL` / `CT_EVENT_BUS_BOOTSTRAP` /
+`CT_EVENT_BUS_TOPIC`, set by the use case's chart), `ctserve.CircuitBreaker`. The API calls
+`telemetry.emit(model, record)` and never names a bucket or a broker.
+
 The platform's alerting rules and the *CT Loop* dashboard know no use case: they query these
 series by the `use_case` label. A use-case API must expose them under `/metrics` (a ServiceMonitor
 in its chart adds the `use_case` label):

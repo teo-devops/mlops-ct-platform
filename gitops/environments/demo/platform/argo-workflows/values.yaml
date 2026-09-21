@@ -3,7 +3,7 @@
 # Contract implemented: "orchestration" (docs/design/contracts.md#orchestration).
 # The pipeline steps are containers with a fixed contract (libs/ctsteps); Argo
 # Workflows is the adapter that runs them in the demo. Airflow / Kubeflow
-# Pipelines adapters of the same steps live in pipelines/adapters/.
+# Pipelines adapters of the same steps live in orchestrators/.
 #
 # RBAC for the workflow namespaces is provided HERE, by the platform, so that a
 # use case never writes Role/RoleBinding in its own namespace (the AppProject

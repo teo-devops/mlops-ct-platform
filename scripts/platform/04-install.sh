@@ -5,9 +5,13 @@
 # The only imperative procedure of the project, run ONCE in the life of the
 # cluster. From phase 3 on, every change is a commit on main.
 #
-#   Usage:  ./scripts/platform/04-install.sh
-#   Env:    GIT_USER / GIT_TOKEN  read credential of the platform repository —
-#           only for a PRIVATE fork; the public repository needs none
+#   Usage:  ./scripts/platform/04-install.sh                 bootstrap (phases 0-3)
+#           ./scripts/platform/04-install.sh credential status|add|remove
+#                                            the Argo CD repository credential alone
+#                                            (a PRIVATE fork needs one; the public
+#                                            repository is cloned anonymously)
+#           ./scripts/platform/04-install.sh admin-password
+#   Env:    GIT_USER / GIT_TOKEN  read credential of a private fork
 #           (defaults: teo-devops / `gh auth token`; GIT_TOKEN= skips it)
 #           ASSUME_YES=1          do not ask for confirmation
 #
@@ -19,6 +23,41 @@ require kubectl helm
 CHART_VERSION="10.2.2"   # -> Argo CD v3.4.6. Must match gitops/environments/demo/argo-cd.yaml
 NAMESPACE="argocd"
 PLATFORM_SECRET="repo-mlops-ct-platform"
+
+credential_add() {
+  GIT_USER="${GIT_USER:-teo-devops}"; GIT_TOKEN="${GIT_TOKEN-$(gh auth token 2>/dev/null || true)}"
+  [[ -n "$GIT_TOKEN" ]] || die "GIT_TOKEN required (or 'gh auth login')"
+  kubectl -n "${NAMESPACE}" create secret generic "${PLATFORM_SECRET}" \
+    --from-literal=type=git --from-literal=url="${PLATFORM_REPO}" \
+    --from-literal=username="${GIT_USER}" --from-literal=password="${GIT_TOKEN}" \
+    --dry-run=client -o yaml | kubectl apply -f - >/dev/null
+  kubectl -n "${NAMESPACE}" label secret "${PLATFORM_SECRET}" \
+    argocd.argoproj.io/secret-type=repository --overwrite >/dev/null
+  info "credential installed for ${PLATFORM_REPO}"
+}
+
+case "${1:-}" in
+  credential)
+    case "${2:-status}" in
+      status)
+        step "Repository credentials in ${NAMESPACE}"
+        kubectl -n "${NAMESPACE}" get secret -l argocd.argoproj.io/secret-type=repository \
+          -o custom-columns='NAME:.metadata.name,URL:.data.url' 2>/dev/null \
+          | awk 'NR==1{print;next}{cmd="echo "$2" | base64 -d"; cmd | getline u; close(cmd); print $1"  "u}'
+        info "tree needs: ${PLATFORM_REPO}" ;;
+      add) credential_add ;;
+      remove) kubectl -n "${NAMESPACE}" delete secret "${PLATFORM_SECRET}" --ignore-not-found ;;
+      *) die "usage: $0 credential status|add|remove" ;;
+    esac
+    exit 0 ;;
+  admin-password)
+    # The bcrypt in gitops/argo-cd/values.yaml wins (README: admin-demo); the initial secret only
+    # exists before it applies.
+    kubectl -n "${NAMESPACE}" get secret argocd-initial-admin-secret -o jsonpath='{.data.password}' 2>/dev/null | base64 -d \
+      || echo "admin-demo (gitops/argo-cd/values.yaml)"; echo; exit 0 ;;
+  "") ;;
+  *) die "unknown command: $1" ;;
+esac
 
 echo "==> kubectl context: $(kubectl config current-context)"
 if [[ "${ASSUME_YES:-0}" != "1" ]]; then
@@ -41,15 +80,7 @@ if kubectl -n "${NAMESPACE}" get secret "${PLATFORM_SECRET}" >/dev/null 2>&1 && 
 elif [[ -z "${GIT_TOKEN}" ]]; then
   info "no GIT_TOKEN: no repository credential (fine for the public repository; a private fork needs one)"
 else
-  kubectl -n "${NAMESPACE}" create secret generic "${PLATFORM_SECRET}" \
-    --from-literal=type=git \
-    --from-literal=url="${PLATFORM_REPO}" \
-    --from-literal=username="${GIT_USER}" \
-    --from-literal=password="${GIT_TOKEN}" \
-    --dry-run=client -o yaml | kubectl apply -f - >/dev/null
-  kubectl -n "${NAMESPACE}" label secret "${PLATFORM_SECRET}" \
-    argocd.argoproj.io/secret-type=repository --overwrite >/dev/null
-  info "credential installed for ${PLATFORM_REPO}"
+  credential_add
 fi
 
 # --- Phase 1: Argo CD from the official chart, rendered with the SAME values

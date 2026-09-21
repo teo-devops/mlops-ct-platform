@@ -6,8 +6,7 @@ import asyncio
 import time
 
 import httpx
-
-from app import metrics
+from ctserve import metrics
 
 
 class ModelError(Exception):

@@ -20,8 +20,12 @@ docker build "${NETWORK_ARG[@]}" -q --build-arg "BASE=ctsteps-base:${VERSION}" \
   -t "automated-listing-engine-steps:${VERSION}" "${REPO_ROOT}/use-cases/automated-listing-engine/plugin" >/dev/null
 info "built"
 
+step "ctserve-base:${VERSION}"
+docker build "${NETWORK_ARG[@]}" -q -t "ctserve-base:${VERSION}" "${REPO_ROOT}/libs/ctserve" >/dev/null
+info "built"
+
 step "automated-listing-engine-api:${VERSION}"
-docker build "${NETWORK_ARG[@]}" -q --build-arg "GIT_COMMIT=${GIT_COMMIT}" \
+docker build "${NETWORK_ARG[@]}" -q --build-arg "BASE=ctserve-base:${VERSION}" --build-arg "GIT_COMMIT=${GIT_COMMIT}" \
   -t "automated-listing-engine-api:${VERSION}" "${REPO_ROOT}/use-cases/automated-listing-engine/api" >/dev/null
 info "built (git ${GIT_COMMIT})"
 

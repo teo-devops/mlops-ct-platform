@@ -14,7 +14,8 @@ use-cases/<name>/
 │   ├── src/<package>/     usecase.py (ModelSpecs, ingest, schema, build_model, evaluate), data.py …
 │   ├── tests/
 │   └── Dockerfile         FROM ctsteps-base: this is the image every pipeline step runs
-├── api/                   the serving-side application (optional: a use case may only expose models)
+├── api/                   the serving-side application (optional): FROM ctserve-base, `ctserve.Telemetry.emit()` per prediction,
+│                          `ctserve.metrics` — the platform's contract; the use case keeps fan-out, fallbacks, schemas
 └── workloads/             one Helm chart per workload, each registered as its own AppProject/Application
     ├── api/
     ├── serving/           InferenceServices — `models.<model>.version` is what promotion bumps

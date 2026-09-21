@@ -32,4 +32,4 @@ resources:
   # Opt-in modules: complete directories, off by default (docs/modules/<module>.md
   # says how to enable one: uncomment, `make secrets`, commit).
   #  - airflow
-  - redpanda
+  #  - redpanda

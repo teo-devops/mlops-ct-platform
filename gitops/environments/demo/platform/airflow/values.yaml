@@ -2,8 +2,9 @@
 #
 # Contract implemented: "orchestration" (docs/design/contracts.md#orchestration),
 # as an alternative to argo-workflows: the same ctsteps containers, driven by
-# the DAGs in pipelines/adapters/airflow/ (delivered by git-sync from this
-# repository). Kept as light as Airflow gets on kind:
+# the DAG factory in orchestrators/airflow/ (delivered by git-sync from this
+# repository; it builds one DAG per use case and model from the use cases'
+# pipelines values). Kept as light as Airflow gets on kind:
 #   * LocalExecutor — tasks run inside the scheduler; a KubernetesPodOperator
 #     per step creates the pod in the use case's pipelines namespace.
 #   * no triggerer, no statsd, no redis/flower/pgbouncer, no log persistence.
@@ -51,7 +52,7 @@ dags:
     branch: main
     ref: main
     depth: 1
-    subPath: pipelines/adapters/airflow
+    subPath: orchestrators/airflow
     period: 30s
 
 apiServer:

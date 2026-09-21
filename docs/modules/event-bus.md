@@ -6,9 +6,10 @@
 | **Demo implementation** | Redpanda single node (Kafka protocol, no JVM, no quorum, no operator), internal listener `redpanda.redpanda.svc.cluster.local:9093`, no TLS/SASL (NetworkPolicies decide who reaches it); Console at http://redpanda.localhost:8088; topics by a PostSync Job (`manifests/topics-job.yaml`), like MinIO's buckets |
 | **Pinned version** | chart 26.2.3 (Redpanda v26.2.2, Console v3.9.0) |
 | **Namespace** | redpanda |
-| **Producers / consumers** | the use-case API (`api/app/event_bus.py`, on when `eventBus.enabled` in its chart) publishes every record keyed by model, next to the S3 log; `ctsteps drift --source kafka` reads its window from the topic by timestamp (`eventBus.enabled` in the pipelines chart) |
+| **Producers / consumers** | the use-case API through `ctserve.Telemetry` (libs/ctserve — the API calls `emit(model, record)`, the platform library publishes keyed by model when `CT_EVENT_BUS_BOOTSTRAP` is set, next to the S3 log; `eventBus.enabled` in the use case's api chart sets it); `ctsteps drift --source kafka` reads its window from the topic by timestamp (`eventBus.enabled` in the pipelines chart) |
 | **Enable** | uncomment `- redpanda` in `gitops/environments/demo/platform/kustomization.yaml`, commit; then `eventBus.enabled: true` in the use case's `workloads/{api,pipelines}/values-demo.yaml`, commit. Nothing out of band |
 | **Disable** | comment the line and set `eventBus.enabled: false` back: the API and the monitor fall back to the S3 log, which never stopped being written |
+| **In the demo** | off: the example use case runs on the S3 log (decisions.md #5). Exercised on 2026-09-21: 600 drifted requests → 60+ records on the topic → `ctsteps drift --source kafka` (rows=392, PSI 0.72) → retrain → `edcc425`/`583e4d4` promoted v2 |
 
 Wave 2. What the bus changes and what it does not: the loop is the same (S3 stays the batch source of
 truth and the fallback), the transport changes — latency (records are available in milliseconds, not at
@@ -24,7 +25,7 @@ operated by Strimzi** is the more robust choice and this platform is open to it:
 rack awareness, KRaft controllers, the operator handling rolling upgrades and certificate rotation, `KafkaTopic`
 / `KafkaUser` as declarative resources under GitOps, Cruise Control for rebalancing, MirrorMaker 2 for
 disaster recovery, and Kafka Streams/Connect if the label join grows beyond a batch step. None of that
-changes the loop: the producer (`api/app/event_bus.py`) and the consumer (`ctsteps io_kafka`) speak the
+changes the loop: the producer (`ctserve.EventBus`) and the consumer (`ctsteps.io_kafka`) speak the
 Kafka protocol and only know a bootstrap URL and a topic name.
 
 Replacing the module = a directory `gitops/environments/demo/platform/strimzi/` with the operator chart

@@ -86,3 +86,11 @@ producer in the API next to the S3 log, `ctsteps drift --source kafka`; both swi
 in the use case's charts; S3 stays the batch source of truth. → What is proven is the contract (bootstrap
 URL + topic), not the broker: Kafka via Strimzi is documented as the more robust production choice with the
 manifests that would replace the module (docs/modules/event-bus.md).
+
+### 15. The platform provides the mechanisms, a use case declares data — on both sides of the loop
+Airflow and the event bus had leaked into the example use case: the DAG carried its image and
+namespace, the API carried the Kafka producer and the platform's metric names. → `libs/ctserve`
+(serving-side counterpart of `ctsteps`: `Telemetry.emit`, `uc_*` metrics, circuit breaker, configured
+by `CT_*` env) and `orchestrators/airflow/ct_dags.py` as a factory over `use-cases/*/workloads/pipelines/values*.yaml`
+and the Applications' namespaces. → A second use case gets pipelines on Argo *and* Airflow and a bus
+by declaring values; the example use case runs the demo on the S3 log with both modules off.

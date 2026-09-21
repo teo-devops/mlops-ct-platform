@@ -55,16 +55,8 @@ class Settings(BaseSettings):
         ]
     )
 
-    # prediction log (artifact-store contract) — the input of the drift monitor
-    prediction_log_enabled: bool = False
-    prediction_log_bucket: str = "predictions"
-    prediction_log_flush_seconds: float = 10.0
-    prediction_log_flush_records: int = 200
-    s3_endpoint_url: str = ""
-
-    # event bus (opt-in): the same records published to a Kafka topic; empty = off
-    event_bus_bootstrap: str = ""
-    event_bus_topic: str = "predictions"
+    # Where predictions are logged (S3 log, event bus) is NOT here: ctserve.Telemetry
+    # reads the platform's CT_* / S3_ENDPOINT_URL variables set by the chart.
 
 
 settings = Settings()

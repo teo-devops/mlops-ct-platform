@@ -15,7 +15,7 @@ Reading order for someone new to the repository:
 
 Reference: [design/secrets.md](design/secrets.md) (out-of-band state), [design/archetypes.md](design/archetypes.md)
 (workload archetypes under GitOps), [../scripts/README.md](../scripts/README.md) (scripts and their `make` targets),
-[../pipelines/README.md](../pipelines/README.md) (orchestrator adapters), [../use-cases/README.md](../use-cases/README.md)
+[../orchestrators/README.md](../orchestrators/README.md) (orchestrator adapters), [../libs/ctserve](../libs/ctserve) (serving-side library), [../use-cases/README.md](../use-cases/README.md)
 (how to add a use case).
 
 ```

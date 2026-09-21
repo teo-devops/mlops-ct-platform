@@ -8,7 +8,8 @@ from __future__ import annotations
 
 from kfp import dsl
 
-IMAGE = "automated-listing-engine-steps:0.1.0"
+# use-case data would come from use-cases/<name>/workloads/pipelines/values.yaml, as in airflow/ct_dags.py
+IMAGE = "<use-case>-steps:0.1.0"
 
 
 def _step(name: str, extra: list[str], outputs: dict[str, str]) -> dsl.ContainerSpec:

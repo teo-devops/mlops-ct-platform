@@ -2,7 +2,7 @@
 # contract. Every task runs the SAME container with `ctsteps <step>`; the
 # orchestrator only wires parameters between tasks. Porting this pipeline to
 # Airflow or Kubeflow Pipelines = rewriting this file, not the steps
-# (pipelines/adapters/).
+# (orchestrators/).
 apiVersion: argoproj.io/v1alpha1
 kind: WorkflowTemplate
 metadata:

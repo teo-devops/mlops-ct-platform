@@ -34,7 +34,7 @@ Served from `s3://models/automated-listing-engine/<model>/v<N>/model.joblib`; th
 
 The fraud check may degrade; the category may not. `api/app/fallback.py` implements explainable
 rules (`price_at_floor`, `price_below_category_floor` against per-category medians,
-`suspicious_keyword`); `api/app/breaker.py` opens the circuit after 5 failures for 30 s so a dead
+`suspicious_keyword`); `ctserve.CircuitBreaker` (libs/ctserve) opens the circuit after 5 failures for 30 s so a dead
 model costs no latency budget. Every answer says which source produced the fraud verdict
 (`model` | `fallback`) and which version.
 

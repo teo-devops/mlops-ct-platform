@@ -22,8 +22,7 @@ kubectl context other than `kind-ct`.
 | 09 | `use-cases/<uc>/scripts/09-induce-drift.sh` | `drift` | the closed loop: drifted world → monitor → retrain → promotion commit → new version served |
 | 10 | `cluster/10-down.sh` | `down` | delete the cluster |
 | — | `platform/status.sh` | `status` | Applications with owner group, every served model and pipeline, URLs and passwords |
-| — | `platform/credentials.sh` | — | the Argo CD repository credential: `status` / `add` / `remove` / `admin` |
-| — | `platform/deploy-local.sh` | `deploy-local` | same charts and values through Helm, on a cluster **without** Argo CD (dev loop) |
+| — | `platform/04-install.sh credential status\|add\|remove` | — | the Argo CD repository credential of a private fork |
 | — | `use-cases/<uc>/scripts/promote.sh` | `promote` | promote (or roll back to) a registry version: `make promote MODEL=fraud VERSION=1` |
 | — | `repo/validate-coherence.py` | `lint` | the GitOps tree is coherent (names, projects, kustomize wiring, platform modules) |
 | — | `repo/register-workload.py` | — | register a workload from the templates into a group: `<name> <path> --group <shared\|use-case>` |

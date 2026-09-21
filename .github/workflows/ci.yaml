@@ -21,11 +21,13 @@ jobs:
           cache: pip
       - name: Install
         run: |
-          pip install --quiet -e "libs/ctsteps[dev]" -e "use-cases/automated-listing-engine/plugin[dev]" -e "use-cases/automated-listing-engine/api[dev]"
+          pip install --quiet -e "libs/ctsteps[dev]" -e "libs/ctserve[dev]" -e "use-cases/automated-listing-engine/plugin[dev]" -e "use-cases/automated-listing-engine/api[dev]"
       - name: Lint
-        run: ruff check libs use-cases && ruff format --check libs use-cases
+        run: ruff check libs use-cases orchestrators && ruff format --check libs use-cases orchestrators
       - name: Test ctsteps (whole pipeline against moto + sqlite MLflow)
         run: cd libs/ctsteps && MLFLOW_DISABLE_AGENT_HINT=1 pytest -q
+      - name: Test ctserve
+        run: cd libs/ctserve && pytest -q
       - name: Test the use-case plugin
         run: cd use-cases/automated-listing-engine/plugin && MLFLOW_DISABLE_AGENT_HINT=1 pytest -q
       - name: Test the API
@@ -40,8 +42,10 @@ jobs:
         run: docker build -t ctsteps-base:ci libs/ctsteps
       - name: automated-listing-engine-steps
         run: docker build --build-arg BASE=ctsteps-base:ci -t automated-listing-engine-steps:ci use-cases/automated-listing-engine/plugin
+      - name: ctserve-base
+        run: docker build -t ctserve-base:ci libs/ctserve
       - name: automated-listing-engine-api
-        run: docker build -t automated-listing-engine-api:ci use-cases/automated-listing-engine/api
+        run: docker build --build-arg BASE=ctserve-base:ci -t automated-listing-engine-api:ci use-cases/automated-listing-engine/api
       - name: Images run as non-root and the CLI answers
         run: |
           [ "$(docker run --rm automated-listing-engine-steps:ci id -u)" = "10001" ]

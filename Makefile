@@ -14,7 +14,6 @@
 #   make down        delete the cluster
 #   make validate    static checks (coherence, render, helm lint, ruff, pytest)
 #   make venv        dev virtualenv with every python package (needed by validate)
-#   make deploy-local  same charts and values with helm directly, no Argo CD
 SHELL := /usr/bin/env bash
 .DEFAULT_GOAL := help
 export CLUSTER ?= ct
@@ -26,7 +25,7 @@ UC := use-cases/$(USE_CASE)/scripts
 # python with the dev dependencies (make venv creates it)
 PY := $(if $(wildcard .venv-dev/bin/python),$(CURDIR)/.venv-dev/bin/python,python3)
 
-.PHONY: help prereqs up secrets bootstrap wait build pipeline promote smoke drift status down demo validate deploy-local render lint test venv
+.PHONY: help prereqs up secrets bootstrap wait build pipeline promote smoke drift status down demo validate render lint test venv
 
 help:
 	@sed -n 's/^#   \(make [a-z-]*\) *\(.*\)/  \1\t\2/p' Makefile
@@ -43,7 +42,6 @@ smoke:      ; @$(UC)/08-smoke.sh
 drift:      ; @$(UC)/09-induce-drift.sh
 status:     ; @scripts/platform/status.sh
 down:       ; @scripts/cluster/10-down.sh
-deploy-local: ; @scripts/platform/deploy-local.sh
 
 demo: up secrets bootstrap wait build pipeline smoke
 
@@ -54,14 +52,14 @@ lint:
 	@python3 scripts/repo/validate-coherence.py
 	@kubectl kustomize gitops/environments/demo > /dev/null && kubectl kustomize gitops/bootstrap > /dev/null && echo "✓ kustomize renders"
 	@for c in workloads/*/ use-cases/*/workloads/*/; do [ -f "$$c/Chart.yaml" ] && helm lint "$$c" -f "$$c/values.yaml" -f "$$c/values-demo.yaml" --quiet && echo "✓ helm lint $$c"; done; true
-	@if $(PY) -m ruff --version >/dev/null 2>&1; then $(PY) -m ruff check libs use-cases && $(PY) -m ruff format --check libs use-cases && echo "✓ ruff"; else echo "ruff not installed (make venv): skipping python lint"; fi
+	@if $(PY) -m ruff --version >/dev/null 2>&1; then $(PY) -m ruff check libs use-cases orchestrators && $(PY) -m ruff format --check libs use-cases orchestrators && echo "✓ ruff"; else echo "ruff not installed (make venv): skipping python lint"; fi
 
 test:
-	@for d in libs/ctsteps use-cases/*/plugin use-cases/*/api; do [ -f "$$d/pyproject.toml" ] || continue; \
+	@for d in libs/* use-cases/*/plugin use-cases/*/api; do [ -f "$$d/pyproject.toml" ] || continue; \
 	  echo "== $$d"; (cd "$$d" && MLFLOW_DISABLE_AGENT_HINT=1 $(PY) -m pytest -q 2>&1 | tail -1) || exit 1; done
 
 venv:
 	python3 -m venv .venv-dev && .venv-dev/bin/pip install -q --upgrade pip \
-	  && .venv-dev/bin/pip install -q -e "libs/ctsteps[dev]" -e "use-cases/automated-listing-engine/plugin[dev]" -e "use-cases/automated-listing-engine/api[dev]"
+	  && .venv-dev/bin/pip install -q -e "libs/ctsteps[dev]" -e "libs/ctserve[dev]" -e "use-cases/automated-listing-engine/plugin[dev]" -e "use-cases/automated-listing-engine/api[dev]"
 
 validate: lint test

@@ -13,11 +13,12 @@ data:
   ALE_CATEGORIZER_LABELS: '{{ .Values.serving.categorizerLabels | splitList "," | toJson }}'
   ALE_CATEGORIZER_TIMEOUT: {{ .Values.serving.categorizerTimeout | quote }}
   ALE_FRAUD_TIMEOUT: {{ .Values.serving.fraudTimeout | quote }}
-  ALE_PREDICTION_LOG_ENABLED: {{ .Values.predictionLog.enabled | quote }}
-  ALE_PREDICTION_LOG_BUCKET: {{ .Values.predictionLog.bucket }}
-  ALE_S3_ENDPOINT_URL: {{ .Values.predictionLog.s3EndpointUrl }}
+  # platform contract read by ctserve.Telemetry (docs/design/contracts.md)
+  CT_PREDICTION_LOG_ENABLED: {{ .Values.predictionLog.enabled | quote }}
+  CT_PREDICTIONS_BUCKET: {{ .Values.predictionLog.bucket }}
+  S3_ENDPOINT_URL: {{ .Values.predictionLog.s3EndpointUrl }}
   {{- if .Values.eventBus.enabled }}
-  ALE_EVENT_BUS_BOOTSTRAP: {{ .Values.eventBus.bootstrap }}
-  ALE_EVENT_BUS_TOPIC: {{ .Values.eventBus.topic }}
+  CT_EVENT_BUS_BOOTSTRAP: {{ .Values.eventBus.bootstrap }}
+  CT_EVENT_BUS_TOPIC: {{ .Values.eventBus.topic }}
   {{- end }}
   AWS_DEFAULT_REGION: us-east-1

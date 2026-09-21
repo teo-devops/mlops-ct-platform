@@ -1,6 +1,7 @@
-FROM python:3.12-slim
+ARG BASE=ctserve-base:0.1.0
+FROM ${BASE}
 ARG GIT_COMMIT=unknown
-ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 ALE_GIT_COMMIT=${GIT_COMMIT}
+ENV ALE_GIT_COMMIT=${GIT_COMMIT}
 WORKDIR /srv
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt

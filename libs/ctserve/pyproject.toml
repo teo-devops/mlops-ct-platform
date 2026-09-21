@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ctserve"
+version = "0.1.0"
+description = "Serving-side contract of the platform for use-case APIs: metrics, prediction log, event bus, circuit breaker."
+requires-python = ">=3.12"
+dependencies = [
+  "prometheus-client>=0.21",
+  "structlog==26.1.0",
+  "boto3>=1.35",
+  "confluent-kafka>=2.6",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "ruff>=0.8"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

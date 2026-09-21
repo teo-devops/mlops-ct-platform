@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 
-from app.event_bus import EventBus
+from ctserve.event_bus import EventBus
 
 
 class FakeProducer:
