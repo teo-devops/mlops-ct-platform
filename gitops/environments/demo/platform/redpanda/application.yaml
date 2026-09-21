@@ -37,9 +37,11 @@ spec:
     automated:
       selfHeal: true
       prune: true
+    # Client-side apply on purpose: the chart renders null fields and a
+    # `timeoutSeconds: 0` probe that server-side apply never reconciles
+    # (permanent OutOfSync); verified on kind with chart 26.2.3.
     syncOptions:
       - CreateNamespace=true
-      - ServerSideApply=true
       - RespectIgnoreDifferences=true
     retry:
       limit: 10
