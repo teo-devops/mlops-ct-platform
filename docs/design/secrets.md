@@ -21,4 +21,4 @@ Human-facing passwords (Argo CD, Grafana, MinIO root) are **known demo defaults*
 (External Secrets, Vault) and the Git credential is a bot token scoped to one repository; in the
 aws profile S3 credentials disappear in favour of IRSA.
 
-Example: [use-cases/automated-listing-engine/docs/architecture.md](../../use-cases/automated-listing-engine/docs/architecture.md#artifact-store-identities-used).
+Each use case lists the identities it uses in its `docs/architecture.md` ("Artifact-store identities used").

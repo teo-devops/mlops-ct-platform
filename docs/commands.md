@@ -1,8 +1,9 @@
 # Command reference
 
 Everything is `make <command>` from the repository root; `make` lists them. Commands act on the
-cluster `ct` (kind) and, when it matters, on the use case `USE_CASE=<name>` (default
-`automated-listing-engine`). Variables go before or after the command: `USE_CASE=x make smoke`.
+cluster `ct` (kind) and, when it matters, on **one use case**: `USE_CASE=<name>` (default: the first
+use case the demo deploys; `make use-case` lists them). There is one demo per use case. Variables go
+before or after the command: `USE_CASE=x make smoke`.
 
 ## Start here
 
@@ -67,7 +68,7 @@ Their cards in [modules/](modules/README.md) say what else to flip in the use ca
 
 | Variable | Default | Used by |
 |---|---|---|
-| `USE_CASE` | `automated-listing-engine` | every use-case command |
+| `USE_CASE` | the first deployed use case | every use-case command; one demo per use case |
 | `CLUSTER` | `ct` | cluster and context (`kind-ct`) |
 | `MODEL`, `VERSION`, `TRIGGER` | — | `promote`, `rollback` |
 | `MODELS`, `PROFILE`, `REQUESTS` | from `usecase.yaml` | `pipeline`, `drift` |

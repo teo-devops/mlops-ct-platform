@@ -12,8 +12,8 @@ make drift       # the world changes → drift detected → retrain → promotio
 ```
 
 What you get: a kind cluster `ct` with the platform (Argo CD, KServe, MLflow, Argo Workflows,
-Prometheus/Grafana, MinIO) and the example use case (`automated-listing-engine`: two models behind one
-API). `make status` prints the UIs and passwords; the ones worth opening first:
+Prometheus/Grafana, MinIO) and **one use case** — the first the demo deploys (`make use-case` lists them;
+`make demo USE_CASE=<name>` picks another). Each use case has its own demo, README and runbook. `make status` prints the UIs and passwords; the ones worth opening first:
 
 | | |
 |---|---|

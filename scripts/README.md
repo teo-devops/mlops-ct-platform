@@ -3,7 +3,7 @@
 Grouped by purpose; the scripts of the **launch flow carry a continuous number (01 → 10)** so the
 order is visible in any file listing, and the `Makefile` runs the same order (`make help`).
 Steps 01–05 and 10 are the platform's; **06–09 run for one use case** (`scripts/use-case/`, reading
-`use-cases/<name>/usecase.yaml`) and `make` runs them for `USE_CASE=<name>` (default `automated-listing-engine`).
+`use-cases/<name>/usecase.yaml`) and `make` runs them for `USE_CASE=<name>` (default: the first deployed use case).
 The platform never names a use case.
 Unnumbered scripts are on-demand tools. Every script resolves paths from the repository root
 through `lib.sh` (`REPO_ROOT`), so they run from anywhere, and every one refuses to touch a
@@ -26,7 +26,7 @@ kubectl context other than `kind-ct`.
 | — | `platform/04-install.sh credential status\|add\|remove` | — | the Argo CD repository credential of a private fork |
 | — | `platform/module.sh enable\|disable\|status` | `module` | opt-in platform modules: line in the kustomization, images, out-of-band state, hooks (`ENABLE=` / `DISABLE=` / `COMMIT=1`) |
 | — | `use-case/toggle.sh enable\|disable\|status` | `use-case` | which use cases the demo deploys (`ENABLE=` / `DISABLE=` / `COMMIT=1`) |
-| — | `use-case/promote.sh` | `promote` | promote (or roll back to) a registry version: `make promote MODEL=fraud VERSION=1` |
+| — | `use-case/promote.sh` | `promote` | promote (or roll back to) a registry version: `make promote MODEL=<m> VERSION=<n>` |
 | — | `repo/validate-coherence.py` | `lint` | the GitOps tree is coherent (names, projects, kustomize wiring, platform modules) |
 | — | `repo/register-workload.py` | — | register a workload from the templates into a group: `<name> <path> --group <shared\|use-case>` |
 | — | `repo/render.sh` | `render` | what Argo CD would apply (rendered manifests) |

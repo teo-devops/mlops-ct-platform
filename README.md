@@ -10,9 +10,9 @@ ingest → validate (gate) → train → evaluate champion/challenger (gate) →
 
 Every tool sits behind a **contract** — artifact store, model registry, serving, orchestration,
 monitoring, model monitoring — and is a self-contained, pinned **module** that can be swapped or
-disabled without touching anything else. The example use case, the *Automated Listing Engine*
-(ALE: categorise a marketplace listing and flag fraud, inspired by a real hiring case study of a
-second-hand marketplace), is a **plugin**: the platform never mentions it.
+disabled without touching anything else. A use case is a **plugin** the platform never mentions:
+each one has its own demo (`make demo USE_CASE=<name>`), its own namespaces, buckets and
+credentials, and cannot see the others. Two ship with the repository ([use-cases/](use-cases/README.md)).
 
 | What you get | Where |
 |---|---|
@@ -26,16 +26,20 @@ second-hand marketplace), is a **plugin**: the platform never mentions it.
 | Platform scripts: cluster lifecycle, bootstrap, operations, repo tooling | `scripts/` |
 | kind cluster definition and the images preloaded into it | `cluster/` |
 | Platform docs: architecture, contracts, the loop, module cards, decisions, profiles, runbook | `docs/` |
-| The use cases: `usecase.yaml`, plugin, API, three charts, docs — isolated from each other; `make new-use-case` scaffolds one | `use-cases/automated-listing-engine/` |
+| The use cases: `usecase.yaml`, plugin, API, three charts, docs — isolated from each other; `make new-use-case` scaffolds one | `use-cases/<name>/` |
 
 ## Start
 
 ```bash
 make prereqs   # tools, credentials, network, memory — and what the demo will deploy
-make demo      # cluster → platform → example use case → smoke → status   (≈15 min, ~8 GiB)
+make demo      # cluster → platform → one use case → smoke → status   (≈15 min, ~8 GiB)
 make drift     # the world changes → drift → retrain → promotion commit → new version served
 make down
 ```
+
+There is **one demo per use case**: `make demo USE_CASE=<name>` (default: the first use case the
+demo deploys — `make use-case` lists them). The platform is shared; each use case's loop, data and
+namespaces are its own.
 
 `make` lists every command; **[docs/getting-started.md](docs/getting-started.md)** has the three
 ways in (see the loop · bring your use case · operate the platform) and
@@ -49,7 +53,7 @@ what `main` says, so enabling is a commit (`COMMIT=1` does it):
 ```bash
 make module                          # Airflow, Redpanda, Argo Rollouts: opt-in, off by default
 make module ENABLE=airflow COMMIT=1
-make use-case                        # the example use case is deployed; delivery-eta is opt-in
+make use-case                        # which use cases the demo deploys (one is on, the other opt-in)
 make use-case ENABLE=delivery-eta COMMIT=1 && USE_CASE=delivery-eta make build pipeline smoke drift
 make new-use-case NAME=churn MODELS=risk   # your own: rendered, registered, working
 ```
@@ -67,7 +71,7 @@ Every UI is published by ingress-nginx on `http://<name>.localhost:8088` (browse
 | Grafana | http://grafana.localhost:8088 | `admin` | `admin-demo` | *CT Loop* dashboard under folder `mlops-ct-platform` |
 | Prometheus | http://prometheus.localhost:8088 | — | — | |
 | MinIO console | http://minio.localhost:8088 | `root` | `minio-demo` | buckets `datasets` · `models` · `predictions` · `mlflow` |
-| Automated Listing Engine API | http://automated-listing-engine.localhost:8088/docs | — | — | the example use case (OpenAPI UI) |
+| a use case's API | http://<use-case>.localhost:8088/docs | — | — | one per deployed use case (OpenAPI UI) |
 
 > **These are demo defaults, deliberately known.** They exist so that a fresh laptop needs no
 > lookup; they are never in a Secret in Git (the scripts create them) but they are in this file.
@@ -97,30 +101,16 @@ in `docs/modules/` saying what it promises, how to replace it and how to disable
 reference architecture that are not implemented (Kafka, Feast, Katib, Great Expectations, Argo
 Rollouts) have cards too, with their contract and where they plug in.
 
-## The example use case: Automated Listing Engine (ALE)
+## Use cases
 
-`use-cases/automated-listing-engine/` — categorise a marketplace listing and flag fraud; two models, one API
-with graceful degradation, a synthetic data source with a "post-season" drift profile. It is the
-use case the `make` targets drive by default (`USE_CASE=automated-listing-engine`), and it proves the loop:
+| Use case | What | In the demo |
+|---|---|---|
+| [automated-listing-engine](use-cases/automated-listing-engine/README.md) | categorise a marketplace listing and flag fraud — two classifiers, one API with rules fallback; inspired by a hiring case study of a second-hand marketplace | deployed |
+| [delivery-eta](use-cases/delivery-eta/README.md) | minutes from order to door — one regressor, no fallback; generated with `make new-use-case` | opt-in |
 
-```
-$ make drift
-drift-categorizer  level=retrain max_psi=0.3285 rows=1205 retrain=ct-categorizer-drift-j7m77
-✓ ct-categorizer-drift-j7m77 Succeeded      gate: f1_macro improved by 0.1511 (0.99 vs 0.84)
-46e44d1 ct: promote automated-listing-engine/categorizer v2 (trigger=drift)
-served versions after: categorizer/fraud = 2 1   (before: 1 1)
-```
-
-* **No model is deployed by hand** — only through the pipeline's gates and a promotion commit.
-* **Silent failure is caught by distributions**, not by errors: every prediction is logged, the
-  monitor compares it with the champion's training reference every 10 minutes.
-* **Degradation is a product decision**: the fraud check falls back to explainable rules, the
-  listing flow never blocks; the categorizer fails loud.
-* **Isolation is declared**: one namespace/AppProject/Application per workload, NetworkPolicies
-  shipped by each chart, verified by the smoke test.
-
-A second use case, `delivery-eta` (one regressor, no fallback), was generated with
-`make new-use-case` and runs next to it, isolated — see [use-cases/README.md](use-cases/README.md).
+Each has its own README, docs, runbook and demo (`make demo USE_CASE=<name>`); what every use case
+proves — no model deployed by hand, silent failure caught by distributions, isolation declared and
+verified — is in [use-cases/README.md](use-cases/README.md).
 
 ## Repository map
 
@@ -151,11 +141,10 @@ mlops-ct-platform/
 │   ├── use-case/                             the flow of one use case: secrets · 06-build · 07-pipeline · 08-smoke · 09-drift · promote
 │   └── repo/                                 validate-coherence.py · register-workload.py · new-use-case.py (+ use-case-template/) · render.sh
 ├── use-cases/                                one directory per use case (use-cases/README.md = how to add one)
-│   ├── delivery-eta/                         the second use case, generated by the scaffold (same shape)
-│   └── automated-listing-engine/
+│   └── <name>/                               one per use case, same shape (two ship: automated-listing-engine, delivery-eta)
 │       ├── usecase.yaml                      what the platform's flow scripts need (models, API, drift profile)
 │       ├── README.md
-│       ├── docs/                             architecture of the instance · case-study · runbook
+│       ├── docs/                             architecture of the instance · runbook (· case study)
 │       ├── plugin/                           the UseCase implementation + the steps image (FROM ctsteps-base)
 │       ├── api/                              FastAPI: fan-out, fallback rules, schemas (telemetry/metrics from libs/ctserve) + tests
 │       └── workloads/                        api/ · serving/ · pipelines/ — one Helm chart per workload
@@ -175,7 +164,6 @@ mlops-ct-platform/
 * [scripts/README.md](scripts/README.md) — every script, its `make` target and the launch order
 * [docs/modules/](docs/modules/) — one card per module, including the gaps (Kafka, Feast, Katib, Great Expectations, Argo Rollouts)
 * [docs/decisions.md](docs/decisions.md) — ADRs: why Argo Workflows and not Airflow in kind, sqlite, MinIO, push vs PR…
-* [use-cases/automated-listing-engine/docs/](use-cases/automated-listing-engine/docs/) — the example use case: instance architecture, case study, runbook
 * [docs/operations/what-the-demo-does-not-prove.md](docs/operations/what-the-demo-does-not-prove.md) — read this before extrapolating
 
 The GitOps control plane is inherited from [teo-devops/Argo-cd-Labs](https://github.com/teo-devops/Argo-cd-Labs);

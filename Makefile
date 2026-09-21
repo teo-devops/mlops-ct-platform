@@ -2,9 +2,11 @@
 SHELL := /usr/bin/env bash
 .DEFAULT_GOAL := help
 export CLUSTER ?= ct
-# The use case the use-case commands act on. The flow scripts are the platform's
-# (scripts/use-case/); they read use-cases/$(USE_CASE)/usecase.yaml and nothing else.
-USE_CASE ?= automated-listing-engine
+# The use case the use-case commands act on: USE_CASE=<name>, default = the first
+# use case the demo deploys (gitops/environments/demo/apps/kustomization.yaml).
+# One demo per use case: `make demo USE_CASE=<name>`. The flow scripts are the
+# platform's (scripts/use-case/); they read use-cases/$(USE_CASE)/usecase.yaml.
+USE_CASE ?= $(shell sed -nE 's/^\s*-\s*([a-z0-9-]+)\s*$$/\1/p' gitops/environments/demo/apps/kustomization.yaml | grep -vx shared | head -1)
 export USE_CASE
 UC := scripts/use-case
 # python with the dev dependencies (make venv creates it)
@@ -18,7 +20,7 @@ help:
 	@awk 'BEGIN {FS=":.*##"} \
 	  /^##@/ {printf "\n\033[1m%s\033[0m\n", substr($$0, 5); next} \
 	  /^[a-z-]+:.*##/ {printf "  \033[36m%-14s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST)
-	@printf "\n  USE_CASE=<name> selects the use case (default %s); every UI answers on http://<name>.localhost:8088\n\n" "$(USE_CASE)"
+	@printf "\n  One demo per use case: USE_CASE=<name> (deployed ones: make use-case; now defaulting to '%s').\n  Every UI answers on http://<name>.localhost:8088\n\n" "$(USE_CASE)"
 
 ##@ Start here
 prereqs: ## check tools, credentials, network and memory — and what the demo will deploy

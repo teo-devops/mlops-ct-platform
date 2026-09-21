@@ -65,4 +65,4 @@ need — belongs to the `platform` project. Applications carry the label
 platform workloads from use-case workloads without knowing any use case. Secrets are never in Git
 ([secrets.md](secrets.md)).
 
-The concrete instance of all this for the example use case: [use-cases/automated-listing-engine/docs/architecture.md](../../use-cases/automated-listing-engine/docs/architecture.md).
+The concrete instance of all this for a use case is in its own docs: `use-cases/<name>/docs/architecture.md` ([use-cases/README.md](../../use-cases/README.md) lists them).

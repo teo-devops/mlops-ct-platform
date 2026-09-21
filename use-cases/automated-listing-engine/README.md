@@ -6,9 +6,8 @@ Inspired by, and answering, the hiring case study of a second-hand marketplace
 ([docs/case-study.md](docs/case-study.md)); the data is synthetic.
 
 ```
+usecase.yaml what the platform's flow scripts need (models, API host/path/sample, `fraud` degradable, drift profile)
 docs/       architecture of the instance, the case study, the runbook
-scripts/    06-build-images · 07-run-pipeline · 08-smoke · 09-induce-drift · promote · secrets
-            (steps 06-09 continue the platform's launch flow; `make` runs them with USE_CASE=automated-listing-engine)
 plugin/     the `UseCase` implementation (data generator with a `drift` profile, schema, two
             scikit-learn pipelines, metrics) and the steps image: FROM ctsteps-base + this package
 api/        FastAPI orchestrator: parallel fan-out, per-model timeouts, circuit breaker + rules
@@ -18,6 +17,31 @@ workloads/  the three workloads (1 namespace = 1 AppProject = 1 Application each
   serving/    two InferenceServices pulled by version from s3://models/automated-listing-engine/<model>/v<N>
   pipelines/  WorkflowTemplates ct-pipeline / ct-promote / ct-drift, weekly CronWorkflows, drift CronWorkflow
 ```
+
+## Its demo
+
+```bash
+make demo USE_CASE=automated-listing-engine    # or just `make demo` while it is the first deployed use case
+make drift USE_CASE=automated-listing-engine
+```
+
+The loop, as `make drift` shows it (the world turns "post-season": prices collapse, electronics
+floods, new vocabulary):
+
+```
+drift-categorizer  level=retrain max_psi=0.3285 rows=1205 retrain=ct-categorizer-drift-j7m77
+✓ ct-categorizer-drift-j7m77 Succeeded      gate: f1_macro improved by 0.1511 (0.99 vs 0.84)
+46e44d1 ct: promote automated-listing-engine/categorizer v2 (trigger=drift)
+served versions after: categorizer=2 fraud=1   (before: categorizer=1 fraud=1)
+```
+
+* **No model is deployed by hand** — only through the pipeline's gates and a promotion commit.
+* **Silent failure is caught by distributions**, not by errors: every prediction is logged, the
+  monitor compares it with the champion's training reference every 10 minutes.
+* **Degradation is a product decision**: the fraud check falls back to explainable rules, the
+  listing flow never blocks; the categorizer fails loud.
+* **Isolation is declared**: one namespace/AppProject/Application per workload, its own buckets and
+  users, NetworkPolicies shipped by each chart — verified by `make smoke`.
 
 ## Try it
 

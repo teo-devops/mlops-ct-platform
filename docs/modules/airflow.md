@@ -9,13 +9,13 @@
 | **Enable** | `make module ENABLE=airflow COMMIT=1` (uncomments its line, preloads its images, creates its out-of-band state, commits). UI: http://airflow.localhost:8088 |
 | **Disable** | `make module DISABLE=airflow COMMIT=1`: Argo CD prunes the module (the Postgres PVC is `Prune=false`) |
 
-Wave 2. `orchestrators/airflow/ct_dags.py` is a factory: one DAG per use case and model (`ct_pipeline_<use_case>_<model>`), built from the use case's pipelines values and its Application's namespace — the platform names no use case. Exercised on 2026-09-21 (`ct_pipeline_categorizer`, the pre-factory id: gate refused an equal challenger, then promoted v3 in commit `1f01dc3`). What is *exercised*: the DAGs run the seven steps with the
+Wave 2. `orchestrators/airflow/ct_dags.py` is a factory: one DAG per use case and model (`ct_pipeline_<use_case>_<model>`), built from the use case's pipelines values and its Application's namespace — the platform names no use case. Exercised on 2026-09-21 on a use case with two models (gate refused an equal challenger, then promoted v3 in commit `1f01dc3`). What is *exercised*: the DAGs run the seven steps with the
 same image, environment, arguments and resources as the Argo `WorkflowTemplate ct-pipeline`; XCom carries the
 three scalars (`mlflow_run_id`, `promote`, `version`) from `result.json`; a `ShortCircuitOperator` is the gate;
 `promote` pushes the deployment commit exactly as the Argo path does. Trigger a run:
 
 ```bash
-curl -s -X POST http://airflow.localhost:8088/api/v2/dags/ct_pipeline_automated_listing_engine_categorizer/dagRuns \
+curl -s -X POST http://airflow.localhost:8088/api/v2/dags/ct_pipeline_<use_case>_<model>/dagRuns \
   -H 'content-type: application/json' -d '{"logical_date": null, "conf": {"trigger": "manual"}}'
 ```
 

@@ -1,8 +1,8 @@
 # Runbook (platform)
 
-Use-case specific commands live with the use case (e.g.
-[use-cases/automated-listing-engine/docs/runbook.md](../../use-cases/automated-listing-engine/docs/runbook.md)).
-`make` targets that operate a use case take `USE_CASE=<name>` (default `automated-listing-engine`).
+What is specific to a use case lives with the use case (`use-cases/<name>/docs/runbook.md`).
+`make` targets that operate a use case take `USE_CASE=<name>` (default: the first use case the demo
+deploys — `make use-case` lists them).
 
 | I want to… | Do |
 |---|---|
@@ -11,7 +11,7 @@ Use-case specific commands live with the use case (e.g.
 | retrain, promote, roll back, smoke, drift for a use case | `make pipeline` · `make promote MODEL=<m> VERSION=<n>` · `make smoke` · `make drift` (with `USE_CASE=`) |
 | hurry an Argo CD sync | `kubectl -n argocd annotate application <app> argocd.argoproj.io/refresh=normal --overwrite` |
 | see what Argo CD would apply before committing | `make render` (`scripts/repo/render.sh`) |
-| rotate a platform secret | delete it, `make secrets` (with `MINIO_ROOT_PASSWORD=` / `GRAFANA_ADMIN_PASSWORD=` for the human-facing ones), restart the consumer (`minio`, `kps-grafana`), re-sync `minio` so the provisioning hook runs with the new root; Git credential: `scripts/platform/credentials.sh add`; Argo CD admin: new bcrypt in `gitops/argo-cd/values.yaml` |
+| rotate a platform secret | delete it, `make secrets` (with `MINIO_ROOT_PASSWORD=` / `GRAFANA_ADMIN_PASSWORD=` for the human-facing ones), restart the consumer (`minio`, `kps-grafana`), re-sync `minio` so the provisioning hook runs with the new root; Git credential: `scripts/platform/04-install.sh credential add`; Argo CD admin: new bcrypt in `gitops/argo-cd/values.yaml` |
 | register a workload | `python3 scripts/repo/register-workload.py <name> <path> --group <shared\|use-case>` — then READ the AppProject |
 | add a use case | [use-cases/README.md](../../use-cases/README.md) |
 | add / replace / disable a platform module | a directory under `gitops/environments/demo/platform/` + its card in `docs/modules/`; disable = remove its line from `platform/kustomization.yaml` |
