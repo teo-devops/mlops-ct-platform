@@ -28,6 +28,25 @@ second-hand marketplace), is a **plugin**: the platform never mentions it.
 | Platform docs: architecture, contracts, the loop, module cards, decisions, profiles, runbook | `docs/` |
 | The use cases: `usecase.yaml`, plugin, API, three charts, docs — isolated from each other; `make new-use-case` scaffolds one | `use-cases/automated-listing-engine/` |
 
+## What the demo deploys, and how to trim it
+
+The demo is **the core** — GitOps engine, cert-manager, KServe, MLflow, Argo Workflows,
+Prometheus/Grafana + Pushgateway, MinIO, the CT rules — plus **the use cases listed** in
+`gitops/environments/demo/{apps,projects}/kustomization.yaml` (the example use case; `delivery-eta`
+is opt-in) and **the opt-in modules listed** in `platform/kustomization.yaml` (Airflow, Redpanda, Argo
+Rollouts: off). Nothing that is off is preloaded, secreted or synced:
+
+```bash
+make module                          # what is on / opt-in
+make module ENABLE=airflow COMMIT=1  # a module: line, images, out-of-band state, hook, commit
+make use-case                        # which use cases the demo deploys
+make use-case ENABLE=delivery-eta COMMIT=1
+make demo USE_CASE=delivery-eta      # refuses a use case the demo does not deploy
+```
+
+Argo CD deploys what `main` says, so enabling is a commit (`COMMIT=1` does it). ~8 GiB for the core
+with one use case; each opt-in module adds 0.5–1.5 GiB.
+
 ## Quickstart (≈15 minutes on a laptop)
 
 Requirements: Docker, kind ≥ 0.31, kubectl, helm ≥ 3.14, python ≥ 3.11 with PyYAML, `gh` logged in
@@ -36,7 +55,7 @@ so on your fork you need a token that can write) — `make prereqs` checks them.
 
 ```bash
 # platform (scripts/cluster, scripts/platform)
-make up          # 02  kind cluster + ingress-nginx + image preload (~5 min)
+make up          # 02  kind cluster + ingress-nginx + image preload of the ENABLED modules (~5 min)
 make secrets     # 03  platform identities and Secrets, then each use case's (random, cluster-only, never in Git)
 make bootstrap   # 04  Argo CD from the chart, then root-app: everything else arrives by GitOps
 make wait        # 05  platform modules Synced/Healthy

@@ -6,8 +6,8 @@
 | **Demo implementation** | Apache Airflow on `LocalExecutor`; one `KubernetesPodOperator` per step in the use case's pipelines namespace; the DAGs of `orchestrators/airflow/` delivered by git-sync from this repository; own Postgres (`manifests/postgres.yaml`); no login (SimpleAuthManager, everyone admin — like the Argo Workflows UI) |
 | **Pinned version** | chart 1.22.0 (Airflow 3.2.2), `postgres:16.10-alpine`, git-sync v4.4.2 |
 | **Namespace** | airflow (api-server, scheduler, dag-processor, postgres); step pods in each use case's pipelines namespace |
-| **Enable** | uncomment `- airflow` in `gitops/environments/demo/platform/kustomization.yaml`, `make secrets` (creates its out-of-band state), commit. UI: http://airflow.localhost:8088 |
-| **Disable** | comment the line again: Argo CD prunes the module (the Postgres PVC is `Prune=false`) |
+| **Enable** | `make module ENABLE=airflow COMMIT=1` (uncomments its line, preloads its images, creates its out-of-band state, commits). UI: http://airflow.localhost:8088 |
+| **Disable** | `make module DISABLE=airflow COMMIT=1`: Argo CD prunes the module (the Postgres PVC is `Prune=false`) |
 
 Wave 2. `orchestrators/airflow/ct_dags.py` is a factory: one DAG per use case and model (`ct_pipeline_<use_case>_<model>`), built from the use case's pipelines values and its Application's namespace — the platform names no use case. Exercised on 2026-09-21 (`ct_pipeline_categorizer`, the pre-factory id: gate refused an equal challenger, then promoted v3 in commit `1f01dc3`). What is *exercised*: the DAGs run the seven steps with the
 same image, environment, arguments and resources as the Argo `WorkflowTemplate ct-pipeline`; XCom carries the

@@ -11,7 +11,7 @@ kubectl context other than `kind-ct`.
 
 | # | Script | `make` | What it does |
 |---|---|---|---|
-| 01 | `cluster/01-prereqs.sh` | `prereqs` | tools, GitHub credential, WARP/TLS warning |
+| 01 | `cluster/01-prereqs.sh` | `prereqs` | tools, GitHub credential, WARP off, port 8088 free, builder DNS, memory; prints what the demo will deploy |
 | 02 | `cluster/02-up.sh` | `up` | kind cluster from `cluster/kind.yaml`, image preload from `cluster/images.txt`, ingress-nginx |
 | 03 | `platform/03-secrets.sh` | `secrets` | platform namespaces, artifact-store identities, platform Secrets (opt-in modules only while enabled); then every `use-cases/*/scripts/secrets.sh` |
 | — | `use-case/secrets.sh` | (via 03) | the use case's namespaces, consumer credentials, Git credential, data-source state |
@@ -24,6 +24,8 @@ kubectl context other than `kind-ct`.
 | 10 | `cluster/10-down.sh` | `down` | delete the cluster |
 | — | `platform/status.sh` | `status` | Applications with owner group, every served model and pipeline, URLs and passwords |
 | — | `platform/04-install.sh credential status\|add\|remove` | — | the Argo CD repository credential of a private fork |
+| — | `platform/module.sh enable\|disable\|status` | `module` | opt-in platform modules: line in the kustomization, images, out-of-band state, hooks (`ENABLE=` / `DISABLE=` / `COMMIT=1`) |
+| — | `use-case/toggle.sh enable\|disable\|status` | `use-case` | which use cases the demo deploys (`ENABLE=` / `DISABLE=` / `COMMIT=1`) |
 | — | `use-case/promote.sh` | `promote` | promote (or roll back to) a registry version: `make promote MODEL=fraud VERSION=1` |
 | — | `repo/validate-coherence.py` | `lint` | the GitOps tree is coherent (names, projects, kustomize wiring, platform modules) |
 | — | `repo/register-workload.py` | — | register a workload from the templates into a group: `<name> <path> --group <shared\|use-case>` |
