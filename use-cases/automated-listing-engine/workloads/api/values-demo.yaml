@@ -6,7 +6,7 @@ models:
   categorizer:
     version: "3"
   fraud:
-    version: "2"
+    version: "1"
 # opt-in event-bus module on (docs/modules/event-bus.md)
 eventBus:
   enabled: true
