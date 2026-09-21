@@ -1,0 +1,75 @@
+useCase: delivery-eta
+# Plugin image: ctsteps + the delivery_eta package (use-cases/delivery-eta/plugin/Dockerfile)
+image:
+  repository: delivery-eta-steps
+  tag: 0.1.0
+  pullPolicy: IfNotPresent
+useCaseRef: "delivery_eta:use_case"
+models: [eta]
+
+# ServiceAccount created by the argo-workflows platform module in this namespace.
+serviceAccount: argo-workflow
+
+# --- contracts the steps talk to --------------------------------------------
+artifactStore:
+  endpointUrl: http://minio.minio.svc.cluster.local:9000
+  secretName: pipeline-s3-credentials     # user `pipeline`, created out of band
+  datasetsBucket: delivery-eta-datasets       # this use case's buckets (isolation)
+  modelsBucket: delivery-eta-models
+  predictionsBucket: delivery-eta-predictions
+registry:
+  trackingUri: http://mlflow.mlflow.svc.cluster.local
+promote:
+  gitSecretName: pipeline-git-credentials # GIT_USER / GIT_TOKEN / GIT_REPO, out of band
+  branch: main
+  # files whose `models.<model>.version` the promote step bumps (one commit)
+  valuesFiles:
+    - use-cases/delivery-eta/workloads/serving/values-demo.yaml
+    - use-cases/delivery-eta/workloads/api/values-demo.yaml
+  authorName: ct-pipeline
+  authorEmail: ct-pipeline@mlops-ct-platform.local
+
+# The upstream data source. In the demo the use case generates its data; the
+# ConfigMap below (created by scripts/platform/03-secrets.sh, NOT in Git — it is
+# state of the outside world, like a Secret) tells it which "world" to
+# generate: `profile: ""` (normal) or `profile: drift` (post-season).
+dataSource:
+  configMap: ct-data-source
+data:
+  rows: 6000
+  seed: 42
+  holdoutRatio: 0.25
+  referenceRows: 2000
+
+schedule:
+  # Weekly safety net: even with no drift, a model is never older than a week.
+  enabled: true
+  cron: "0 3 * * 1"
+
+drift:
+  enabled: true
+  cron: "*/10 * * * *"
+  windowMinutes: 30
+  warn: 0.2
+  retrain: 0.3
+  minRows: 200
+  pushgateway: pushgateway.observability.svc.cluster.local:9091
+
+resources:
+  requests: {cpu: 250m, memory: 512Mi}
+  limits: {cpu: "2", memory: 2Gi}
+
+# Event bus (opt-in platform module `redpanda`): when enabled the drift monitor
+# reads its live window from the topic instead of the S3 prediction log.
+eventBus:
+  enabled: false
+  bootstrap: redpanda.redpanda.svc.cluster.local:9093
+  topic: predictions
+  namespace: redpanda
+  port: 9093
+
+networkPolicy:
+  enabled: true
+  artifactStoreNamespace: minio
+  registryNamespace: mlflow
+  observabilityNamespace: observability

@@ -1,0 +1,16 @@
+# What the platform's flow scripts (scripts/use-case/*) need to know about this
+# use case. Everything else the platform learns from the charts' values.
+name: delivery-eta
+package: delivery_eta                    # python package of the plugin: CT_USE_CASE=<package>:use_case
+models: [eta]
+api:
+  enabled: true
+  host: delivery-eta.localhost
+  path: /v1/deliveries/eta
+  sample: {distance_km: 4.2, weight_kg: 1.5, hour: 18, zone: north}
+  # smoke fallback drill: the model whose predictor is killed; the API must keep
+  # answering (uc_fallback_total grows). Empty = the use case has no fallback.
+  degradable_model: ""
+drift:
+  profile: strike                      # a transport strike: the world `make drift` flips to
+  requests: 600

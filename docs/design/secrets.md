@@ -11,7 +11,7 @@ InferenceServices need their credentials on the first attempt), by scripts that 
 |---|---|---|
 | Argo CD operation | `argocd/repo-mlops-ct-platform` (read token of the repository — only needed by a private fork, the public repository is cloned anonymously), `argocd-initial-admin-secret` | `scripts/platform/04-install.sh` phase 0 / Argo CD; rotate with `scripts/platform/04-install.sh credential add` |
 | Platform | `minio/minio-root`; `minio/minio-users` (one secret key per consumer user declared in `workloads/minio/values.yaml`); `mlflow/mlflow-s3-credentials`; `observability/grafana-admin`; when the opt-in airflow module is enabled: `airflow/airflow-postgres`, `airflow-metadata`, `airflow-fernet-key`, `airflow-api-secret-key`, `airflow-jwt-secret` | `scripts/platform/03-secrets.sh` |
-| Use case | its namespaces; the artifact-store credentials of its consumers (copied from `minio/minio-users` with `minio_user_secret` from `scripts/lib.sh`); its Git credential for `promote`; any data-source state | `use-cases/<name>/scripts/secrets.sh`, run last by `03-secrets.sh` |
+| Use case | its namespaces; the credentials of **its own** artifact-store users `<uc>-reader/-pipeline/-api` (copied from `minio/minio-users` with `minio_user_secret`); its Git credential for `promote`; its data-source state | `scripts/use-case/secrets.sh` for every `use-cases/*/usecase.yaml`, run last by `03-secrets.sh` |
 
 The artifact-store **identities are platform property** (the access matrix is `users:` in the
 MinIO chart); a use case only receives the keys of the users it is allowed to use. Adding a use

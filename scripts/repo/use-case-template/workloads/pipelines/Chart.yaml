@@ -1,0 +1,8 @@
+apiVersion: v2
+name: __UC__-pipelines
+description: >-
+  Continuous-training pipeline of __UC_TITLE__ on Argo Workflows: the ctsteps
+  contract as a WorkflowTemplate, a weekly safety-net schedule and the drift
+  monitor that retrains on demand.
+type: application
+version: 0.1.0

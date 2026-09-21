@@ -26,6 +26,7 @@ The AppProject it writes defines privilege limits — READ IT before committing.
 
 Inherited from teo-devops/Argo-cd-Labs scripts/alta-workload.py.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -50,7 +51,7 @@ def render(template: pathlib.Path, values: dict[str, str]) -> str:
     lines = template.read_text(encoding="utf-8").splitlines(keepends=True)
     seps = [i for i, l in enumerate(lines) if RX_SEPARATOR.match(l.rstrip())]
     if len(seps) >= 2:
-        lines = lines[seps[1] + 1:]
+        lines = lines[seps[1] + 1 :]
     text = "".join(lines)
     # Longest markers first so that PATH does not eat REPO_URL etc.
     for marker in sorted(values, key=len, reverse=True):
@@ -61,7 +62,8 @@ def render(template: pathlib.Path, values: dict[str, str]) -> str:
 def add_to_kustomization(kustomization: pathlib.Path, entry: str) -> bool:
     if not kustomization.exists():
         kustomization.write_text(
-            "apiVersion: kustomize.config.k8s.io/v1beta1\nkind: Kustomization\nresources:\n", encoding="utf-8"
+            "apiVersion: kustomize.config.k8s.io/v1beta1\nkind: Kustomization\nresources:\n",
+            encoding="utf-8",
         )
     lines = kustomization.read_text(encoding="utf-8").splitlines()
     try:
@@ -71,12 +73,12 @@ def add_to_kustomization(kustomization: pathlib.Path, entry: str) -> bool:
     end = start + 1
     while end < len(lines) and lines[end].startswith("  - "):
         end += 1
-    entries = [l[4:].strip() for l in lines[start + 1:end]]
+    entries = [l[4:].strip() for l in lines[start + 1 : end]]
     if entry in entries:
         return False
     entries.append(entry)
     entries.sort(key=lambda e: (e != "platform.yaml", e))
-    lines[start + 1:end] = [f"  - {e}" for e in entries]
+    lines[start + 1 : end] = [f"  - {e}" for e in entries]
     kustomization.write_text("\n".join(lines) + "\n", encoding="utf-8")
     return True
 
@@ -85,10 +87,23 @@ def main() -> int:
     p = argparse.ArgumentParser(description="Register a workload from the templates.")
     p.add_argument("name")
     p.add_argument("path")
-    p.add_argument("--group", required=True, help="shared | <use-case> (folder under projects/ and apps/)")
+    p.add_argument(
+        "--group",
+        required=True,
+        help="shared | <use-case> (folder under projects/ and apps/)",
+    )
     p.add_argument("--archetype", choices=ARCHETYPES, default="stateless")
     p.add_argument("--description", default=None)
-    p.add_argument("--team", default=None, help="identity-provider group that operates it in the Argo CD UI")
+    p.add_argument(
+        "--team",
+        default=None,
+        help="identity-provider group that operates it in the Argo CD UI",
+    )
+    p.add_argument(
+        "--no-validate",
+        action="store_true",
+        help="skip validate-coherence.py (the caller runs it)",
+    )
     p.add_argument("--dry-run", action="store_true")
     args = p.parse_args()
 
@@ -96,7 +111,9 @@ def main() -> int:
     if not RX_NAME.match(name):
         sys.exit(f"invalid name {name!r}: must be a valid namespace name (RFC 1123)")
     if not (ROOT / args.path).is_dir() and not args.dry_run:
-        sys.exit(f"path {args.path!r} does not exist in the repository; create the chart first")
+        sys.exit(
+            f"path {args.path!r} does not exist in the repository; create the chart first"
+        )
 
     if not RX_NAME.match(args.group):
         sys.exit(f"invalid group {args.group!r}")
@@ -111,7 +128,8 @@ def main() -> int:
         "REPO_URL": PLATFORM_REPO,
         "PATH": args.path,
         "ARCHETYPE": args.archetype,
-        "DESCRIPTION": args.description or f"{name}, confined to its namespace of the same name.",
+        "DESCRIPTION": args.description
+        or f"{name}, confined to its namespace of the same name.",
         "GROUP": args.group,
         "TEAM": args.team or f"teo-devops/{name}",
     }
@@ -130,9 +148,15 @@ def main() -> int:
     for base in (DIR_PROJECTS, DIR_APPS):
         add_to_kustomization(base / args.group / "kustomization.yaml", f"{name}.yaml")
         add_to_kustomization(base / "kustomization.yaml", args.group)
-    print(f"✓ {dst_project.relative_to(ROOT)}\n✓ {dst_app.relative_to(ROOT)}\n✓ wired into the {args.group!r} group\n")
+    print(
+        f"✓ {dst_project.relative_to(ROOT)}\n✓ {dst_app.relative_to(ROOT)}\n✓ wired into the {args.group!r} group\n"
+    )
 
-    code = subprocess.run([sys.executable, str(ROOT / "scripts" / "repo" / "validate-coherence.py")]).returncode
+    code = 0
+    if not args.no_validate:
+        code = subprocess.run(
+            [sys.executable, str(ROOT / "scripts" / "repo" / "validate-coherence.py")]
+        ).returncode
     print(f"""
 Left to do, and not done by this script:
   1. READ gitops/environments/demo/projects/{name}.yaml — it defines the privilege limits.

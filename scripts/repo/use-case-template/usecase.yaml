@@ -1,0 +1,16 @@
+# What the platform's flow scripts (scripts/use-case/*) need to know about this
+# use case. Everything else the platform learns from the charts' values.
+name: __UC__
+package: __UC_PKG__                    # python package of the plugin: CT_USE_CASE=<package>:use_case
+models: __MODELS_LIST__
+api:
+  enabled: __API_ENABLED__
+  host: __UC__.localhost
+  path: /v1/__UC__/predict
+  sample: {x1: 1.0, x2: 2.0, x3: 3.0, zone: north}     # replace with a real request
+  # smoke fallback drill: the model whose predictor is killed; the API must keep
+  # answering (uc_fallback_total grows). Empty = the use case has no fallback.
+  degradable_model: ""
+drift:
+  profile: drift                       # data profile `make drift` flips the world to
+  requests: 600

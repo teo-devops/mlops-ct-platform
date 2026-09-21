@@ -1,0 +1,4 @@
+# demo profile: the schedule is kept (it documents the pattern) but the demo
+# relies on `make pipeline` and on the drift monitor.
+data:
+  rows: 6000

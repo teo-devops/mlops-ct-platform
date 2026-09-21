@@ -16,12 +16,11 @@ from contextlib import asynccontextmanager
 from datetime import UTC, datetime
 
 import structlog
-from ctserve import CircuitBreaker, Telemetry, configure_logging, metrics
+from ctserve import CircuitBreaker, KServeClient, ModelError, Telemetry, configure_logging, metrics
 from fastapi import FastAPI, HTTPException, Request
 from prometheus_fastapi_instrumentator import Instrumentator
 
 from app import __version__
-from app.clients import KServeClient, ModelError
 from app.config import settings
 from app.fallback import fraud_rules
 from app.schemas import Analysis, Category, Fraud, Lineage, ListingIn

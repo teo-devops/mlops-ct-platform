@@ -76,10 +76,14 @@ if module_enabled airflow; then
 fi
 
 step "Use cases"
-for uc in "${REPO_ROOT}"/use-cases/*/scripts/secrets.sh; do
-  [[ -x "$uc" ]] || continue
-  info "→ $(basename "$(dirname "$(dirname "$uc")")")"
-  "$uc"
+# Every use case declares itself in usecase.yaml; the platform's generic
+# script creates its namespaces, its own artifact-store credentials, the Git
+# credential and the data-source state.
+for f in "${REPO_ROOT}"/use-cases/*/usecase.yaml; do
+  [[ -f "$f" ]] || continue
+  uc="$(basename "$(dirname "$f")")"
+  info "→ ${uc}"
+  USE_CASE="$uc" "${REPO_ROOT}/scripts/use-case/secrets.sh"
 done
 
 echo

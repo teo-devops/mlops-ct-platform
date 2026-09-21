@@ -1,0 +1,5 @@
+apiVersion: v2
+name: __UC__-serving
+description: __UC_TITLE__ models as InferenceServices, pulled by version from the artifact store.
+type: application
+version: 0.1.0

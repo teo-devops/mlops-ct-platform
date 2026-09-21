@@ -6,7 +6,7 @@ useCase: automated-listing-engine
 # this commit. Version "0" means "nothing published yet": the predictor stays
 # Progressing until the first pipeline run promotes v1.
 artifactStore:
-  bucket: models
+  bucket: automated-listing-engine-models   # this use case's bucket (isolation)
   # Secret with AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY of the `models-reader`
   # user, created by scripts/platform/03-secrets.sh (never in Git). Endpoint,
   # region and scheme are the cluster-wide defaults of the KServe module.

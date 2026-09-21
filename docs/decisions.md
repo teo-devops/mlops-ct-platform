@@ -103,3 +103,17 @@ ct-slo` on the api-metrics contract restricted to the canary pods) and a `rollou
 use case's api chart that renders a `Rollout` instead of the `Deployment`. → What is protected is the
 API surface after a promotion (latency, errors, fallbacks) with automatic abort; the model canary stays a
 prod-profile concern (KServe Serverless `canaryTrafficPercent`), documented, not faked.
+
+### 17. Use cases are isolated, and adding one is a command
+Two use cases must not see each other's artifacts, models or namespaces, and a team must be able
+to add one without reading six steps. → Per use case: three buckets and three MinIO users whose
+policies name only them (hard isolation, `AccessDenied` verified), three namespaces/AppProjects,
+NetworkPolicies that admit only its own namespaces; `usecase.yaml` as the single declaration the
+platform's flow scripts read (`scripts/use-case/`); chart templates owned by the platform
+(`scripts/repo/use-case-template/`, copies must not diverge); `make new-use-case` renders the
+template and registers the use case everywhere the platform keeps data about it; the validator
+proves all of it, including that nothing under one use case names another. → What is NOT isolated in
+the demo, on purpose and documented: the registry (MLflow without auth: by name) and the metrics (one
+Prometheus, label `use_case`); production answers are one MLflow per team / auth, and tenant labels
+or per-team Prometheus. `delivery-eta` (regression, one model, no fallback) is the proof: generated,
+filled in, run end to end next to the example use case.

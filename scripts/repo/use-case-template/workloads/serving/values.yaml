@@ -1,0 +1,35 @@
+useCase: __UC__
+
+# Serving contract: each model is an InferenceService whose storageUri points
+# at `s3://<bucket>/<use_case>/<model>/v<version>` (one model.joblib inside).
+# `version` is what the pipeline's promote step bumps — the deployment IS
+# this commit. Version "0" means "nothing published yet": the predictor stays
+# Progressing until the first pipeline run promotes v1.
+artifactStore:
+  bucket: __UC__-models   # this use case's bucket (isolation)
+  # Secret with AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY of the `models-reader`
+  # user, created by scripts/platform/03-secrets.sh (never in Git). Endpoint,
+  # region and scheme are the cluster-wide defaults of the KServe module.
+  secretName: models-s3-credentials
+
+models:
+__MODELS_SERVING__
+
+runtime:
+  modelFormat: sklearn
+  protocolVersion: v1
+  predictProba: __PREDICT_PROBA__
+  resources:
+    requests: {cpu: 100m, memory: 256Mi}
+    limits: {cpu: "1", memory: 1Gi}
+  # kind has no metrics-server: no HPA. The prod profile sets `hpa`.
+  autoscalerClass: external
+
+podMonitor:
+  enabled: true
+
+networkPolicy:
+  enabled: true
+  apiNamespace: __UC__-api
+  observabilityNamespace: observability
+  artifactStoreNamespace: minio

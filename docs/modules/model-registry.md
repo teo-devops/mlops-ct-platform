@@ -9,4 +9,4 @@
 | **Replace with** | MLflow with managed Postgres (prod); any registry with aliases and version tags could back the same step code via `ctsteps/registry.py` |
 | **Disable** | remove the line and reimplement `registry.py` |
 
-Wave 2. Host-header validation in MLflow 3 means both the ingress host (with port) and the in-cluster Service names are allow-listed. Two uvicorn workers and a 2 GiB limit (four workers were OOM-killed at 1 GiB). The metrics dir is an emptyDir because the root filesystem is read-only.
+Wave 2. Isolation between use cases is **by name only** (experiments `<uc>/<model>`, registered models `<uc>-<model>`): MLflow has no auth in the demo, so a pipeline with tracking access can read another use case's runs. Production: one MLflow per team, or the server's auth (basic/OIDC) with per-experiment permissions — decisions.md #17. Host-header validation in MLflow 3 means both the ingress host (with port) and the in-cluster Service names are allow-listed. Two uvicorn workers and a 2 GiB limit (four workers were OOM-killed at 1 GiB). The metrics dir is an emptyDir because the root filesystem is read-only.

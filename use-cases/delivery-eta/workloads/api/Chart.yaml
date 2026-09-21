@@ -1,0 +1,6 @@
+apiVersion: v2
+name: delivery-eta-api
+description: Delivery Eta API — fans out to the use case's models with graceful degradation.
+type: application
+version: 0.1.0
+appVersion: "0.1.0"

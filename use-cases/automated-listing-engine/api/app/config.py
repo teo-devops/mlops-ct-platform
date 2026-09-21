@@ -2,21 +2,35 @@
 
 from __future__ import annotations
 
-from pydantic import Field
+from pydantic import AliasChoices, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_prefix="ALE_", env_file=None)
 
-    use_case: str = "automated-listing-engine"
+    # The platform contract (chart ConfigMap, docs/design/contracts.md): the use
+    # case's name and, per model, the predictor endpoint and the version served.
+    use_case: str = Field(
+        "automated-listing-engine",
+        validation_alias=AliasChoices("CT_USE_CASE_NAME", "ALE_USE_CASE"),
+    )
     git_commit: str = "unknown"
-
-    # serving contract: one InferenceService per model, KServe v1 protocol
-    categorizer_url: str = "http://categorizer-predictor.automated-listing-engine-serving.svc.cluster.local/v1/models/categorizer:predict"
-    fraud_url: str = "http://fraud-predictor.automated-listing-engine-serving.svc.cluster.local/v1/models/fraud:predict"
-    categorizer_version: str = "0"
-    fraud_version: str = "0"
+    categorizer_url: str = Field(
+        "http://categorizer-predictor.automated-listing-engine-serving.svc.cluster.local/v1/models/categorizer:predict",
+        validation_alias=AliasChoices("CT_MODEL_CATEGORIZER_URL", "ALE_CATEGORIZER_URL"),
+    )
+    fraud_url: str = Field(
+        "http://fraud-predictor.automated-listing-engine-serving.svc.cluster.local/v1/models/fraud:predict",
+        validation_alias=AliasChoices("CT_MODEL_FRAUD_URL", "ALE_FRAUD_URL"),
+    )
+    categorizer_version: str = Field(
+        "0",
+        validation_alias=AliasChoices("CT_MODEL_CATEGORIZER_VERSION", "ALE_CATEGORIZER_VERSION"),
+    )
+    fraud_version: str = Field(
+        "0", validation_alias=AliasChoices("CT_MODEL_FRAUD_VERSION", "ALE_FRAUD_VERSION")
+    )
     # class order of the categorizer's predict_proba (scikit-learn sorts classes)
     categorizer_labels: list[str] = Field(
         default=["books", "electronics", "fashion", "home", "kids", "sports"]

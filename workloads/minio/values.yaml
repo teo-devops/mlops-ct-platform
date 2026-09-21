@@ -29,30 +29,57 @@ resources:
 # --- Buckets, users and policies: the artifact-store contract --------------
 # Every consumer gets its own user with the minimum bucket rights. Root
 # credentials never leave this namespace.
+#
+# ISOLATION: a use case owns three buckets (<uc>-models, <uc>-datasets,
+# <uc>-predictions) and three users (<uc>-reader, <uc>-pipeline, <uc>-api) whose
+# policies name only its buckets (+ the shared `mlflow` bucket for the pipeline,
+# which logs runs there). Another use case's keys get AccessDenied on them.
+# `make new-use-case` appends these entries; scripts/repo/validate-coherence.py
+# checks them. The layout inside a bucket stays <uc>/<model>/… (ctsteps).
 buckets:
-  - mlflow        # MLflow artifacts (runs, logged models)
-  - models        # serving artifacts: models/<model>/<version>/model.joblib
-  - datasets      # pipeline datasets: raw, reference, holdout
-  - predictions   # prediction log written by the APIs (drift monitor input)
+  - mlflow        # MLflow artifacts (runs, logged models) — shared, written by the server
+  # --- use case: automated-listing-engine
+  - automated-listing-engine-models        # serving artifacts: <uc>/<model>/v<N>/model.joblib
+  - automated-listing-engine-datasets      # pipeline datasets: raw, reference, holdout
+  - automated-listing-engine-predictions   # prediction log written by the API (drift input)
+  # --- use case: delivery-eta
+  - delivery-eta-models
+  - delivery-eta-datasets
+  - delivery-eta-predictions
 
 users:
   - name: mlflow          # the tracking server
     envPrefix: MLFLOW
     policy:
       rw: [mlflow]
-  - name: models-reader   # KServe storage-initializer
-    envPrefix: MODELS_READER
+  # --- use case: automated-listing-engine
+  - name: automated-listing-engine-reader     # KServe storage-initializer
+    envPrefix: AUTOMATED_LISTING_ENGINE_READER
     policy:
-      ro: [models]
-  - name: pipeline        # ctsteps (train, register, promote, drift)
-    envPrefix: PIPELINE
+      ro: [automated-listing-engine-models]
+  - name: automated-listing-engine-pipeline   # ctsteps (train, register, promote, drift)
+    envPrefix: AUTOMATED_LISTING_ENGINE_PIPELINE
     policy:
-      rw: [models, datasets, mlflow]
-      ro: [predictions]
-  - name: api-writer      # prediction log
-    envPrefix: API_WRITER
+      rw: [automated-listing-engine-models, automated-listing-engine-datasets, mlflow]
+      ro: [automated-listing-engine-predictions]
+  - name: automated-listing-engine-api        # prediction log
+    envPrefix: AUTOMATED_LISTING_ENGINE_API
     policy:
-      wo: [predictions]
+      wo: [automated-listing-engine-predictions]
+  # --- use case: delivery-eta
+  - name: delivery-eta-reader
+    envPrefix: DELIVERY_ETA_READER
+    policy:
+      ro: [delivery-eta-models]
+  - name: delivery-eta-pipeline
+    envPrefix: DELIVERY_ETA_PIPELINE
+    policy:
+      rw: [delivery-eta-models, delivery-eta-datasets, mlflow]
+      ro: [delivery-eta-predictions]
+  - name: delivery-eta-api
+    envPrefix: DELIVERY_ETA_API
+    policy:
+      wo: [delivery-eta-predictions]
 
 ingress:
   enabled: false
@@ -65,9 +92,14 @@ networkPolicy:
   # consumers above.
   apiClients:
     - mlflow
+    # --- use case: automated-listing-engine
     - automated-listing-engine-serving
     - automated-listing-engine-pipelines
     - automated-listing-engine-api
+    # --- use case: delivery-eta
+    - delivery-eta-serving
+    - delivery-eta-pipelines
+    - delivery-eta-api
   # Namespace of the ingress controller (console + host port-forward path).
   ingressNamespace: ingress-nginx
   observabilityNamespace: observability

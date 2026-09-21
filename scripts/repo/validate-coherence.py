@@ -39,6 +39,12 @@ ARCHETYPES = {"stateless", "batch", "stateful", "pipeline"}
 ARCHETYPE_ANNOTATION = "mlops-ct-platform.dev/archetype"
 MARKERS = ("NAME", "REPO_URL", "DESCRIPTION", "GROUP", "TEAM", "ARCHETYPE", "PATH")
 PLATFORM_PROJECTS = {"platform"}
+DIR_USE_CASES = ROOT / "use-cases"
+MINIO_VALUES = ROOT / "workloads" / "minio" / "values.yaml"
+ARGO_WF_VALUES = DIR_PLATFORM / "argo-workflows" / "values.yaml"
+ARGO_WF_NAMESPACES = DIR_PLATFORM / "argo-workflows" / "manifests" / "namespaces.yaml"
+AIRFLOW_RBAC = DIR_PLATFORM / "airflow" / "manifests" / "rbac.yaml"
+UC_TEMPLATE = ROOT / "scripts" / "repo" / "use-case-template"
 
 errors: list[str] = []
 
@@ -58,7 +64,9 @@ def resources_of(kustomization: pathlib.Path) -> set[str]:
 
 def yaml_files(directory: pathlib.Path) -> list[pathlib.Path]:
     """Manifests directly in `directory` and in its group subdirectories."""
-    return sorted(p for p in directory.glob("**/*.yaml") if p.name != "kustomization.yaml")
+    return sorted(
+        p for p in directory.glob("**/*.yaml") if p.name != "kustomization.yaml"
+    )
 
 
 def check_kustomize_wiring(directory: pathlib.Path) -> None:
@@ -66,7 +74,9 @@ def check_kustomize_wiring(directory: pathlib.Path) -> None:
     root_listed = resources_of(directory / "kustomization.yaml")
     for group in sorted(d for d in directory.iterdir() if d.is_dir()):
         if group.name not in root_listed:
-            error(f"{rel(directory)}/kustomization.yaml: group {group.name!r} exists but is not listed")
+            error(
+                f"{rel(directory)}/kustomization.yaml: group {group.name!r} exists but is not listed"
+            )
         kz = group / "kustomization.yaml"
         if not kz.exists():
             error(f"{rel(group)}: no kustomization.yaml")
@@ -77,7 +87,9 @@ def check_kustomize_wiring(directory: pathlib.Path) -> None:
                 error(f"{rel(kz)}: {f.name} missing; the manifest is not applied")
     for f in sorted(directory.glob("*.yaml")):
         if f.name != "kustomization.yaml" and f.name not in root_listed:
-            error(f"{rel(directory)}/kustomization.yaml: {f.name} missing; the manifest is not applied")
+            error(
+                f"{rel(directory)}/kustomization.yaml: {f.name} missing; the manifest is not applied"
+            )
 
 
 def sources_of(spec: dict) -> list[dict]:
@@ -109,12 +121,18 @@ def check_template_markers() -> None:
             for value in scalars(load(path)):
                 for marker in MARKERS:
                     if re.search(rf"(?<![\w-]){marker}(?![\w-])", value):
-                        error(f"{rel(path)}: template marker {marker!r} left in value {value!r}")
+                        error(
+                            f"{rel(path)}: template marker {marker!r} left in value {value!r}"
+                        )
 
 
 def check_chart_version() -> None:
     """install.sh and argo-cd.yaml must pin the same Argo CD chart version."""
-    m = re.search(r'^CHART_VERSION="([^"]+)"', INSTALL_SH.read_text(encoding="utf-8"), re.MULTILINE)
+    m = re.search(
+        r'^CHART_VERSION="([^"]+)"',
+        INSTALL_SH.read_text(encoding="utf-8"),
+        re.MULTILINE,
+    )
     if not m:
         error(f"{rel(INSTALL_SH)}: CHART_VERSION not found")
         return
@@ -124,23 +142,33 @@ def check_chart_version() -> None:
         error(f"{rel(ENGINE_APP)}: no source with chart 'argo-cd'")
         return
     if m.group(1) != chart.get("targetRevision"):
-        error(f"argo-cd chart version differs: install.sh {m.group(1)!r} vs "
-              f"{rel(ENGINE_APP)} {chart.get('targetRevision')!r}")
+        error(
+            f"argo-cd chart version differs: install.sh {m.group(1)!r} vs "
+            f"{rel(ENGINE_APP)} {chart.get('targetRevision')!r}"
+        )
 
 
 def check_platform_repo() -> None:
     """lib.sh (credential), root-app and the engine must point at the same repo."""
     lib = ROOT / "scripts" / "lib.sh"
-    m = re.search(r'^PLATFORM_REPO="([^"]+)"', lib.read_text(encoding="utf-8"), re.MULTILINE)
+    m = re.search(
+        r'^PLATFORM_REPO="([^"]+)"', lib.read_text(encoding="utf-8"), re.MULTILINE
+    )
     if not m:
         error(f"{rel(lib)}: PLATFORM_REPO not found")
         return
     url_root = ((load(ROOT_APP).get("spec") or {}).get("source") or {}).get("repoURL")
     if m.group(1) != url_root:
-        error(f"PLATFORM_REPO in lib.sh ({m.group(1)!r}) != repoURL of {rel(ROOT_APP)} ({url_root!r})")
-    ref = next((s for s in sources_of(load(ENGINE_APP).get("spec", {})) if s.get("ref")), {})
+        error(
+            f"PLATFORM_REPO in lib.sh ({m.group(1)!r}) != repoURL of {rel(ROOT_APP)} ({url_root!r})"
+        )
+    ref = next(
+        (s for s in sources_of(load(ENGINE_APP).get("spec", {})) if s.get("ref")), {}
+    )
     if ref.get("repoURL") != url_root:
-        error(f"{rel(ENGINE_APP)}: $values source repoURL ({ref.get('repoURL')!r}) != root-app repoURL")
+        error(
+            f"{rel(ENGINE_APP)}: $values source repoURL ({ref.get('repoURL')!r}) != root-app repoURL"
+        )
 
 
 def check_platform_modules(projects: dict[str, dict]) -> None:
@@ -149,12 +177,18 @@ def check_platform_modules(projects: dict[str, dict]) -> None:
     listed = resources_of(kustomization)
     # Opt-in modules: a complete directory whose line is commented out (`#  - <name>`).
     # Still validated in full; only the "not listed" check is waived.
-    opt_in = set(re.findall(r"^\s*#\s*-\s*([a-z0-9-]+)\s*$", kustomization.read_text(), re.MULTILINE))
+    opt_in = set(
+        re.findall(
+            r"^\s*#\s*-\s*([a-z0-9-]+)\s*$", kustomization.read_text(), re.MULTILINE
+        )
+    )
     pspec = projects.get("platform", {}).get("spec", {})
     allowed = pspec.get("sourceRepos", [])
     for module in sorted(d for d in DIR_PLATFORM.iterdir() if d.is_dir()):
         if module.name not in listed and module.name not in opt_in:
-            error(f"gitops/environments/demo/platform/kustomization.yaml: module {module.name!r} exists but is not listed (disabled?)")
+            error(
+                f"gitops/environments/demo/platform/kustomization.yaml: module {module.name!r} exists but is not listed (disabled?)"
+            )
         app = module / "application.yaml"
         if not app.exists():
             error(f"{rel(module)}: no application.yaml")
@@ -168,20 +202,242 @@ def check_platform_modules(projects: dict[str, dict]) -> None:
             error(f"{rel(app)}: metadata.name {name!r} != directory {module.name!r}")
         spec = doc.get("spec", {})
         if spec.get("project") != "platform":
-            error(f"{rel(app)}: platform modules must use project 'platform' (found {spec.get('project')!r})")
+            error(
+                f"{rel(app)}: platform modules must use project 'platform' (found {spec.get('project')!r})"
+            )
         for src in sources_of(spec):
             if src.get("repoURL") not in allowed:
-                error(f"{rel(app)}: repoURL {src.get('repoURL')!r} not in platform sourceRepos")
-            for vf in ((src.get("helm") or {}).get("valueFiles") or []):
+                error(
+                    f"{rel(app)}: repoURL {src.get('repoURL')!r} not in platform sourceRepos"
+                )
+            for vf in (src.get("helm") or {}).get("valueFiles") or []:
                 if vf.startswith("$values/"):
-                    target = ROOT / vf[len("$values/"):]
+                    target = ROOT / vf[len("$values/") :]
                     if not target.exists():
                         error(f"{rel(app)}: values file {vf!r} does not exist")
-            if src.get("path") and src.get("repoURL", "").endswith("mlops-ct-platform.git"):
+            if src.get("path") and src.get("repoURL", "").endswith(
+                "mlops-ct-platform.git"
+            ):
                 if not (ROOT / src["path"]).exists():
-                    error(f"{rel(app)}: path {src['path']!r} does not exist in the repo")
-        if "argocd.argoproj.io/sync-wave" not in (doc.get("metadata", {}).get("annotations") or {}):
+                    error(
+                        f"{rel(app)}: path {src['path']!r} does not exist in the repo"
+                    )
+        if "argocd.argoproj.io/sync-wave" not in (
+            doc.get("metadata", {}).get("annotations") or {}
+        ):
             error(f"{rel(app)}: platform modules must declare a sync-wave")
+
+
+def use_cases() -> dict[str, dict]:
+    """Every use case declared by a usecase.yaml (directories starting with `_` are templates)."""
+    found = {}
+    if not DIR_USE_CASES.exists():
+        return found
+    for f in sorted(DIR_USE_CASES.glob("*/usecase.yaml")):
+        if f.parent.name.startswith("_"):
+            continue
+        found[f.parent.name] = load(f)
+    return found
+
+
+def check_use_cases() -> None:
+    """A use case is declared once (usecase.yaml), wired everywhere the platform keeps data
+    about it, consistent with its own charts — and isolated: it never names another use case."""
+    ucs = use_cases()
+    if not ucs:
+        return
+    minio = load(MINIO_VALUES)
+    buckets = set(minio.get("buckets") or [])
+    users = {u["name"]: u for u in minio.get("users") or []}
+    api_clients = set((minio.get("networkPolicy") or {}).get("apiClients") or [])
+    wf_namespaces = set(
+        (load(ARGO_WF_VALUES).get("controller") or {}).get("workflowNamespaces") or []
+    )
+    with ARGO_WF_NAMESPACES.open(encoding="utf-8") as fh:
+        declared_ns = {d["metadata"]["name"] for d in yaml.safe_load_all(fh) if d}
+    airflow_ns = set()
+    if AIRFLOW_RBAC.exists():
+        with AIRFLOW_RBAC.open(encoding="utf-8") as fh:
+            airflow_ns = {
+                d["metadata"]["namespace"] for d in yaml.safe_load_all(fh) if d
+            }
+    apps = {p.stem: p.parent.name for p in yaml_files(DIR_APPS)}
+    archetype_of = {
+        p.stem: (load(p).get("metadata", {}).get("annotations") or {}).get(
+            ARCHETYPE_ANNOTATION
+        )
+        for p in yaml_files(DIR_APPS)
+    }
+
+    for uc, decl in ucs.items():
+        d = DIR_USE_CASES / uc
+        r = f"use-cases/{uc}"
+        if decl.get("name") != uc:
+            error(f"{r}/usecase.yaml: name {decl.get('name')!r} != directory {uc!r}")
+        pkg = decl.get("package", "")
+        models = decl.get("models") or []
+        if not re.fullmatch(r"[a-z_][a-z0-9_]*", pkg):
+            error(f"{r}/usecase.yaml: package {pkg!r} is not a python package name")
+        if not models:
+            error(f"{r}/usecase.yaml: no models")
+        api_enabled = bool((decl.get("api") or {}).get("enabled"))
+        # 1. its workloads, registered in its own group with the right archetypes
+        expected = {f"{uc}-serving": "stateless", f"{uc}-pipelines": "pipeline"}
+        if api_enabled:
+            expected[f"{uc}-api"] = "stateless"
+        for wl, arch in expected.items():
+            if apps.get(wl) != uc:
+                error(
+                    f"{r}: workload {wl!r} not registered in group {uc!r} (scripts/repo/register-workload.py)"
+                )
+            elif archetype_of.get(wl) != arch:
+                error(
+                    f"{r}: workload {wl!r} archetype {archetype_of.get(wl)!r}, expected {arch!r}"
+                )
+        # 2. the platform data that names it
+        ns_p = f"{uc}-pipelines"
+        if ns_p not in wf_namespaces:
+            error(
+                f"{rel(ARGO_WF_VALUES)}: {ns_p!r} missing in controller.workflowNamespaces"
+            )
+        if ns_p not in declared_ns:
+            error(f"{rel(ARGO_WF_NAMESPACES)}: Namespace {ns_p!r} missing")
+        if AIRFLOW_RBAC.exists() and ns_p not in airflow_ns:
+            error(f"{rel(AIRFLOW_RBAC)}: no Role/RoleBinding for {ns_p!r}")
+        for b in (f"{uc}-models", f"{uc}-datasets", f"{uc}-predictions"):
+            if b not in buckets:
+                error(
+                    f"{rel(MINIO_VALUES)}: bucket {b!r} missing (isolation: one set of buckets per use case)"
+                )
+        prefix = uc.upper().replace("-", "_")
+        for user, env, must in (
+            (f"{uc}-reader", f"{prefix}_READER", {f"{uc}-models"}),
+            (
+                f"{uc}-pipeline",
+                f"{prefix}_PIPELINE",
+                {f"{uc}-models", f"{uc}-datasets", f"{uc}-predictions", "mlflow"},
+            ),
+            (f"{uc}-api", f"{prefix}_API", {f"{uc}-predictions"}),
+        ):
+            u = users.get(user)
+            if not u:
+                error(
+                    f"{rel(MINIO_VALUES)}: user {user!r} missing (isolation: one set of users per use case)"
+                )
+                continue
+            if u.get("envPrefix") != env:
+                error(
+                    f"{rel(MINIO_VALUES)}: user {user!r} envPrefix {u.get('envPrefix')!r}, expected {env!r}"
+                )
+            granted = {b for v in (u.get("policy") or {}).values() for b in v}
+            if granted != must:
+                error(
+                    f"{rel(MINIO_VALUES)}: user {user!r} touches {sorted(granted)}; a use case's user may only touch {sorted(must)}"
+                )
+        for ns in expected:
+            if ns not in api_clients:
+                error(
+                    f"{rel(MINIO_VALUES)}: {ns!r} missing in networkPolicy.apiClients"
+                )
+        # 3. its charts agree with the declaration
+        charts = d / "workloads"
+        pv = (
+            load(charts / "pipelines" / "values.yaml")
+            if (charts / "pipelines" / "values.yaml").exists()
+            else {}
+        )
+        sv = (
+            load(charts / "serving" / "values.yaml")
+            if (charts / "serving" / "values.yaml").exists()
+            else {}
+        )
+        av = (
+            load(charts / "api" / "values.yaml")
+            if (charts / "api" / "values.yaml").exists()
+            else {}
+        )
+        if (
+            pv.get("useCase") != uc
+            or sv.get("useCase") != uc
+            or (api_enabled and av.get("useCase") != uc)
+        ):
+            error(f"{r}/workloads: every chart must set useCase: {uc}")
+        if pv.get("useCaseRef") != f"{pkg}:use_case":
+            error(
+                f"{r}/workloads/pipelines/values.yaml: useCaseRef must be {pkg}:use_case"
+            )
+        if sorted(pv.get("models") or []) != sorted(models):
+            error(
+                f"{r}/workloads/pipelines/values.yaml: models {pv.get('models')} != usecase.yaml {models}"
+            )
+        if sorted((sv.get("models") or {}).keys()) != sorted(models):
+            error(
+                f"{r}/workloads/serving/values.yaml: models {sorted((sv.get('models') or {}).keys())} != usecase.yaml {models}"
+            )
+        store = pv.get("artifactStore") or {}
+        for key, b in (
+            ("datasetsBucket", f"{uc}-datasets"),
+            ("modelsBucket", f"{uc}-models"),
+            ("predictionsBucket", f"{uc}-predictions"),
+        ):
+            if store.get(key) != b:
+                error(
+                    f"{r}/workloads/pipelines/values.yaml: artifactStore.{key} must be {b}"
+                )
+        if (sv.get("artifactStore") or {}).get("bucket") != f"{uc}-models":
+            error(
+                f"{r}/workloads/serving/values.yaml: artifactStore.bucket must be {uc}-models"
+            )
+        if (sv.get("networkPolicy") or {}).get("apiNamespace") != f"{uc}-api":
+            error(
+                f"{r}/workloads/serving/values.yaml: networkPolicy.apiNamespace must be {uc}-api"
+            )
+        if api_enabled:
+            if (av.get("serving") or {}).get("namespace") != f"{uc}-serving":
+                error(
+                    f"{r}/workloads/api/values.yaml: serving.namespace must be {uc}-serving"
+                )
+            if (av.get("predictionLog") or {}).get("bucket") != f"{uc}-predictions":
+                error(
+                    f"{r}/workloads/api/values.yaml: predictionLog.bucket must be {uc}-predictions"
+                )
+            if sorted((av.get("models") or {}).keys()) != sorted(models):
+                error(
+                    f"{r}/workloads/api/values.yaml: models {sorted((av.get('models') or {}).keys())} != usecase.yaml {models}"
+                )
+        for vf in (pv.get("promote") or {}).get("valuesFiles") or []:
+            if not vf.startswith(f"use-cases/{uc}/"):
+                error(
+                    f"{r}/workloads/pipelines/values.yaml: promote.valuesFiles {vf!r} outside the use case"
+                )
+        # 4. the chart templates are the platform's: a use case owns values, not templates
+        for chart in ("api", "serving", "pipelines"):
+            tdir = UC_TEMPLATE / "workloads" / chart / "templates"
+            udir = charts / chart / "templates"
+            if not udir.exists():
+                continue
+            for tf in sorted(tdir.glob("*")):
+                uf = udir / tf.name
+                if not uf.exists() or uf.read_text(encoding="utf-8") != tf.read_text(encoding="utf-8"):
+                    error(f"{rel(uf)}: differs from the platform's {rel(tf)} (charts are the platform's; change the template, then every use case)")
+        # 5. isolation: nothing under this use case names another one
+        for other in ucs:
+            if other == uc:
+                continue
+            for f in d.rglob("*"):
+                if f.is_file() and not any(
+                    part.startswith(".") or part.endswith(".egg-info")
+                    for part in f.parts
+                ):
+                    try:
+                        text = f.read_text(encoding="utf-8")
+                    except (UnicodeDecodeError, OSError):
+                        continue
+                    if other in text:
+                        error(
+                            f"{rel(f)}: names use case {other!r} — use cases are isolated"
+                        )
+                        break
 
 
 def main() -> int:
@@ -204,6 +460,7 @@ def main() -> int:
         projects[name] = doc
 
     check_platform_modules(projects)
+    check_use_cases()
 
     with_app: set[str] = set()
     for path in yaml_files(DIR_APPS):
@@ -223,10 +480,14 @@ def main() -> int:
             error(f"{r}: project 'default' restricts nothing")
             continue
         if project in PLATFORM_PROJECTS:
-            error(f"{r}: project {project!r} is the platform project; a workload must not use it")
+            error(
+                f"{r}: project {project!r} is the platform project; a workload must not use it"
+            )
             continue
         if project != name:
-            error(f"{r}: project {project!r} but Application is {name!r} (1 workload = 1 AppProject of the same name)")
+            error(
+                f"{r}: project {project!r} but Application is {name!r} (1 workload = 1 AppProject of the same name)"
+            )
         if project not in projects:
             error(f"{r}: project {project!r} does not exist in projects/")
             continue
@@ -238,30 +499,48 @@ def main() -> int:
         allowed = pspec.get("sourceRepos", [])
         for src in sources:
             if src.get("repoURL") not in allowed:
-                error(f"{r}: repoURL {src.get('repoURL')!r} not in sourceRepos of projects/{project}.yaml")
+                error(
+                    f"{r}: repoURL {src.get('repoURL')!r} not in sourceRepos of projects/{project}.yaml"
+                )
             if src.get("path") and not (ROOT / src["path"]).exists():
                 error(f"{r}: path {src['path']!r} does not exist in the repo")
-            for vf in ((src.get("helm") or {}).get("valueFiles") or []):
+            for vf in (src.get("helm") or {}).get("valueFiles") or []:
                 if src.get("path") and not (ROOT / src["path"] / vf).exists():
                     error(f"{r}: values file {vf!r} not found under {src['path']}")
         git_repos = {s.get("repoURL") for s in sources if not s.get("chart")}
         if len(git_repos) > 1:
-            error(f"{r}: {len(git_repos)} Git repositories ({sorted(git_repos)}); 1 workload = 1 repo")
+            error(
+                f"{r}: {len(git_repos)} Git repositories ({sorted(git_repos)}); 1 workload = 1 repo"
+            )
 
-        group = (doc.get("metadata", {}).get("labels") or {}).get("mlops-ct-platform.dev/group")
+        group = (doc.get("metadata", {}).get("labels") or {}).get(
+            "mlops-ct-platform.dev/group"
+        )
         if group != path.parent.name:
-            error(f"{r}: label mlops-ct-platform.dev/group is {group!r} but the file lives in group {path.parent.name!r}")
-        archetype = (doc.get("metadata", {}).get("annotations") or {}).get(ARCHETYPE_ANNOTATION)
+            error(
+                f"{r}: label mlops-ct-platform.dev/group is {group!r} but the file lives in group {path.parent.name!r}"
+            )
+        archetype = (doc.get("metadata", {}).get("annotations") or {}).get(
+            ARCHETYPE_ANNOTATION
+        )
         if archetype is not None and archetype not in ARCHETYPES:
-            error(f"{r}: unknown archetype {archetype!r}; known: {sorted(ARCHETYPES)} (docs/design/archetypes.md)")
+            error(
+                f"{r}: unknown archetype {archetype!r}; known: {sorted(ARCHETYPES)} (docs/design/archetypes.md)"
+            )
 
         dest = spec.get("destination", {})
         ns, server = dest.get("namespace"), dest.get("server")
         dests = pspec.get("destinations", [])
-        if not any(d.get("namespace") == ns and d.get("server") == server for d in dests):
-            error(f"{r}: destination {server}/{ns} not in destinations of projects/{project}.yaml")
+        if not any(
+            d.get("namespace") == ns and d.get("server") == server for d in dests
+        ):
+            error(
+                f"{r}: destination {server}/{ns} not in destinations of projects/{project}.yaml"
+            )
         if any(d.get("namespace") == "*" for d in dests):
-            error(f"projects/{project}.yaml: destinations with wildcard '*'; a workload is confined to one namespace")
+            error(
+                f"projects/{project}.yaml: destinations with wildcard '*'; a workload is confined to one namespace"
+            )
         if ns != name:
             error(f"{r}: destination namespace {ns!r} != workload name {name!r}")
         if server != EXPECTED_SERVER:
@@ -273,8 +552,10 @@ def main() -> int:
 
         allowed_cluster = [{"group": "", "kind": "Namespace"}]
         if pspec.get("clusterResourceWhitelist") != allowed_cluster:
-            error(f"projects/{project}.yaml: clusterResourceWhitelist must be exactly {allowed_cluster}; "
-                  f"found {pspec.get('clusterResourceWhitelist')}")
+            error(
+                f"projects/{project}.yaml: clusterResourceWhitelist must be exactly {allowed_cluster}; "
+                f"found {pspec.get('clusterResourceWhitelist')}"
+            )
 
     for name in projects:
         if name in PLATFORM_PROJECTS:
@@ -287,7 +568,9 @@ def main() -> int:
         for e in errors:
             print(f"  - {e}", file=sys.stderr)
         return 1
-    print(f"✓ {len(with_app)} workload(s) and {len(list(DIR_PLATFORM.iterdir())) - 1} platform module(s) coherent.")
+    print(
+        f"✓ {len(with_app)} workload(s), {len(list(DIR_PLATFORM.iterdir())) - 1} platform module(s) and {len(use_cases())} use case(s) coherent."
+    )
     return 0
 
 

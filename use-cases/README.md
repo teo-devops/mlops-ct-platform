@@ -1,45 +1,52 @@
 # Use cases
 
 A use case is a **plugin** of the platform: it brings its data, its models and its API; the
-platform brings the pipeline, the gates, the registry, the serving, the monitoring and the
-promotion. One directory per use case, always with the same shape:
+platform brings the pipeline, the gates, the registry, the serving, the monitoring, the promotion
+— and the flow scripts. One directory per use case, always with the same shape, **isolated from
+the others**: its own namespaces, AppProjects, artifact-store buckets and users, NetworkPolicies
+that admit only its namespaces; nothing in it names another use case (the validator checks).
 
 ```
 use-cases/<name>/
+├── usecase.yaml           what the platform's flow scripts need: package, models, API host/path/sample,
+│                          the model that may degrade, the drift profile — the only file scripts read
 ├── README.md              what it predicts, how to try it, its models
-├── docs/                  architecture of the instance, case study, runbook — use-case docs live HERE, not in docs/
-├── scripts/               secrets.sh (out-of-band state) + the flow: 06-build-images, 07-run-pipeline, 08-smoke,
-│                          09-induce-drift, promote — `make` runs them with USE_CASE=<name>
+├── docs/                  architecture of the instance, runbook (use-case docs live HERE, not in docs/)
 ├── plugin/                python package implementing ctsteps.contracts.UseCase
-│   ├── src/<package>/     usecase.py (ModelSpecs, ingest, schema, build_model, evaluate), data.py …
-│   ├── tests/
+│   ├── src/<package>/     usecase.py (ModelSpecs, ingest, schema, build_model, evaluate), data.py
+│   ├── tests/             the plugin against the platform's step harness (moto S3 + sqlite MLflow)
 │   └── Dockerfile         FROM ctsteps-base: this is the image every pipeline step runs
-├── api/                   the serving-side application (optional): FROM ctserve-base, `ctserve.Telemetry.emit()` per prediction,
-│                          `ctserve.metrics` — the platform's contract; the use case keeps fan-out, fallbacks, schemas
-└── workloads/             one Helm chart per workload, each registered as its own AppProject/Application
-    ├── api/
+├── api/                   FROM ctserve-base (optional: a use case may only expose models):
+│                          fan-out to its models, its own request schema and fallbacks; telemetry,
+│                          metrics and the KServe client come from libs/ctserve
+└── workloads/             one Helm chart per workload, each its own AppProject/Application
+    ├── api/               templates are the platform's (scripts/repo/use-case-template); values are yours
     ├── serving/           InferenceServices — `models.<model>.version` is what promotion bumps
     └── pipelines/         WorkflowTemplates + CronWorkflows parameterised with the plugin image
 ```
 
 ## Adding a use case (the paved road)
 
-1. `plugin/`: implement `UseCase` (only scikit-learn built-ins in the estimators), add tests, a
-   `Dockerfile` `FROM ctsteps-base:<version>`.
-2. `workloads/`: copy the three charts of `automated-listing-engine/workloads/` and change names, image,
-   models and buckets in their `values*.yaml`.
-3. Register the workloads into their own group:
-   `python3 scripts/repo/register-workload.py <name>-serving use-cases/<name>/workloads/serving --group <name>` (×3).
-4. Give the pipelines namespace its RBAC: add it to `controller.workflowNamespaces` in
-   `gitops/environments/demo/platform/argo-workflows/values.yaml` and to its `manifests/namespaces.yaml`.
-5. Declare its artifact-store users in `workloads/minio/values.yaml` (`users:`) and its namespaces in
-   `networkPolicy.apiClients`; write `scripts/secrets.sh` delivering those keys into its namespaces
-   (`minio_user_secret` from `scripts/lib.sh`) — `scripts/platform/03-secrets.sh` runs it automatically.
-6. Write its flow scripts (`scripts/06-…09-…`, `promote.sh`) — copy the Automated Listing Engine ones and change
-   names — then `USE_CASE=<name> make build pipeline smoke`.
+```bash
+make new-use-case NAME=<name> MODELS=<m1>,<m2> [TASK=classification|regression] [API=false]
+```
 
-The platform never names a use case: steps 3–5 are the only places it appears, all of them data.
+One command renders the directory above from `scripts/repo/use-case-template/` **and** registers
+the use case everywhere the platform keeps data about use cases: three AppProjects/Applications in
+group `<name>`, its pipelines namespace in the argo-workflows module (and the airflow module's RBAC),
+its own buckets and users in the MinIO chart, its namespaces among MinIO's clients. Then it runs the
+validator. What is generated works as it is (synthetic data), so the loop closes on day one:
+
+1. `plugin/src/<package>/data.py` and `usecase.py`: the real ingest and the four methods.
+2. `api/app/schemas.py`: the real request; `usecase.yaml` `api.sample` accordingly.
+3. `make venv && make validate`.
+4. `make secrets` (namespaces, its own credentials), commit, push — Argo CD creates the workloads.
+5. `USE_CASE=<name> make build pipeline smoke drift`.
+
+The platform never names a use case in code: adapters, scripts and modules read `usecase.yaml`
+and the charts' values (decisions.md #15, #17).
 
 | Use case | What | Status |
 |---|---|---|
-| [automated-listing-engine](automated-listing-engine/README.md) | categorise a marketplace listing and flag fraud | runs the demo |
+| [automated-listing-engine](automated-listing-engine/README.md) | categorise a marketplace listing and flag fraud (two classifiers, rules fallback) | runs the demo |
+| [delivery-eta](delivery-eta/README.md) | minutes from order to door (one regressor, no fallback) | generated by the scaffold; proves the plugin boundary |

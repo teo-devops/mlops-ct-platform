@@ -8,3 +8,11 @@ metadata:
   labels:
     app.kubernetes.io/managed-by: argocd
     mlops-ct-platform.dev/workflow-namespace: "true"
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: delivery-eta-pipelines
+  labels:
+    app.kubernetes.io/managed-by: argocd
+    mlops-ct-platform.dev/workflow-namespace: "true"

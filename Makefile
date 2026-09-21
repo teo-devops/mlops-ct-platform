@@ -13,19 +13,21 @@
 #   make status      Applications, pods, URLs and demo passwords
 #   make down        delete the cluster
 #   make validate    static checks (coherence, render, helm lint, ruff, pytest)
+#   make new-use-case  scaffold + register a use case: make new-use-case NAME=x MODELS=a,b [TASK=regression] [API=false]
 #   make venv        dev virtualenv with every python package (needed by validate)
 SHELL := /usr/bin/env bash
 .DEFAULT_GOAL := help
 export CLUSTER ?= ct
 # The use case whose flow `make build/pipeline/promote/smoke/drift` runs. The
-# platform itself knows nothing about it: those targets delegate to
-# use-cases/$(USE_CASE)/scripts/. Any directory with those scripts works.
+# flow scripts are the platform's (scripts/use-case/); they read
+# use-cases/$(USE_CASE)/usecase.yaml and know nothing else about it.
 USE_CASE ?= automated-listing-engine
-UC := use-cases/$(USE_CASE)/scripts
+export USE_CASE
+UC := scripts/use-case
 # python with the dev dependencies (make venv creates it)
 PY := $(if $(wildcard .venv-dev/bin/python),$(CURDIR)/.venv-dev/bin/python,python3)
 
-.PHONY: help prereqs up secrets bootstrap wait build pipeline promote smoke drift status down demo validate render lint test venv
+.PHONY: help prereqs up secrets bootstrap wait build pipeline promote smoke drift status down demo validate render new-use-case lint test venv
 
 help:
 	@sed -n 's/^#   \(make [a-z-]*\) *\(.*\)/  \1\t\2/p' Makefile
@@ -45,6 +47,9 @@ down:       ; @scripts/cluster/10-down.sh
 
 demo: up secrets bootstrap wait build pipeline smoke
 
+new-use-case:
+	@$(PY) scripts/repo/new-use-case.py "$(NAME)" --models "$(MODELS)" --task "$(or $(TASK),classification)" $(if $(filter false,$(API)),--no-api,)
+
 render:
 	@scripts/repo/render.sh rendered
 
@@ -60,6 +65,7 @@ test:
 
 venv:
 	python3 -m venv .venv-dev && .venv-dev/bin/pip install -q --upgrade pip \
-	  && .venv-dev/bin/pip install -q -e "libs/ctsteps[dev]" -e "libs/ctserve[dev]" -e "use-cases/automated-listing-engine/plugin[dev]" -e "use-cases/automated-listing-engine/api[dev]"
+	  && .venv-dev/bin/pip install -q -e "libs/ctsteps[dev]" -e "libs/ctserve[dev]" \
+	  $$(for d in use-cases/*/plugin use-cases/*/api; do [ -f "$$d/pyproject.toml" ] && printf -- '-e %s[dev] ' "$$d"; done)
 
 validate: lint test

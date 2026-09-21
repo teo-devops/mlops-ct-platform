@@ -15,13 +15,15 @@ proposing changes; most "improvements" that look obvious were decided against, o
 * **The serving side has a library too.** `libs/ctserve` is what a use-case API owes the platform
   (`uc_*` metrics, `Telemetry.emit`, circuit breaker). Where a prediction record goes (S3 log, event
   bus) is platform configuration (`CT_*` env from the chart), never API code.
-* **A use case is a plugin** (`use-cases/<name>/`): a `UseCase` implementation, an API, its workload
-  charts, **its own docs, scripts and secrets**. The platform never mentions a use case by name except
-  as data: its group under `gitops/environments/demo/{projects,apps}/`, its users/namespaces in the MinIO
-  chart values, its pipelines namespace in the orchestration module values, and `USE_CASE ?=` in the
-  Makefile. Use-case documentation goes in `use-cases/<name>/docs/`, never in `docs/`; platform scripts
-  (`scripts/`) must not hardcode a use case — they use the `mlops-ct-platform.dev/group` label or
-  iterate over `use-cases/*/`.
+* **A use case is a plugin** (`use-cases/<name>/`): `usecase.yaml`, a `UseCase` implementation, an
+  API, the values of its three charts, its own docs. Created with `make new-use-case`; the flow scripts
+  are the platform's (`scripts/use-case/`, they read `usecase.yaml`) and the chart templates are the
+  platform's (`scripts/repo/use-case-template/`, the validator rejects a diverging copy). The platform
+  never mentions a use case by name except as data: its group under `gitops/environments/demo/{projects,apps}/`,
+  its buckets/users/namespaces in the MinIO chart values, its pipelines namespace in the orchestration
+  modules, and `USE_CASE ?=` in the Makefile. **Use cases are isolated from each other**: own
+  namespaces, AppProjects, buckets, users, NetworkPolicies; nothing under `use-cases/<a>/` may name
+  `<b>` (validator). Use-case documentation goes in `use-cases/<name>/docs/`, never in `docs/`.
 * **GitOps rules inherited from Argo-cd-Labs**: `1 workload = 1 namespace = 1 AppProject =
   1 Application` (= 1 directory here); AppProjects are written by hand and confine a workload to its
   namespace; cluster-scoped things belong to the `platform` project; nothing applied to the cluster

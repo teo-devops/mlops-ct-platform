@@ -11,8 +11,8 @@ import pytest
 from moto import mock_aws
 from sklearn.compose import ColumnTransformer
 from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import f1_score
+from sklearn.linear_model import LinearRegression, LogisticRegression
+from sklearn.metrics import f1_score, mean_absolute_error
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 
@@ -20,6 +20,8 @@ from ctsteps.contracts import ColumnCheck, ModelSpec
 
 
 class ToyUseCase:
+    """Two models on one frame: a classifier (`colour`) and a regressor (`weight`)."""
+
     name = "toy"
     models: ClassVar[dict[str, ModelSpec]] = {
         "colour": ModelSpec(
@@ -28,7 +30,15 @@ class ToyUseCase:
             features=("text", "size"),
             primary_metric="f1_macro",
             drift_columns=("size",),
-        )
+        ),
+        "weight": ModelSpec(
+            name="weight",
+            target="weight",
+            features=("size",),
+            primary_metric="mae",
+            higher_is_better=False,
+            drift_columns=("size",),
+        ),
     }
 
     def ingest(self, model, *, profile, seed, rows):
@@ -39,16 +49,20 @@ class ToyUseCase:
         size = np.where(colour == "red", rng.normal(10, 2, rows), rng.normal(20, 2, rows))
         if profile == "drift":
             size = size * 3
-        return pd.DataFrame({"text": text, "size": size, "colour": colour})
+        weight = size * 1.5 + rng.normal(0, 0.5, rows)  # continuous target for the regressor
+        return pd.DataFrame({"text": text, "size": size, "colour": colour, "weight": weight})
 
     def schema(self, model):
         return {
             "text": ColumnCheck(dtype="string"),
             "size": ColumnCheck(dtype="number", min=0),
             "colour": ColumnCheck(dtype="string", allowed=("red", "blue")),
+            "weight": ColumnCheck(dtype="number"),
         }
 
     def build_model(self, model):
+        if model == "weight":
+            return Pipeline([("scale", StandardScaler()), ("reg", LinearRegression())])
         return Pipeline(
             [
                 (
@@ -65,6 +79,9 @@ class ToyUseCase:
         )
 
     def evaluate(self, model, estimator, df):
+        if model == "weight":
+            pred = estimator.predict(df[["size"]])
+            return {"mae": float(mean_absolute_error(df["weight"], pred))}
         pred = estimator.predict(df[["text", "size"]])
         return {"f1_macro": float(f1_score(df["colour"], pred, average="macro"))}
 

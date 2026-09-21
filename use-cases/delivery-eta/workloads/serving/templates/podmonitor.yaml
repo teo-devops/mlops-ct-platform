@@ -1,0 +1,24 @@
+{{- if .Values.podMonitor.enabled }}
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: predictors
+  labels:
+    {{- include "serving.labels" . | nindent 4 }}
+spec:
+  selector:
+    matchExpressions:
+      - key: serving.kserve.io/inferenceservice
+        operator: Exists
+  podMetricsEndpoints:
+    - portNumber: 8080
+      path: /metrics
+      interval: 15s
+      relabelings:
+        - action: replace
+          sourceLabels: [__meta_kubernetes_pod_label_serving_kserve_io_inferenceservice]
+          targetLabel: model
+        - action: replace
+          targetLabel: use_case
+          replacement: {{ .Values.useCase }}
+{{- end }}

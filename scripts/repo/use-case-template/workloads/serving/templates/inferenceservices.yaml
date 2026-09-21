@@ -1,0 +1,32 @@
+{{- range $name, $m := .Values.models }}
+---
+apiVersion: serving.kserve.io/v1beta1
+kind: InferenceService
+metadata:
+  name: {{ $name }}
+  labels:
+    {{- include "serving.labels" $ | nindent 4 }}
+    mlops-ct-platform.dev/model: {{ $name }}
+    mlops-ct-platform.dev/model-version: {{ $m.version | quote }}
+  annotations:
+    serving.kserve.io/deploymentMode: Standard
+    serving.kserve.io/autoscalerClass: {{ $.Values.runtime.autoscalerClass }}
+spec:
+  predictor:
+    serviceAccountName: models-reader
+    minReplicas: {{ $m.minReplicas | default 1 }}
+    maxReplicas: {{ $m.maxReplicas | default 1 }}
+    {{- with $m.canaryTrafficPercent }}
+    canaryTrafficPercent: {{ . }}
+    {{- end }}
+    model:
+      modelFormat:
+        name: {{ $.Values.runtime.modelFormat }}
+      protocolVersion: {{ $.Values.runtime.protocolVersion }}
+      storageUri: s3://{{ $.Values.artifactStore.bucket }}/{{ $.Values.useCase }}/{{ $name }}/v{{ $m.version }}
+      env:
+        - name: PREDICT_PROBA
+          value: {{ $.Values.runtime.predictProba | quote }}
+      resources:
+        {{- toYaml $.Values.runtime.resources | nindent 8 }}
+{{- end }}

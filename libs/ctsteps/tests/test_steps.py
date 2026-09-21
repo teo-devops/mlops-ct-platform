@@ -128,3 +128,22 @@ def test_validate_gate_blocks_bad_data(env, monkeypatch):
     with pytest.raises(SystemExit):
         cli.main(["validate", *run])
     assert read_result(env)["ok"] is False
+
+
+def test_regression_model_splits_without_stratifying_and_gates_on_mae(env):
+    """A continuous target: preprocess must not stratify; the gate reads higher_is_better=False."""
+    run = ["--model", "weight", "--run-id", "reg1"]
+    cli.main(["ingest", *run, "--rows", "300"])
+    cli.main(["validate", *run])
+    cli.main(["preprocess", *run, "--reference-rows", "50"])
+    cli.main(["train", *run, "--trigger", "test"])
+    mlflow_run = json.loads((env / "outputs" / "result.json").read_text())["mlflow_run_id"]
+    cli.main(["evaluate", *run, "--mlflow-run-id", mlflow_run])
+    res = json.loads((env / "outputs" / "result.json").read_text())
+    assert res["promote"] is True and res["primary_metric"] == "mae"
+
+
+def test_sample_prints_feature_records(env, capsys):
+    cli.main(["sample", "--model", "colour", "--rows", "5", "--profile", "drift"])
+    records = json.loads(capsys.readouterr().out)
+    assert len(records) == 5 and set(records[0]) == {"text", "size"}

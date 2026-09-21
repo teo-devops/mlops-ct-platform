@@ -7,6 +7,7 @@ data that trained the model, is what makes "drift" a precise question.
 
 from __future__ import annotations
 
+import pandas as pd
 from sklearn.model_selection import train_test_split
 
 from ctsteps import io_s3, result
@@ -15,7 +16,11 @@ from ctsteps.steps.common import Context
 
 def run(ctx: Context, *, holdout_ratio: float, seed: int, reference_rows: int) -> dict:
     df = io_s3.get_parquet(ctx.s3, ctx.dataset_uri("raw.parquet"))
-    stratify = df[ctx.spec.target] if df[ctx.spec.target].nunique() > 1 else None
+    # Stratify on a categorical target only: a regression target has as many
+    # values as rows and train_test_split would refuse it.
+    y = df[ctx.spec.target]
+    categorical = not pd.api.types.is_numeric_dtype(y) or y.nunique() <= 20
+    stratify = y if categorical and y.nunique() > 1 else None
     train, holdout = train_test_split(
         df, test_size=holdout_ratio, random_state=seed, stratify=stratify
     )

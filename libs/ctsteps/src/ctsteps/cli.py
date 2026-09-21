@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 import os
 import sys
 
@@ -43,6 +44,15 @@ def build_parser() -> argparse.ArgumentParser:
     )
     s.add_argument("--seed", type=int, default=int(os.environ.get("CT_SEED", "42")))
     s.add_argument("--rows", type=int, default=int(os.environ.get("CT_ROWS", "6000")))
+
+    # `sample` is not a pipeline step: it prints feature records of the use
+    # case's data (any profile) as JSON, so that platform scripts can generate
+    # realistic traffic for an API without knowing the use case's columns.
+    s = sub.add_parser("sample", help="print feature records as JSON (traffic generator)")
+    _common(s, run_id=False)
+    s.add_argument("--profile", default=None)
+    s.add_argument("--seed", type=int, default=7)
+    s.add_argument("--rows", type=int, default=100)
 
     s = sub.add_parser("validate", help="data-quality gate")
     _common(s)
@@ -102,6 +112,13 @@ def build_parser() -> argparse.ArgumentParser:
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     ctx = Context.build(args.use_case, args.model, getattr(args, "run_id", "monitor"))
+    if args.step == "sample":
+        frame = ctx.use_case.ingest(
+            args.model, profile=args.profile, seed=args.seed, rows=args.rows
+        )
+        records = frame[list(ctx.spec.features)].to_dict(orient="records")
+        json.dump(records, sys.stdout, default=str)
+        return 0
     if args.step == "ingest":
         ingest.run(ctx, profile=args.profile, seed=args.seed, rows=args.rows)
     elif args.step == "validate":

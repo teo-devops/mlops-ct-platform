@@ -1,0 +1,8 @@
+apiVersion: v2
+name: delivery-eta-pipelines
+description: >-
+  Continuous-training pipeline of Delivery Eta on Argo Workflows: the ctsteps
+  contract as a WorkflowTemplate, a weekly safety-net schedule and the drift
+  monitor that retrains on demand.
+type: application
+version: 0.1.0

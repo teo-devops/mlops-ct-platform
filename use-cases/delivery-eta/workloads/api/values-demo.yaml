@@ -1,0 +1,7 @@
+ingress:
+  enabled: true
+# Served versions (lineage). Bumped by the pipeline together with
+# ../serving/values-demo.yaml — see ctsteps promote.
+models:
+  eta:
+    version: "0"

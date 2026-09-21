@@ -20,6 +20,7 @@ controller:
   # ServiceAccount + Role + RoleBinding in each of them.
   workflowNamespaces:
     - automated-listing-engine-pipelines
+    - delivery-eta-pipelines
   metricsConfig:
     enabled: true
   serviceMonitor:

@@ -1,0 +1,16 @@
+# What the platform's flow scripts (scripts/use-case/*) need to know about this
+# use case. Everything else the platform learns from the charts' values.
+name: automated-listing-engine
+package: automated_listing_engine     # python package of the plugin: CT_USE_CASE=<package>:use_case
+models: [categorizer, fraud]
+api:
+  enabled: true
+  host: automated-listing-engine.localhost
+  path: /v1/listings/analyze
+  sample: {title: "iPhone 13 Pro 128GB very good condition", price: 450}
+  # smoke fallback drill: the model whose predictor is killed; the API must keep
+  # answering (uc_fallback_total grows). Empty = the use case has no fallback.
+  degradable_model: fraud
+drift:
+  profile: drift                       # data profile `make drift` flips the world to
+  requests: 600
