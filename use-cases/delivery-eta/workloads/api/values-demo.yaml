@@ -4,4 +4,4 @@ ingress:
 # ../serving/values-demo.yaml — see ctsteps promote.
 models:
   eta:
-    version: "1"
+    version: "2"

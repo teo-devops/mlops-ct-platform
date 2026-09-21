@@ -1,4 +1,4 @@
 # demo profile. `models.<name>.version` is bumped by the pipeline (ctsteps promote).
 models:
   eta:
-    version: "1"
+    version: "2"
