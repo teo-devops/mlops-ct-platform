@@ -52,8 +52,6 @@ if exists observability grafana-admin; then info "kept"; else
 fi
 
 # --- Opt-in modules: their state exists only while they are enabled --------
-module_enabled() { grep -Eq "^\s*-\s*$1\s*$" "${REPO_ROOT}/gitops/environments/demo/platform/kustomization.yaml"; }
-
 if module_enabled airflow; then
   step "Airflow (opt-in): metadata database and keys (namespace airflow)"
   kubectl create namespace airflow --dry-run=client -o yaml | kubectl apply -f - >/dev/null
@@ -82,6 +80,7 @@ step "Use cases"
 for f in "${REPO_ROOT}"/use-cases/*/usecase.yaml; do
   [[ -f "$f" ]] || continue
   uc="$(basename "$(dirname "$f")")"
+  use_case_enabled "$uc" || { info "→ ${uc}: not enabled in the demo (make use-case ENABLE=${uc}); skipped"; continue; }
   info "→ ${uc}"
   USE_CASE="$uc" "${REPO_ROOT}/scripts/use-case/secrets.sh"
 done

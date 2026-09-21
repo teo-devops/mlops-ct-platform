@@ -82,6 +82,14 @@ print(" ".join(bad))' "$scope")"
   done
 }
 
+# Is a platform module listed (uncommented) in the demo platform kustomization?
+# Opt-in modules live there as `#  - <name>` until enabled (make module ENABLE=<name>).
+PLATFORM_KUSTOMIZATION="${REPO_ROOT}/gitops/environments/demo/platform/kustomization.yaml"
+module_enabled() { grep -Eq "^\s*-\s*$1\s*$" "${PLATFORM_KUSTOMIZATION}"; }
+# Same for a use case's group in apps/ and projects/ (make use-case ENABLE=<name>).
+APPS_KUSTOMIZATION="${REPO_ROOT}/gitops/environments/demo/apps/kustomization.yaml"
+use_case_enabled() { grep -Eq "^\s*-\s*$1\s*$" "${APPS_KUSTOMIZATION}"; }
+
 rand_hex() { openssl rand -hex 16 2>/dev/null || head -c 32 /dev/urandom | od -An -tx1 | tr -d ' \n'; }
 
 # Deliver the artifact-store credential of one consumer user into a namespace:

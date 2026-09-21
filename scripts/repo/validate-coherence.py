@@ -69,9 +69,14 @@ def yaml_files(directory: pathlib.Path) -> list[pathlib.Path]:
     )
 
 
+def commented_resources(kustomization: pathlib.Path) -> set[str]:
+    """Entries kept as `#  - <name>`: declared, deliberately not deployed (opt-in)."""
+    return set(re.findall(r"^\s*#\s*-\s*([a-z0-9.-]+)\s*$", kustomization.read_text(encoding="utf-8"), re.MULTILINE))
+
+
 def check_kustomize_wiring(directory: pathlib.Path) -> None:
-    """Every file must be reachable: root kustomization -> group -> file."""
-    root_listed = resources_of(directory / "kustomization.yaml")
+    """Every file must be reachable: root kustomization -> group -> file (or opt-in, commented)."""
+    root_listed = resources_of(directory / "kustomization.yaml") | commented_resources(directory / "kustomization.yaml")
     for group in sorted(d for d in directory.iterdir() if d.is_dir()):
         if group.name not in root_listed:
             error(
@@ -177,11 +182,7 @@ def check_platform_modules(projects: dict[str, dict]) -> None:
     listed = resources_of(kustomization)
     # Opt-in modules: a complete directory whose line is commented out (`#  - <name>`).
     # Still validated in full; only the "not listed" check is waived.
-    opt_in = set(
-        re.findall(
-            r"^\s*#\s*-\s*([a-z0-9-]+)\s*$", kustomization.read_text(), re.MULTILINE
-        )
-    )
+    opt_in = commented_resources(kustomization)
     pspec = projects.get("platform", {}).get("spec", {})
     allowed = pspec.get("sourceRepos", [])
     for module in sorted(d for d in DIR_PLATFORM.iterdir() if d.is_dir()):
@@ -261,6 +262,7 @@ def check_use_cases() -> None:
             airflow_ns = {
                 d["metadata"]["namespace"] for d in yaml.safe_load_all(fh) if d
             }
+    deployed_groups = resources_of(DIR_APPS / "kustomization.yaml")
     apps = {p.stem: p.parent.name for p in yaml_files(DIR_APPS)}
     archetype_of = {
         p.stem: (load(p).get("metadata", {}).get("annotations") or {}).get(
@@ -285,6 +287,10 @@ def check_use_cases() -> None:
         expected = {f"{uc}-serving": "stateless", f"{uc}-pipelines": "pipeline"}
         if api_enabled:
             expected[f"{uc}-api"] = "stateless"
+        if uc not in deployed_groups and uc not in commented_resources(DIR_APPS / "kustomization.yaml"):
+            error(f"{r}: group {uc!r} neither listed nor opt-in in apps/kustomization.yaml")
+        if (uc in deployed_groups) != (uc in resources_of(DIR_PROJECTS / "kustomization.yaml")):
+            error(f"{r}: group {uc!r} must be enabled (or opt-in) in BOTH apps/ and projects/ kustomizations")
         for wl, arch in expected.items():
             if apps.get(wl) != uc:
                 error(
@@ -568,8 +574,11 @@ def main() -> int:
         for e in errors:
             print(f"  - {e}", file=sys.stderr)
         return 1
+    ucs = use_cases()
+    on = [u for u in ucs if u in resources_of(DIR_APPS / "kustomization.yaml")]
     print(
-        f"✓ {len(with_app)} workload(s), {len(list(DIR_PLATFORM.iterdir())) - 1} platform module(s) and {len(use_cases())} use case(s) coherent."
+        f"✓ {len(with_app)} workload(s), {len(list(DIR_PLATFORM.iterdir())) - 1} platform module(s) "
+        f"and {len(ucs)} use case(s) coherent (deployed in the demo: {', '.join(on) or 'none'})."
     )
     return 0
 
