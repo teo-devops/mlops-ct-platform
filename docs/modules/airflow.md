@@ -9,7 +9,7 @@
 | **Enable** | uncomment `- airflow` in `gitops/environments/demo/platform/kustomization.yaml`, `make secrets` (creates its out-of-band state), commit. UI: http://airflow.localhost:8088 |
 | **Disable** | comment the line again: Argo CD prunes the module (the Postgres PVC is `Prune=false`) |
 
-Wave 2. What is *exercised*: `ct_pipeline_categorizer` / `ct_pipeline_fraud` run the seven steps with the
+Wave 2. Exercised on 2026-09-21 (`ct_pipeline_categorizer`: gate refused an equal challenger, then promoted v3 in commit `5b67091`). What is *exercised*: `ct_pipeline_categorizer` / `ct_pipeline_fraud` run the seven steps with the
 same image, environment, arguments and resources as the Argo `WorkflowTemplate ct-pipeline`; XCom carries the
 three scalars (`mlflow_run_id`, `promote`, `version`) from `result.json`; a `ShortCircuitOperator` is the gate;
 `promote` pushes the deployment commit exactly as the Argo path does. Trigger a run:
