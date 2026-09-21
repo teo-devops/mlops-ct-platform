@@ -93,7 +93,7 @@ PROMOTE_RESOURCES = V1ResourceRequirements(
 
 # --run-id names the dataset folder in S3 and the MLflow run, like {{workflow.name}} in Argo.
 RUN_ID_SUFFIX = (
-    "{{ run_id | replace('_', '-') | replace(':', '-') | replace('+', '-')"
+    "{{ run_id | replace('__', '-') | replace('_', '-') | replace(':', '-') | replace('+', '-')"
     " | replace('.', '-') | replace('T', '-') | lower }}"
 )
 
