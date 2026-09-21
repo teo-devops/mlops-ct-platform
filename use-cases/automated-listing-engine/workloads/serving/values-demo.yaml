@@ -1,6 +1,6 @@
 # demo profile. `models.<name>.version` is bumped by the pipeline (ctsteps promote).
 models:
   categorizer:
-    version: "2"
+    version: "1"
   fraud:
     version: "1"
