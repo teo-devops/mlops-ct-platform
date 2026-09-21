@@ -10,7 +10,7 @@ namespace: argocd
 resources:
   - platform.yaml
   - automated-listing-engine
-  - delivery-eta
+  #  - delivery-eta
   - shared
 
 # AppProjects are created before the Applications that reference them.

@@ -16,7 +16,7 @@ namespace: argocd
 # leave the dangerous half by hand. See docs/decisions.md.
 resources:
   - automated-listing-engine
-  - delivery-eta
+  #  - delivery-eta
   - shared
 
 # Wave 5: after every platform module.
