@@ -33,4 +33,4 @@ resources:
   # says how to enable one: uncomment, `make secrets`, commit).
   #  - airflow
   #  - redpanda
-  - argo-rollouts
+  #  - argo-rollouts

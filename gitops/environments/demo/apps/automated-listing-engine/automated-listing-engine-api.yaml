@@ -45,11 +45,10 @@ spec:
       # selfHeal from day one: reverts any `kubectl edit`.
       # On a `batch` workload it means DELETING A FINISHED JOB RE-RUNS IT.
       selfHeal: true
-      # prune NO at birth: while the workload stabilises, a short render must
-      # not delete live resources. Enabling it is a one-line PR. When enabled,
-      # resources that must never die (PVCs) carry
-      # `argocd.argoproj.io/sync-options: Prune=false` in the chart.
-      prune: false
+      # prune ON (the one-line PR the template talks about): the chart switches
+      # between a Deployment and a Rollout (`rollout.enabled`) and the retired
+      # one must go. Stateless workload, nothing to protect.
+      prune: true
     syncOptions:
       # Argo CD creates the destination namespace; the chart declares none.
       - CreateNamespace=true

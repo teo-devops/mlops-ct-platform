@@ -7,9 +7,9 @@
 | **Pinned version** | chart 2.43.2 (Argo Rollouts v1.10.0) |
 | **Namespace** | argo-rollouts (controller, dashboard); Rollouts in each workload's namespace |
 | **Producers / consumers** | the use case's api chart renders a `Rollout` instead of its `Deployment` when `rollout.enabled` (steps: 20 % → pause → analysis → 50 % → pause → 100 %); its Application ignores the `rollouts-pod-template-hash` the controller stamps on the Service selectors |
-| **Enable** | uncomment `- argo-rollouts` in `gitops/environments/demo/platform/kustomization.yaml`, commit; then `rollout.enabled: true` in the use case's `workloads/api/values-demo.yaml`, commit. The use case's Application has `prune: false`: delete the old Deployment by hand once (`kubectl -n <uc>-api delete deploy <uc>-api`), otherwise both serve. Nothing out of band |
+| **Enable** | uncomment `- argo-rollouts` in `gitops/environments/demo/platform/kustomization.yaml`, commit; then `rollout.enabled: true` in the use case's `workloads/api/values-demo.yaml`, commit. The example use case's Application has `prune: true`, so the retired Deployment (or Rollout, when disabling) is removed by Argo CD; with `prune: false` delete it by hand or both serve. Nothing out of band |
 | **Disable** | `rollout.enabled: false` (back to a Deployment) and comment the line |
-| **In the demo** | off: rolling update with readiness, rollback = `make promote` to the previous version (decisions.md #12) |
+| **In the demo** | off: rolling update with readiness, rollback = `make promote` to the previous version (decisions.md #12). Exercised on 2026-09-21: promotion under traffic → 20 % → analysis (p99 0.099 s, errors 0, fallbacks 0) → 50 % → 100 %; with the fraud predictor scaled to 0 the next promotion was **aborted** at `fallback-ratio` 0.71/0.82 (> 0.2), traffic stayed on the stable ReplicaSet; a retry once the 2-minute window was clean completed |
 
 Wave 2. What a canary protects against here: what the offline gate cannot see — latency, integration,
 a lineage change that breaks the API — on the **API surface**. A promotion commit changes the API's
@@ -17,7 +17,9 @@ ConfigMap (`ALE_*_VERSION`), the pod template checksum changes, the Rollout star
 goes to the new pods, the platform's analysis reads their error ratio, p99 and fallback ratio for two
 minutes, and only then the weight grows. A failed analysis aborts the rollout: the canary ReplicaSet is
 scaled down, the stable one keeps 100 %, the Rollout (and its Application) is `Degraded` until a new
-revision or `kubectl argo rollouts retry`.
+revision or a retry (`kubectl argo rollouts retry rollout <name>`, or without the plugin
+`kubectl patch rollout <name> --subresource status --type merge -p '{"status":{"abort":false}}'`) — retry after
+the 2-minute rate window is clean, or the analysis fails again on the outage it just saw.
 
 What it does **not** do on kind, on purpose: the *model* itself is switched by KServe as soon as the
 InferenceService's `storageUri` changes (Standard mode, no traffic split — decisions.md #8). A canary of
