@@ -17,3 +17,4 @@ All `make` targets below assume `USE_CASE=automated-listing-engine` (the default
 | rotate its secrets | delete them in `automated-listing-engine-*` namespaces, `scripts/secrets.sh`, restart the consumers |
 
 Its Secrets, identities and the data-source ConfigMap: [architecture.md](architecture.md#artifact-store-identities-used).
+| move it to other buckets (migration) | the registry keeps `serving_uri` / `reference_uri` of the old bucket: migrate the objects and re-tag, or reset its registered models (`DELETE /api/2.0/mlflow/registered-models/delete`) so the next `make pipeline` bootstraps v1 |
