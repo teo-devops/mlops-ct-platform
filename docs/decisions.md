@@ -68,3 +68,12 @@ treatment as a Secret: created by the bootstrap script, mutated by the demo, doc
 ### 12. No Cilium, no Rollouts, no Feast, no Katib, no Great Expectations in the demo
 Each would add a controller and a story of its own without changing the control flow being
 demonstrated. → Documented as module gaps with their contract and their production counterpart.
+
+### 13. Airflow exercised as an opt-in module, not as the demo orchestrator
+The roadmap asked for the Airflow adapter to run on kind, and #4 still holds: Airflow costs an api-server, a
+scheduler, a dag-processor and a database for a loop that Argo Workflows runs with one controller. → A complete
+module (`platform/airflow/`: chart 1.22.0 on `LocalExecutor`, own Postgres because the subchart is
+`bitnamilegacy`, DAGs by git-sync from this repository, keys out of band, no login like the Argo UI) whose line
+in the platform kustomization is commented; the DAG mirrors the WorkflowTemplate step by step and was run
+end-to-end, promote included. → Enabling it is uncomment + `make secrets` + commit; the drift monitor keeps
+submitting Argo Workflows, so Airflow sits next to Argo rather than replacing it (docs/modules/airflow.md).

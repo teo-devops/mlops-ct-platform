@@ -10,7 +10,7 @@ Same modules, same contracts, same charts. What changes is the values — and wh
 | Artifact store | MinIO single node, local-path PVC | MinIO erasure-coded on Longhorn (or S3) | S3 + IRSA |
 | Model registry | MLflow, sqlite on PVC | MLflow + managed Postgres, artifacts on MinIO/S3 | MLflow + RDS + S3 |
 | Serving | KServe Standard, no autoscaling | KServe + Istio/Gateway, HPA on QPS, canary via Rollouts/KServe | same on EKS |
-| Orchestration | Argo Workflows | Airflow (ETL, sensors) + Argo Workflows/KFP + Katib | MWAA + KFP on EKS (or SageMaker Pipelines) |
+| Orchestration | Argo Workflows (Airflow as an opt-in module, exercised) | Airflow (ETL, sensors) + Argo Workflows/KFP + Katib | MWAA + KFP on EKS (or SageMaker Pipelines) |
 | Events | prediction log on S3 | Kafka via Strimzi | MSK |
 | Monitoring | kube-prometheus-stack mini, Pushgateway | full stack + Alertmanager routes | Amazon Managed Prometheus + Grafana |
 | Model monitoring | Evidently on a CronWorkflow | Evidently consuming Kafka, labels feedback loop | same |

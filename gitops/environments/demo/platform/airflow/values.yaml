@@ -1,0 +1,100 @@
+# airflow — demo profile. OPT-IN module (docs/modules/airflow.md).
+#
+# Contract implemented: "orchestration" (docs/design/contracts.md#orchestration),
+# as an alternative to argo-workflows: the same ctsteps containers, driven by
+# the DAGs in pipelines/adapters/airflow/ (delivered by git-sync from this
+# repository). Kept as light as Airflow gets on kind:
+#   * LocalExecutor — tasks run inside the scheduler; a KubernetesPodOperator
+#     per step creates the pod in the use case's pipelines namespace.
+#   * no triggerer, no statsd, no redis/flower/pgbouncer, no log persistence.
+#   * own Postgres (manifests/postgres.yaml): the chart's subchart points at
+#     frozen bitnamilegacy images (decisions.md #6).
+#   * no login in the demo (SimpleAuthManager, everyone admin), like the Argo
+#     Workflows UI. The prod profile puts an auth manager and SSO in front.
+# Everything secret is out of band (scripts/platform/03-secrets.sh):
+#   airflow-postgres · airflow-metadata · airflow-fernet-key ·
+#   airflow-api-secret-key · airflow-jwt-secret
+airflowVersion: "3.2.2"
+defaultAirflowTag: "3.2.2"
+executor: LocalExecutor
+
+postgresql:
+  enabled: false
+data:
+  metadataSecretName: airflow-metadata
+
+fernetKeySecretName: airflow-fernet-key
+apiSecretKeySecretName: airflow-api-secret-key
+jwtSecretName: airflow-jwt-secret
+
+# Argo CD applies the chart as plain manifests: no helm hooks.
+migrateDatabaseJob:
+  useHelmHooks: false
+  applyCustomEnv: false
+createUserJob:
+  enabled: false          # FAB command; the demo uses SimpleAuthManager
+
+config:
+  core:
+    auth_manager: airflow.api_fastapi.auth.managers.simple.simple_auth_manager.SimpleAuthManager
+    simple_auth_manager_all_admins: 'True'
+    load_examples: 'False'
+  api:
+    base_url: http://airflow.localhost:8088
+
+# DAGs: git-sync of this repository, only the adapter directory. Public
+# repository, no credential.
+dags:
+  gitSync:
+    enabled: true
+    repo: https://github.com/teo-devops/mlops-ct-platform.git
+    branch: main
+    ref: main
+    depth: 1
+    subPath: pipelines/adapters/airflow
+    period: 30s
+
+apiServer:
+  resources:
+    requests: {cpu: 100m, memory: 512Mi}
+    limits: {memory: 1Gi}
+scheduler:
+  resources:
+    requests: {cpu: 100m, memory: 512Mi}
+    limits: {memory: 1.5Gi}
+  logGroomerSidecar:
+    enabled: false
+dagProcessor:
+  resources:
+    requests: {cpu: 50m, memory: 256Mi}
+    limits: {memory: 1Gi}
+  logGroomerSidecar:
+    enabled: false
+triggerer:
+  enabled: false
+statsd:
+  enabled: false
+flower:
+  enabled: false
+redis:
+  enabled: false
+pgbouncer:
+  enabled: false
+logs:
+  persistence:
+    enabled: false
+
+# RBAC of the airflow namespace comes from the chart; the Role that lets the
+# scheduler create step pods in each pipelines namespace is in manifests/.
+rbac:
+  create: true
+multiNamespaceMode: false
+
+ingress:
+  apiServer:
+    enabled: true
+    ingressClassName: nginx
+    hosts:
+      - name: airflow.localhost
+    path: /
+    pathType: Prefix

@@ -25,6 +25,7 @@ spec:
     - 'https://community-charts.github.io/helm-charts'
     - 'https://prometheus-community.github.io/helm-charts'
     - 'https://github.com/kubernetes-sigs/gateway-api.git'
+    - 'https://airflow.apache.org'
 
   destinations:
     - server: 'https://kubernetes.default.svc'
@@ -53,3 +54,7 @@ spec:
       - group: ''
         kind: Secret
         name: demo-*
+      # Out-of-band state of the opt-in airflow module (03-secrets.sh).
+      - group: ''
+        kind: Secret
+        name: airflow-*

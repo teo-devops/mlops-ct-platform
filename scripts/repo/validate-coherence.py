@@ -145,11 +145,15 @@ def check_platform_repo() -> None:
 
 def check_platform_modules(projects: dict[str, dict]) -> None:
     """Every module directory is listed, uses project `platform` and allowed repos."""
-    listed = resources_of(DIR_PLATFORM / "kustomization.yaml")
+    kustomization = DIR_PLATFORM / "kustomization.yaml"
+    listed = resources_of(kustomization)
+    # Opt-in modules: a complete directory whose line is commented out (`#  - <name>`).
+    # Still validated in full; only the "not listed" check is waived.
+    opt_in = set(re.findall(r"^\s*#\s*-\s*([a-z0-9-]+)\s*$", kustomization.read_text(), re.MULTILINE))
     pspec = projects.get("platform", {}).get("spec", {})
     allowed = pspec.get("sourceRepos", [])
     for module in sorted(d for d in DIR_PLATFORM.iterdir() if d.is_dir()):
-        if module.name not in listed:
+        if module.name not in listed and module.name not in opt_in:
             error(f"gitops/environments/demo/platform/kustomization.yaml: module {module.name!r} exists but is not listed (disabled?)")
         app = module / "application.yaml"
         if not app.exists():

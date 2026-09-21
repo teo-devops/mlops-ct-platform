@@ -12,7 +12,7 @@ kubectl context other than `kind-ct`.
 |---|---|---|---|
 | 01 | `cluster/01-prereqs.sh` | `prereqs` | tools, GitHub credential, WARP/TLS warning |
 | 02 | `cluster/02-up.sh` | `up` | kind cluster from `cluster/kind.yaml`, image preload from `cluster/images.txt`, ingress-nginx |
-| 03 | `platform/03-secrets.sh` | `secrets` | platform namespaces, artifact-store identities, platform Secrets; then every `use-cases/*/scripts/secrets.sh` |
+| 03 | `platform/03-secrets.sh` | `secrets` | platform namespaces, artifact-store identities, platform Secrets (opt-in modules only while enabled); then every `use-cases/*/scripts/secrets.sh` |
 | — | `use-cases/<uc>/scripts/secrets.sh` | (via 03) | the use case's namespaces, consumer credentials, Git credential, data-source state |
 | 04 | `platform/04-install.sh` | `bootstrap` | Argo CD in four phases (credential → chart → wait → root-app); the only imperative step of the control plane |
 | 05 | `platform/05-wait.sh` | `wait` | platform Applications Synced/Healthy (`SCOPE=<uc>` for a use case) |

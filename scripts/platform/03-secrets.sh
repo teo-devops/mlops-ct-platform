@@ -51,6 +51,30 @@ if exists observability grafana-admin; then info "kept"; else
   secret_upsert observability grafana-admin admin-user=admin "admin-password=${GRAFANA_ADMIN_PASSWORD}"; info "created (admin / \$GRAFANA_ADMIN_PASSWORD)"
 fi
 
+# --- Opt-in modules: their state exists only while they are enabled --------
+module_enabled() { grep -Eq "^\s*-\s*$1\s*$" "${REPO_ROOT}/gitops/environments/demo/platform/kustomization.yaml"; }
+
+if module_enabled airflow; then
+  step "Airflow (opt-in): metadata database and keys (namespace airflow)"
+  kubectl create namespace airflow --dry-run=client -o yaml | kubectl apply -f - >/dev/null
+  pg_pass="$(kubectl -n airflow get secret airflow-postgres -o jsonpath='{.data.POSTGRES_PASSWORD}' 2>/dev/null | base64 -d || true)"
+  if [[ -n "$pg_pass" ]]; then info "airflow-postgres kept"; else
+    pg_pass="$(rand_hex)"
+    secret_upsert airflow airflow-postgres POSTGRES_USER=airflow "POSTGRES_PASSWORD=${pg_pass}" POSTGRES_DB=airflow; info "airflow-postgres created"
+  fi
+  # SQLAlchemy URL the chart reads (data.metadataSecretName), derived from the same password.
+  secret_upsert airflow airflow-metadata \
+    "connection=postgresql+psycopg2://airflow:${pg_pass}@airflow-postgres.airflow.svc.cluster.local:5432/airflow"
+  # Keys the chart would otherwise regenerate on every render (permanent OutOfSync).
+  for pair in "airflow-fernet-key fernet-key" "airflow-api-secret-key api-secret-key" "airflow-jwt-secret jwt-secret"; do
+    set -- $pair
+    if exists airflow "$1"; then info "$1 kept"; else
+      # url-safe base64 of 32 bytes: what Fernet requires, fine for the other two
+      secret_upsert airflow "$1" "$2=$(python3 -c 'import base64,os;print(base64.urlsafe_b64encode(os.urandom(32)).decode())')"; info "$1 created"
+    fi
+  done
+fi
+
 step "Use cases"
 for uc in "${REPO_ROOT}"/use-cases/*/scripts/secrets.sh; do
   [[ -x "$uc" ]] || continue

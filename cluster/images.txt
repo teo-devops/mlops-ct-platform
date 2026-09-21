@@ -33,3 +33,9 @@ quay.io/prometheus/pushgateway:v1.11.3
 # --- MinIO (Docker Hub no longer serves MinIO; quay.io does)
 quay.io/minio/minio:RELEASE.2025-09-07T16-13-09Z
 quay.io/minio/mc:RELEASE.2025-08-13T08-35-41Z
+# --- Airflow 3.2.2 (chart 1.22.0) — OPT-IN module; harmless to preload when off
+apache/airflow:3.2.2
+registry.k8s.io/git-sync/git-sync:v4.4.2
+postgres:16.10-alpine
+# XCom sidecar of the KubernetesPodOperator (cncf provider 10.17.1 in the image)
+alpine:3.23.4

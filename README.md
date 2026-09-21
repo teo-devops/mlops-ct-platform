@@ -17,11 +17,11 @@ second-hand marketplace), is a **plugin**: the platform never mentions it.
 | What you get | Where |
 |---|---|
 | GitOps control plane (Argo CD app-of-apps, one AppProject per workload) | `gitops/` — `bootstrap/`, `argo-cd/`, `templates/`, `environments/demo/` |
-| Platform modules: cert-manager, KServe, MLflow, Argo Workflows, Prometheus/Grafana, Pushgateway | `gitops/environments/demo/platform/<module>/` |
+| Platform modules: cert-manager, KServe, MLflow, Argo Workflows, Prometheus/Grafana, Pushgateway (+ Airflow, opt-in) | `gitops/environments/demo/platform/<module>/` |
 | Workload registrations, grouped by owner (`shared/`, `<use-case>/`) | `gitops/environments/demo/{projects,apps}/<group>/` |
 | Shared workloads: MinIO with per-consumer users, CT alerting rules and the *CT Loop* dashboard | `workloads/` |
 | The step contract: pipeline steps as containers, orchestrator-agnostic | `libs/ctsteps/` |
-| Orchestrator adapters (Argo Workflows runs the demo; Airflow/KFP as reference) | `pipelines/` |
+| Orchestrator adapters (Argo Workflows runs the demo; Airflow exercised as an opt-in module; KFP as reference) | `pipelines/` |
 | Platform scripts: cluster lifecycle, bootstrap, operations, repo tooling | `scripts/` |
 | kind cluster definition and the images preloaded into it | `cluster/` |
 | Platform docs: architecture, contracts, the loop, module cards, decisions, profiles, runbook | `docs/` |
@@ -83,7 +83,7 @@ Every UI is published by ingress-nginx on `http://<name>.localhost:8088` (browse
 | artifact-store | MinIO | S3 buckets `datasets` / `models` / `predictions` and a least-privilege user per consumer |
 | model-registry | MLflow | runs, registered models, aliases `champion` / `challenger` / `previous` |
 | serving | KServe (Standard mode) | an `InferenceService` per model, pulled by version from the artifact store |
-| orchestration | Argo Workflows | the step contract run as a pipeline, schedules, RBAC for its namespace |
+| orchestration | Argo Workflows (Airflow opt-in) | the step contract run as a pipeline, schedules, RBAC for its namespace |
 | monitoring | kube-prometheus-stack + Pushgateway | scraping, generic CT alerting rules, the *CT Loop* dashboard |
 | model-monitoring | Evidently (`ctsteps drift`) | PSI against the frozen training reference, automatic retrain above threshold |
 | promotion | `ctsteps promote` + Argo CD | deployment = a commit; rollback = another commit |

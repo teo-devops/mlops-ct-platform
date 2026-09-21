@@ -1,0 +1,38 @@
+# The scheduler (LocalExecutor: the KubernetesPodOperator runs inside it)
+# creates the step pods in each use case's pipelines namespace. Provided HERE,
+# by the platform, exactly like argo-workflows' `controller.workflowNamespaces`:
+# a use case never writes Role/RoleBinding in its own namespace (its AppProject
+# blacklists them). Registering a use case with Airflow pipelines = one more
+# Role/RoleBinding pair below. The use case appears only as data.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: airflow-pod-launcher
+  namespace: automated-listing-engine-pipelines
+rules:
+  - apiGroups: [""]
+    resources: [pods]
+    verbs: [create, get, list, watch, delete, patch]
+  - apiGroups: [""]
+    resources: [pods/log]
+    verbs: [get, list]
+  - apiGroups: [""]
+    resources: [pods/exec]
+    verbs: [create, get]   # XCom sidecar: the operator reads return.json with exec
+  - apiGroups: [""]
+    resources: [events]
+    verbs: [list]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: airflow-pod-launcher
+  namespace: automated-listing-engine-pipelines
+subjects:
+  - kind: ServiceAccount
+    name: airflow-scheduler
+    namespace: airflow
+roleRef:
+  kind: Role
+  name: airflow-pod-launcher
+  apiGroup: rbac.authorization.k8s.io

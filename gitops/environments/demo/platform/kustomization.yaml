@@ -13,7 +13,8 @@ namespace: argocd
 # the directory, as long as the new one honours the same contract
 # (docs/design/contracts.md). Sync-waves (in each application.yaml):
 #   1  cert-manager, gateway-api-crds
-#   2  kserve-crd, mlflow, argo-workflows, kube-prometheus-stack, pushgateway
+#   2  kserve-crd, mlflow, argo-workflows, kube-prometheus-stack, pushgateway,
+#      airflow (opt-in)
 #   3  kserve (needs cert-manager webhooks + CRDs)
 #   4  kserve-runtimes (needs the KServe webhook)
 #   5  workload Applications (../apps)
@@ -28,3 +29,6 @@ resources:
   - argo-workflows
   - kube-prometheus-stack
   - pushgateway
+  # Opt-in modules: complete directories, off by default (docs/modules/<module>.md
+  # says how to enable one: uncomment, `make secrets`, commit).
+  - airflow

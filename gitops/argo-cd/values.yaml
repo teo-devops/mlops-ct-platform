@@ -86,8 +86,8 @@ configs:
 
   # Helm repositories the platform modules pull charts from. Declared here so
   # that a fresh cluster knows them without any `argocd repo add`. Public,
-  # anonymous: no credentials. The Git credential of this repository (private
-  # until published) is NOT here: install.sh phase 0 creates it in-cluster.
+  # anonymous: no credentials. The Git credential of a private fork of this
+  # repository is NOT here: install.sh phase 0 creates it in-cluster.
   repositories:
     kserve-charts:
       type: helm
@@ -110,6 +110,10 @@ configs:
       type: helm
       name: argo
       url: https://argoproj.github.io/argo-helm
+    apache-airflow:
+      type: helm
+      name: apache-airflow
+      url: https://airflow.apache.org
 
   # ==========================================================================
   # RBAC — designed to grow from "admin only" to several users without redoing

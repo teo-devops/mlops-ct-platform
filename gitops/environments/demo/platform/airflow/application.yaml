@@ -1,0 +1,49 @@
+# Platform module: airflow — see docs/modules/airflow.md
+# OPT-IN alternative implementation of the orchestration contract (the demo
+# runs Argo Workflows, decisions.md #4/#13). Enabled by listing `airflow` in
+# ../kustomization.yaml. Upstream chart + values from this repository. Pinned.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: airflow
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: platform
+  sources:
+    - repoURL: https://airflow.apache.org
+      chart: airflow
+      targetRevision: 1.22.0   # Airflow 3.2.2
+      helm:
+        releaseName: airflow
+        valueFiles:
+          - $values/gitops/environments/demo/platform/airflow/values.yaml
+    # Extra manifests of this module: the metadata database (own Postgres,
+    # not the chart's bitnami subchart) and the RBAC that lets the scheduler
+    # run step pods in the pipelines namespaces.
+    - repoURL: 'https://github.com/teo-devops/mlops-ct-platform.git'
+      targetRevision: main
+      path: gitops/environments/demo/platform/airflow/manifests
+    - repoURL: 'https://github.com/teo-devops/mlops-ct-platform.git'
+      targetRevision: main
+      ref: values
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: airflow
+  syncPolicy:
+    automated:
+      selfHeal: true
+      prune: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
+      - RespectIgnoreDifferences=true
+    retry:
+      limit: 10
+      backoff:
+        duration: 15s
+        factor: 2
+        maxDuration: 3m
