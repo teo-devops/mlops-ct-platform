@@ -1,0 +1,9 @@
+apiVersion: v2
+name: seaweedfs
+description: >-
+  S3-compatible artifact store for the platform (single-node SeaweedFS). Implements
+  the "artifact-store" contract: buckets, per-consumer users and per-bucket rights.
+  Replaces the MinIO chart once MinIO's images left every public registry.
+type: application
+version: 0.1.0
+appVersion: "4.47"

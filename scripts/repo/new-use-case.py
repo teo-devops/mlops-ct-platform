@@ -10,7 +10,7 @@ the platform keeps data about use cases:
   * three workloads in group <name> (register-workload.py: AppProject + Application each)
   * the pipelines namespace in the argo-workflows module (values + manifests) and in the
     airflow module's RBAC
-  * the use case's OWN artifact-store buckets and users, and its namespaces among MinIO's clients
+  * the use case's OWN artifact-store buckets and users, and its namespaces among the artifact store's clients
 Then it runs validate-coherence.py. What is left is the use case's job: the four methods of
 `UseCase`, the request schema of its API, its docs. The generated use case works as it is
 (synthetic data), so `make secrets` + commit + `USE_CASE=<name> make build pipeline smoke drift`
@@ -29,7 +29,7 @@ ROOT = pathlib.Path(__file__).resolve().parents[2]
 TEMPLATE = ROOT / "scripts" / "repo" / "use-case-template"
 USE_CASES = ROOT / "use-cases"
 PLATFORM = ROOT / "gitops" / "environments" / "demo" / "platform"
-MINIO_VALUES = ROOT / "workloads" / "minio" / "values.yaml"
+STORE_VALUES = ROOT / "workloads" / "seaweedfs" / "values.yaml"
 ARGO_WF_VALUES = PLATFORM / "argo-workflows" / "values.yaml"
 ARGO_WF_NAMESPACES = PLATFORM / "argo-workflows" / "manifests" / "namespaces.yaml"
 AIRFLOW_RBAC = PLATFORM / "airflow" / "manifests" / "rbac.yaml"
@@ -303,13 +303,13 @@ def main() -> int:
         AIRFLOW_RBAC.write_text(rbac.rstrip("\n") + "\n---\n" + pair, encoding="utf-8")
     for suffix in ("models", "datasets", "predictions"):
         append_list_item(
-            MINIO_VALUES,
+            STORE_VALUES,
             "buckets:",
             f"- {name}-{suffix}",
             comment=f"# --- use case: {name}" if suffix == "models" else None,
         )
     append_block(
-        MINIO_VALUES,
+        STORE_VALUES,
         "users:",
         f"# --- use case: {name}\n- name: {name}-reader\n  envPrefix: {prefix}_READER\n  policy:\n    ro: [{name}-models]\n"
         f"- name: {name}-pipeline\n  envPrefix: {prefix}_PIPELINE\n  policy:\n    rw: [{name}-models, {name}-datasets, mlflow]\n    ro: [{name}-predictions]\n"
@@ -317,13 +317,13 @@ def main() -> int:
     )
     for i, wl in enumerate(["serving", "pipelines"] + (["api"] if api else [])):
         append_list_item(
-            MINIO_VALUES,
+            STORE_VALUES,
             "  apiClients:",
             f"- {name}-{wl}",
             comment=f"# --- use case: {name}" if i == 0 else None,
         )
     print(
-        "✓ platform data updated: argo-workflows namespaces, airflow RBAC, minio buckets/users/clients"
+        "✓ platform data updated: argo-workflows namespaces, airflow RBAC, artifact-store buckets/users/clients"
     )
 
     # 4. coherence

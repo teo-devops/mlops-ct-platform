@@ -22,7 +22,7 @@ def _env(name: str, default: str | None = None) -> str:
 @dataclass(frozen=True)
 class Settings:
     # artifact store (S3 API)
-    s3_endpoint: str  # e.g. http://minio.minio.svc.cluster.local:9000
+    s3_endpoint: str  # e.g. http://seaweedfs.seaweedfs.svc.cluster.local:9000
     datasets_bucket: str
     models_bucket: str
     predictions_bucket: str

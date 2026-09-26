@@ -63,7 +63,7 @@ make new-use-case NAME=churn MODELS=risk TASK=classification     # then: use-cas
 ## Shape the demo
 
 The demo deploys **the core** (GitOps engine, KServe, MLflow, Argo Workflows, Prometheus/Grafana,
-MinIO, the CT rules) plus the **use cases** and **opt-in modules** that are listed. Nothing that is
+SeaweedFS, the CT rules) plus the **use cases** and **opt-in modules** that are listed. Nothing that is
 off is preloaded, secreted or synced. Argo CD deploys what `main` says, so enabling is a commit
 (`COMMIT=1` does it for you).
 
@@ -78,7 +78,7 @@ make use-case ENABLE=delivery-eta COMMIT=1
 
 | Contract | Module (pinned) | What a use case gets |
 |---|---|---|
-| artifact-store | MinIO | its own buckets `<uc>-datasets` / `<uc>-models` / `<uc>-predictions` and least-privilege users |
+| artifact-store | SeaweedFS | its own buckets `<uc>-datasets` / `<uc>-models` / `<uc>-predictions` and least-privilege users |
 | model-registry | MLflow | runs, registered models, aliases `champion` / `challenger` / `previous` |
 | serving | KServe (Standard mode) | an `InferenceService` per model, pulled by version from the artifact store |
 | orchestration | Argo Workflows (Airflow opt-in) | the step contract run as a pipeline, schedules, RBAC for its namespace |
@@ -103,11 +103,11 @@ architecture: [docs/design/architecture.md](docs/design/architecture.md); why it
 | MLflow | http://mlflow.localhost:8088 | none |
 | Grafana | http://grafana.localhost:8088 | `admin` / `admin-demo` |
 | Prometheus | http://prometheus.localhost:8088 | none |
-| MinIO console | http://minio.localhost:8088 | `root` / `minio-demo` |
+| SeaweedFS admin | http://seaweedfs.localhost:8088 | `root` / `seaweedfs-demo` |
 | a use case's API | http://<use-case>.localhost:8088/docs | none |
 
 > Demo defaults, deliberately known so that a fresh laptop needs no lookup. Change them before the
-> cluster is reachable by anyone else: `MINIO_ROOT_PASSWORD=… GRAFANA_ADMIN_PASSWORD=… make secrets`
+> cluster is reachable by anyone else: `SEAWEEDFS_ROOT_PASSWORD=… GRAFANA_ADMIN_PASSWORD=… make secrets`
 > (after deleting the two Secrets), a new bcrypt in `gitops/argo-cd/values.yaml` for Argo CD.
 > Machine-to-machine keys are random and never printed ([docs/design/secrets.md](docs/design/secrets.md)).
 
@@ -127,7 +127,7 @@ mlops-ct-platform/
 │       │   └── apps/<group>/                 one Application per workload  ┘ (commented group = opt-in)
 │       ├── prod/ · aws/                      documented shapes of the same tree (docs/design/profiles.md)
 ├── cluster/                                  kind.yaml and the image preload list (grouped by module)
-├── workloads/                                charts of the shared workloads: minio, observability
+├── workloads/                                charts of the shared workloads: seaweedfs, observability
 ├── libs/
 │   ├── ctsteps/                              the step contract: python package + `ctsteps` CLI + tests + base image
 │   └── ctserve/                              the serving-side contract for use-case APIs (Telemetry, metrics, KServe client)
@@ -152,4 +152,4 @@ mlops-ct-platform/
 * [docs/operations/what-the-demo-does-not-prove.md](docs/operations/what-the-demo-does-not-prove.md) — read before extrapolating
 
 The GitOps control plane is inherited from [teo-devops/Argo-cd-Labs](https://github.com/teo-devops/Argo-cd-Labs);
-the artifact store from [teo-devops/minIO-docker](https://github.com/teo-devops/minIO-docker).
+the artifact store's bucket/user matrix from [teo-devops/minIO-docker](https://github.com/teo-devops/minIO-docker).

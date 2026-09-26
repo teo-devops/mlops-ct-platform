@@ -1,12 +1,12 @@
 apiVersion: argoproj.io/v1alpha1
 kind: AppProject
 metadata:
-  name: minio
+  name: seaweedfs
   namespace: argocd
   finalizers:
     - resources-finalizer.argocd.argoproj.io
 spec:
-  description: Shared S3-compatible artifact store (MinIO) consumed over the network by the registry, the pipelines, the serving layer and the API
+  description: Shared S3-compatible artifact store (SeaweedFS) consumed over the network by the registry, the pipelines, the serving layer and the API
 
   # --- 1. Which repository it may read from --------------------------------
   # One. In this monorepo every workload reads the platform repository; the
@@ -20,7 +20,7 @@ spec:
   # fails the WHOLE sync; nothing deploys partially.
   destinations:
     - server: 'https://kubernetes.default.svc'
-      namespace: minio
+      namespace: seaweedfs
 
   # --- 3. Cluster-scoped resources: ONLY Namespace -------------------------
   # `Namespace` is MANDATORY: `CreateNamespace=true` does not bypass this list
@@ -50,11 +50,11 @@ spec:
   # without SSO.
   roles:
     - name: developer
-      description: Sync and read on the Applications of minio
+      description: Sync and read on the Applications of seaweedfs
       policies:
-        - p, proj:minio:developer, applications, get, minio/*, allow
-        - p, proj:minio:developer, applications, sync, minio/*, allow
-        - p, proj:minio:developer, logs, get, minio/*, allow
+        - p, proj:seaweedfs:developer, applications, get, seaweedfs/*, allow
+        - p, proj:seaweedfs:developer, applications, sync, seaweedfs/*, allow
+        - p, proj:seaweedfs:developer, logs, get, seaweedfs/*, allow
       groups:
         - teo-devops/platform
 

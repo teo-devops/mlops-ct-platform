@@ -20,7 +20,7 @@ proposing changes; most "improvements" that look obvious were decided against, o
   are the platform's (`scripts/use-case/`, they read `usecase.yaml`) and the chart templates are the
   platform's (`scripts/repo/use-case-template/`, the validator rejects a diverging copy). The platform
   never mentions a use case by name except as data: its group under `gitops/environments/demo/{projects,apps}/`,
-  its buckets/users/namespaces in the MinIO chart values, its pipelines namespace in the orchestration
+  its buckets/users/namespaces in the SeaweedFS chart values, its pipelines namespace in the orchestration
   modules, and `USE_CASE ?=` in the Makefile. **Use cases are isolated from each other**: own
   namespaces, AppProjects, buckets, users, NetworkPolicies; nothing under `use-cases/<a>/` may name
   `<b>` (validator). Use-case documentation goes in `use-cases/<name>/docs/`, never in `docs/`.
@@ -34,14 +34,14 @@ proposing changes; most "improvements" that look obvious were decided against, o
 * **The deployment is a commit.** Models reach serving only through `ctsteps promote` bumping
   `models.<model>.version` in the profile values of the serving and API charts. Do not add
   `kubectl patch`, `ignoreDifferences` on `storageUri`, or any other way to deploy that bypasses Git.
-* **Versions are pinned, never ranges.** Charts, images (MinIO by tag on quay.io), Python packages
+* **Versions are pinned, never ranges.** Charts, images (SeaweedFS by tag on Docker Hub), Python packages
   (the scikit-learn/numpy/joblib pins are those of `kserve/sklearnserver:v0.20.0` — a model pickled
   by the steps must load there).
 
 ## Things that are deliberate
 
 * Argo Workflows in the demo, Airflow/KFP as reference adapters (docs/decisions.md #4).
-* Prediction log on S3 instead of Kafka; sqlite for MLflow; own MinIO chart; KServe Standard mode
+* Prediction log on S3 instead of Kafka; sqlite for MLflow; own SeaweedFS chart (MinIO's images are gone, decisions #18); KServe Standard mode
   without Istio; push to `main` instead of a PR for promotion; the observability *workload* holds
   rules and dashboards while the monitoring *module* holds the stack.
 * `autoscalerClass: external` on kind; `startupapicheck` off; Alertmanager off; Dex off.

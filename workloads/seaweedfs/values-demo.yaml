@@ -8,5 +8,3 @@ ingress:
 # reference would bypass the preloaded copy and pull from the registry again.
 image:
   digest: ""
-mcImage:
-  digest: ""

@@ -1,0 +1,108 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: seaweedfs
+  labels:
+    {{- include "seaweedfs.labels" . | nindent 4 }}
+spec:
+  replicas: 1
+  # ReadWriteOnce volume: never two pods at once.
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: seaweedfs
+  template:
+    metadata:
+      labels:
+        {{- include "seaweedfs.labels" . | nindent 8 }}
+      annotations:
+        checksum/identities: {{ include (print $.Template.BasePath "/identities.yaml") . | sha256sum }}
+    spec:
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        runAsNonRoot: true
+      containers:
+        # master + volume + filer + S3 gateway (:9000) in one process.
+        - name: seaweedfs
+          image: {{ include "seaweedfs.image" . }}
+          imagePullPolicy: IfNotPresent
+          command: ["/bin/sh", "/config/start.sh"]
+          envFrom:
+            - secretRef:
+                name: {{ .Values.rootSecret }}
+            - secretRef:
+                name: {{ .Values.usersSecret }}
+          env:
+            - name: POD_IP
+              valueFrom:
+                fieldRef: {fieldPath: status.podIP}
+          ports:
+            - name: s3
+              containerPort: 9000
+            - name: master
+              containerPort: 9333
+            - name: master-grpc
+              containerPort: 19333
+          readinessProbe:
+            httpGet: {path: /healthz, port: s3}
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          livenessProbe:
+            httpGet: {path: /healthz, port: s3}
+            initialDelaySeconds: 30
+            periodSeconds: 20
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities: {drop: [ALL]}
+          volumeMounts:
+            - name: data
+              mountPath: /data
+            - name: identities
+              mountPath: /config
+            - name: tmp
+              mountPath: /tmp
+        # Web console, login = root credentials.
+        - name: admin
+          image: {{ include "seaweedfs.image" . }}
+          imagePullPolicy: IfNotPresent
+          command: ["weed"]
+          args:
+            - admin
+            - -ip=0.0.0.0
+            - -port=23646
+            - -master=localhost:9333
+            - -dataDir=/admin
+            - -adminUser=$(SEAWEEDFS_ROOT_USER)
+            - -adminPassword=$(SEAWEEDFS_ROOT_PASSWORD)
+          envFrom:
+            - secretRef:
+                name: {{ .Values.rootSecret }}
+          ports:
+            - name: console
+              containerPort: 23646
+          resources:
+            requests: {cpu: 10m, memory: 64Mi}
+            limits: {memory: 256Mi}
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities: {drop: [ALL]}
+          volumeMounts:
+            - name: admin
+              mountPath: /admin
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: seaweedfs-data
+        - name: identities
+          configMap:
+            name: seaweedfs-identities
+        # The rendered identities file (it holds secret keys) never touches the PVC.
+        - name: tmp
+          emptyDir: {medium: Memory, sizeLimit: 16Mi}
+        - name: admin
+          emptyDir: {}

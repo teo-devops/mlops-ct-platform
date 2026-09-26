@@ -34,7 +34,7 @@ make new-use-case NAME=<name> MODELS=<m1>,<m2> [TASK=classification|regression] 
 One command renders the directory above from `scripts/repo/use-case-template/` **and** registers
 the use case everywhere the platform keeps data about use cases: three AppProjects/Applications in
 group `<name>`, its pipelines namespace in the argo-workflows module (and the airflow module's RBAC),
-its own buckets and users in the MinIO chart, its namespaces among MinIO's clients. Then it runs the
+its own buckets and users in the SeaweedFS chart, its namespaces among its clients. Then it runs the
 validator. What is generated works as it is (synthetic data), so the loop closes on day one:
 
 1. `plugin/src/<package>/data.py` and `usecase.py`: the real ingest and the four methods.

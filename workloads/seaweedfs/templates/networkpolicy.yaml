@@ -7,7 +7,7 @@ kind: NetworkPolicy
 metadata:
   name: default-deny
   labels:
-    {{- include "minio.labels" . | nindent 4 }}
+    {{- include "seaweedfs.labels" . | nindent 4 }}
 spec:
   podSelector: {}
   policyTypes: [Ingress, Egress]
@@ -31,7 +31,7 @@ spec:
         - {protocol: UDP, port: 53}
         - {protocol: TCP, port: 53}
 ---
-# The setup Job talks to MinIO inside the namespace.
+# The setup Job (weed shell) talks to the master and the filer inside the namespace.
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -53,7 +53,7 @@ metadata:
 spec:
   podSelector:
     matchLabels:
-      app.kubernetes.io/name: minio
+      app.kubernetes.io/name: seaweedfs
   policyTypes: [Ingress]
   ingress:
     - from:
@@ -73,13 +73,6 @@ spec:
             matchLabels:
               kubernetes.io/metadata.name: {{ .Values.networkPolicy.ingressNamespace }}
       ports:
-        - {protocol: TCP, port: 9001}
-        - {protocol: TCP, port: 9000}
-    # Prometheus scraping (MinIO exposes /minio/v2/metrics on the API port).
-    - from:
-        - namespaceSelector:
-            matchLabels:
-              kubernetes.io/metadata.name: {{ .Values.networkPolicy.observabilityNamespace }}
-      ports:
+        - {protocol: TCP, port: 23646}
         - {protocol: TCP, port: 9000}
 {{- end }}

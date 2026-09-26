@@ -8,7 +8,7 @@
 #   NAME        same as in the AppProject and the namespace.
 #   REPO_URL    same exact URL as in `sourceRepos` of the AppProject.
 #   PATH        directory with the manifests (a Helm chart or plain YAML),
-#               e.g. workloads/minio or use-cases/automated-listing-engine/workloads/api
+#               e.g. workloads/seaweedfs or use-cases/automated-listing-engine/workloads/api
 #   ARCHETYPE   stateless | batch | stateful | pipeline   (docs/design/archetypes.md)
 #   GROUP       owner folder under projects/ and apps/: `shared` for platform-wide
 #               workloads, or the use-case name. Platform scripts use the label to

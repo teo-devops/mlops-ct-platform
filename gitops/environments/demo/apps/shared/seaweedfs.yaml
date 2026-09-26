@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: minio
+  name: seaweedfs
   namespace: argocd
   labels:
     mlops-ct-platform.dev/group: shared
@@ -11,12 +11,12 @@ metadata:
     - resources-finalizer.argocd.argoproj.io
 spec:
   # The AppProject is the boundary. Never `default`: it restricts nothing.
-  project: minio
+  project: seaweedfs
 
   source:
     repoURL: 'https://github.com/teo-devops/mlops-ct-platform.git'
     targetRevision: main
-    path: workloads/minio
+    path: workloads/seaweedfs
     # For a Helm chart the demo profile is values.yaml + values-demo.yaml.
     # Other profiles (prod, aws) only swap this list.
     helm:
@@ -26,7 +26,7 @@ spec:
 
   destination:
     server: 'https://kubernetes.default.svc'
-    namespace: minio
+    namespace: seaweedfs
 
   syncPolicy:
     automated:

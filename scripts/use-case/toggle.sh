@@ -6,7 +6,7 @@
 #   ./scripts/use-case/toggle.sh status
 #   COMMIT=1                                          also commit and push
 #
-# Everything about the use case stays in the repository (directory, MinIO
+# Everything about the use case stays in the repository (directory, artifact-store
 # buckets/users, orchestration RBAC); only whether it is DEPLOYED changes. The
 # demo deploys what is listed; a laptop does not pay for use cases it is not
 # looking at.

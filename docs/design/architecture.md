@@ -10,7 +10,7 @@ API, its pipeline definition, its secrets, its runbook. Nothing in the platform 
 ├───────────────────────────────────────────────────────────────────────────────────────┤
 │  SERVING             KServe (Standard mode)      contract: InferenceService + storageUri         │
 │  CONTROL / MLOPS     MLflow · Argo Workflows     contracts: model-registry · orchestration        │
-│  DATA                MinIO                       contract: artifact-store (S3 API)                │
+│  DATA                SeaweedFS                   contract: artifact-store (S3 API)                │
 │  OBSERVABILITY       Prometheus · Grafana · Pushgateway · Evidently   contracts: monitoring · model-monitoring │
 ├───────────────────────────────────────────────────────────────────────────────────────┤
 │  GITOPS ENGINE       Argo CD app-of-apps — every box above is an Application it reconciles       │
@@ -44,16 +44,16 @@ the predictor with readiness checks. Weekly CronWorkflows retrain regardless of 
 
 | Namespace | Owner | Ingress allowed from | Egress allowed to |
 |---|---|---|---|
-| `<name>-api` | use case | ingress-nginx, observability | `<name>-serving` :8080, minio :9000 |
-| `<name>-serving` | use case | `<name>-api`, observability | minio :9000 (storage-initializer) |
-| `<name>-pipelines` | use case | — | minio, mlflow, pushgateway, API server, the Git forge (promote) |
-| `minio` | shared workload | every consumer namespace, ingress-nginx, observability, host CIDR | intra-namespace |
+| `<name>-api` | use case | ingress-nginx, observability | `<name>-serving` :8080, seaweedfs :9000 |
+| `<name>-serving` | use case | `<name>-api`, observability | seaweedfs :9000 (storage-initializer) |
+| `<name>-pipelines` | use case | — | seaweedfs, mlflow, pushgateway, API server, the Git forge (promote) |
+| `seaweedfs` | shared workload | every consumer namespace, ingress-nginx, observability, host CIDR | intra-namespace |
 | `mlflow`, `observability` | platform modules / shared | unrestricted ingress | unrestricted |
 | `argocd`, `argo`, `kserve`, `cert-manager`, `ingress-nginx` | platform modules | no policies (webhooks come from the API server) | |
 
 Policies are emitted by each workload's chart (the platform does not impose them) and enforced by
 kindnet in the demo, by Cilium in the prod profile. DNS egress to `kube-system` is always allowed.
-The `minio` chart's `networkPolicy.apiClients` list is where a new use case's namespaces are added.
+The `seaweedfs` chart's `networkPolicy.apiClients` list is where a new use case's namespaces are added.
 
 ## Isolation model (inherited from Argo-cd-Labs)
 

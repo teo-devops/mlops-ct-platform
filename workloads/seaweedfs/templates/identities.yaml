@@ -1,0 +1,46 @@
+# The S3 identities — the artifact-store contract's users and rights.
+#
+# SeaweedFS reads them from a file at start. The file holds secret keys, so Git
+# only carries its shape: start.sh renders it from the root and users Secrets
+# (created out of band by scripts/platform/03-secrets.sh) and then execs the
+# server. A change to the list rolls the pod (checksum annotation on the
+# Deployment); a key rotated in the Secret takes effect on the next restart.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: seaweedfs-identities
+  labels:
+    {{- include "seaweedfs.labels" . | nindent 4 }}
+data:
+  start.sh: |
+    #!/bin/sh
+    set -eu
+    cat > /tmp/s3.json <<JSON
+    {
+      "identities": [
+        {
+          "name": "root",
+          "credentials": [{"accessKey": "${SEAWEEDFS_ROOT_USER}", "secretKey": "${SEAWEEDFS_ROOT_PASSWORD}"}],
+          "actions": ["Admin", "Read", "Write", "List", "Tagging"]
+        }
+        {{- range .Values.users }}
+        {{- $actions := list }}
+        {{- range (.policy.rw | default list) }}{{ $actions = concat $actions (list (printf "Read:%s" .) (printf "Write:%s" .) (printf "List:%s" .)) }}{{ end }}
+        {{- range (.policy.ro | default list) }}{{ $actions = concat $actions (list (printf "Read:%s" .) (printf "List:%s" .)) }}{{ end }}
+        {{- range (.policy.wo | default list) }}{{ $actions = append $actions (printf "Write:%s" .) }}{{ end }}
+        ,
+        {
+          "name": "{{ .name }}",
+          "credentials": [{"accessKey": "{{ .name }}", "secretKey": "${ {{- .envPrefix -}} _SECRET_KEY}"}],
+          "actions": {{ $actions | toJson }}
+        }
+        {{- end }}
+      ]
+    }
+    JSON
+    exec weed server \
+      -dir=/data \
+      -ip="${POD_IP}" -ip.bind=0.0.0.0 \
+      -master.volumeSizeLimitMB={{ .Values.storage.volumeSizeLimitMB }} \
+      -volume.max={{ .Values.storage.maxVolumes }} \
+      -s3 -s3.port=9000 -s3.config=/tmp/s3.json

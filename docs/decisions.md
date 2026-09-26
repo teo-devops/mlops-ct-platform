@@ -38,7 +38,7 @@ The chart's Postgres subchart points at frozen `bitnamilegacy` images. → sqlit
 `Prune=false` PVC, `Recreate` strategy, 2 uvicorn workers. → Single replica; the prod profile uses a
 managed Postgres.
 
-### 7. Own MinIO chart pinned on quay.io
+### 7. Own MinIO chart pinned on quay.io (superseded by #18)
 MinIO images left Docker Hub in 2025; the community chart is unmaintained. → A 150-line chart
 derived from teo-devops/minio-k8s with the bucket/user/policy provisioning of minIO-docker as a
 PostSync hook. → Per-consumer least-privilege users (`models-reader`, `pipeline`, `api-writer`,
@@ -117,3 +117,19 @@ the demo, on purpose and documented: the registry (MLflow without auth: by name)
 Prometheus, label `use_case`); production answers are one MLflow per team / auth, and tenant labels
 or per-team Prometheus. `delivery-eta` (regression, one model, no fallback) is the proof: generated,
 filled in, run end to end next to the example use case.
+
+### 18. SeaweedFS replaces MinIO as the demo artifact store
+In 2026 the pinned MinIO tags stopped being pullable from quay.io too (quay: no such manifest,
+Docker Hub: denied), so `make demo` could no longer bring the artifact store up. → A new
+`workloads/seaweedfs` chart honours the same contract: same buckets, same users (access key = user
+name, random secret keys from `03-secrets.sh`), same `rw`/`ro`/`wo` data in `values.yaml`, S3 on
+pod port 9000 so the platform-owned NetworkPolicies are unchanged. One `weed server` (master,
+volume, filer, S3) per pod; the rights are SeaweedFS identities with per-bucket actions
+(`rw` = Read+Write+List, `ro` = Read+List, `wo` = Write), rendered at start from the Secrets
+(never in Git); buckets by a PostSync `weed shell` Job; console = `weed admin` behind a login
+(the filer UI has no auth and is never exposed). Isolation re-verified (`AccessDenied` across use
+cases and for `wo` reads). → Garage was the alternative: it forces `GK…` access-key IDs, which
+breaks "access key = user name" everywhere the keys are delivered. → Trade-offs: a key rotated in
+the Secret takes effect on the next pod restart (MinIO's hook re-applied it on sync); no Prometheus
+scrape of the store yet. The MinIO chart is removed (git history keeps it); the prod answer is a
+SeaweedFS cluster or S3.

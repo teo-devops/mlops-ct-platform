@@ -35,4 +35,4 @@ networkPolicy:
   enabled: true
   apiNamespace: delivery-eta-api
   observabilityNamespace: observability
-  artifactStoreNamespace: minio
+  artifactStoreNamespace: seaweedfs

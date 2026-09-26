@@ -1,6 +1,6 @@
 # The topics of the event-bus contract, provisioned after every sync (a Job is
 # immutable: recreated each time, idempotent commands). Same pattern as the
-# MinIO setup Job for buckets: the platform owns the topic list, a use case
+# artifact-store setup Job for buckets: the platform owns the topic list, a use case
 # publishes to `predictions` and reads it back; it never creates topics.
 apiVersion: batch/v1
 kind: Job

@@ -39,4 +39,4 @@ networkPolicy:
   enabled: true
   apiNamespace: automated-listing-engine-api
   observabilityNamespace: observability
-  artifactStoreNamespace: minio
+  artifactStoreNamespace: seaweedfs

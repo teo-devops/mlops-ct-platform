@@ -2,5 +2,5 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 # Platform-wide workloads (charts under workloads/).
 resources:
-  - minio.yaml
+  - seaweedfs.yaml
   - observability.yaml

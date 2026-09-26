@@ -100,12 +100,18 @@ use_case_enabled() { grep -Eq "^\s*-\s*$1\s*$" "${APPS_KUSTOMIZATION}"; }
 
 rand_hex() { openssl rand -hex 16 2>/dev/null || head -c 32 /dev/urandom | od -An -tx1 | tr -d ' \n'; }
 
+# The artifact store (contract artifact-store): its namespace, the Secret holding
+# one key per consumer user, and the chart values that declare those users.
+ARTIFACT_STORE_NS="seaweedfs"
+ARTIFACT_STORE_USERS_SECRET="seaweedfs-users"
+ARTIFACT_STORE_VALUES="${REPO_ROOT}/workloads/seaweedfs/values.yaml"
+
 # Deliver the artifact-store credential of one consumer user into a namespace:
-#   minio_user_secret <namespace> <secret-name> <minio-user> <ENVPREFIX>
-# Reads the key minted by scripts/platform/03-secrets.sh (minio/minio-users).
-minio_user_secret() {
+#   store_user_secret <namespace> <secret-name> <store-user> <ENVPREFIX>
+# Reads the key minted by scripts/platform/03-secrets.sh.
+store_user_secret() {
   local ns="$1" name="$2" user="$3" prefix="$4" key
-  key="$(kubectl -n minio get secret minio-users -o jsonpath="{.data.${prefix}_SECRET_KEY}" 2>/dev/null | base64 -d || true)"
+  key="$(kubectl -n "${ARTIFACT_STORE_NS}" get secret "${ARTIFACT_STORE_USERS_SECRET}" -o jsonpath="{.data.${prefix}_SECRET_KEY}" 2>/dev/null | base64 -d || true)"
   [[ -n "$key" ]] || die "no key for user ${user}: run scripts/platform/03-secrets.sh first"
   secret_upsert "$ns" "$name" "AWS_ACCESS_KEY_ID=${user}" "AWS_SECRET_ACCESS_KEY=${key}"
   info "✓ ${ns}/${name} (user ${user})"

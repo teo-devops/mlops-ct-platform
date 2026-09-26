@@ -32,4 +32,4 @@ networkPolicy:
   enabled: true
   apiNamespace: __UC__-api
   observabilityNamespace: observability
-  artifactStoreNamespace: minio
+  artifactStoreNamespace: seaweedfs

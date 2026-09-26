@@ -3,7 +3,7 @@
 | | |
 |---|---|
 | **Contract** | publish/subscribe of prediction records — the same JSON document the prediction log writes (`{ts, request_id, model, model_version, features…, prediction, score, source}`) — on topic `predictions`; the platform provisions topics, a use case publishes and consumes |
-| **Demo implementation** | Redpanda single node (Kafka protocol, no JVM, no quorum, no operator), internal listener `redpanda.redpanda.svc.cluster.local:9093`, no TLS/SASL (NetworkPolicies decide who reaches it); Console at http://redpanda.localhost:8088; topics by a PostSync Job (`manifests/topics-job.yaml`), like MinIO's buckets |
+| **Demo implementation** | Redpanda single node (Kafka protocol, no JVM, no quorum, no operator), internal listener `redpanda.redpanda.svc.cluster.local:9093`, no TLS/SASL (NetworkPolicies decide who reaches it); Console at http://redpanda.localhost:8088; topics by a PostSync Job (`manifests/topics-job.yaml`), like the artifact store's buckets |
 | **Pinned version** | chart 26.2.3 (Redpanda v26.2.2, Console v3.9.0) |
 | **Namespace** | redpanda |
 | **Producers / consumers** | the use-case API through `ctserve.Telemetry` (libs/ctserve — the API calls `emit(model, record)`, the platform library publishes keyed by model when `CT_EVENT_BUS_BOOTSTRAP` is set, next to the S3 log; `eventBus.enabled` in the use case's api chart sets it); `ctsteps drift --source kafka` reads its window from the topic by timestamp (`eventBus.enabled` in the pipelines chart) |

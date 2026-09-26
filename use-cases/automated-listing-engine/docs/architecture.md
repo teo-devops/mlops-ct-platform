@@ -53,7 +53,7 @@ same labelled holdout — is the right primitive here, complemented in productio
 
 ## Artifact-store identities used
 
-| MinIO user | Secret | Namespace | Rights |
+| Artifact-store user | Secret | Namespace | Rights |
 |---|---|---|---|
 | `models-reader` | `models-s3-credentials` | `automated-listing-engine-serving` | read `models` |
 | `pipeline` | `pipeline-s3-credentials` | `automated-listing-engine-pipelines` | read/write `models`, `datasets`, `mlflow`; read `predictions` |

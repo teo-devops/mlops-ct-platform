@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Out-of-band state of ONE use case, created BEFORE its first sync: its
 # namespaces, the artifact-store credentials of its own users (minted by the
-# platform in minio/minio-users, see workloads/minio/values.yaml), the Git
+# platform in seaweedfs/seaweedfs-users, see workloads/seaweedfs/values.yaml), the Git
 # credential of the promote step and the data-source ConfigMap. Idempotent.
 # scripts/platform/03-secrets.sh runs it for every use-cases/*/usecase.yaml.
 . "$(dirname "${BASH_SOURCE[0]}")/lib-uc.sh"
@@ -17,9 +17,9 @@ done
 info "${UC_NS_API} ${UC_NS_SERVING} ${UC_NS_PIPELINES}"
 
 step "${UC}: artifact-store credentials (its own users: ${UC}-reader / -pipeline / -api)"
-minio_user_secret "$UC_NS_SERVING"   models-s3-credentials   "${UC}-reader"   "${PREFIX}_READER"
-minio_user_secret "$UC_NS_PIPELINES" pipeline-s3-credentials "${UC}-pipeline" "${PREFIX}_PIPELINE"
-minio_user_secret "$UC_NS_API"       api-s3-credentials      "${UC}-api"      "${PREFIX}_API"
+store_user_secret "$UC_NS_SERVING"   models-s3-credentials   "${UC}-reader"   "${PREFIX}_READER"
+store_user_secret "$UC_NS_PIPELINES" pipeline-s3-credentials "${UC}-pipeline" "${PREFIX}_PIPELINE"
+store_user_secret "$UC_NS_API"       api-s3-credentials      "${UC}-api"      "${PREFIX}_API"
 
 step "${UC}: Git credential for the promote step"
 # The promote step pushes the deployment commit; a scoped bot token in production.

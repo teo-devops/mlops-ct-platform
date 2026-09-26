@@ -11,7 +11,7 @@ deploys — `make use-case` lists them).
 | retrain, promote, roll back, smoke, drift for a use case | `make pipeline` · `make promote MODEL=<m> VERSION=<n>` · `make smoke` · `make drift` (with `USE_CASE=`) |
 | hurry an Argo CD sync | `kubectl -n argocd annotate application <app> argocd.argoproj.io/refresh=normal --overwrite` |
 | see what Argo CD would apply before committing | `make render` (`scripts/repo/render.sh`) |
-| rotate a platform secret | delete it, `make secrets` (with `MINIO_ROOT_PASSWORD=` / `GRAFANA_ADMIN_PASSWORD=` for the human-facing ones), restart the consumer (`minio`, `kps-grafana`), re-sync `minio` so the provisioning hook runs with the new root; Git credential: `scripts/platform/04-install.sh credential add`; Argo CD admin: new bcrypt in `gitops/argo-cd/values.yaml` |
+| rotate a platform secret | delete it, `make secrets` (with `SEAWEEDFS_ROOT_PASSWORD=` / `GRAFANA_ADMIN_PASSWORD=` for the human-facing ones), restart the consumer (`seaweedfs` — it renders its identities from the Secrets at start —, `kps-grafana`); Git credential: `scripts/platform/04-install.sh credential add`; Argo CD admin: new bcrypt in `gitops/argo-cd/values.yaml` |
 | register a workload | `python3 scripts/repo/register-workload.py <name> <path> --group <shared\|use-case>` — then READ the AppProject |
 | add a use case | [use-cases/README.md](../../use-cases/README.md) |
 | add / replace / disable a platform module | a directory under `gitops/environments/demo/platform/` + its card in `docs/modules/`; disable = remove its line from `platform/kustomization.yaml` |
@@ -31,7 +31,7 @@ deploys — `make use-case` lists them).
 * `root-app` OutOfSync with `failed to list refs`: on a private fork the Git credential is missing
   or expired → `scripts/platform/04-install.sh credential add`.
 * An InferenceService stuck with `storage-initializer` errors other than "No model found": check
-  the consumer's S3 Secret and the MinIO policy of its user (`kubectl -n minio logs job/minio-setup`).
+  the consumer's S3 Secret and the rights of its user in `workloads/seaweedfs/values.yaml` (a key rotated in the Secret needs `kubectl -n seaweedfs rollout restart deploy/seaweedfs`).
 * `promote` failing with `could not push`: the token cannot write to the repository.
 * A platform Application Degraded after a change: `make render` and compare; `make lint` catches
   most tree-level mistakes before they reach the cluster.

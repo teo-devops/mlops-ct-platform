@@ -1,0 +1,71 @@
+# Provisions the buckets of the artifact-store contract (users and rights are
+# the identities file, see identities.yaml).
+#
+# Argo CD PostSync hook: it runs after every successful sync and is recreated
+# each time (a Job is immutable). `s3.bucket.create` on an existing bucket is a
+# no-op, so re-running it converges: new buckets in values.yaml appear. The
+# final listing makes the Job fail if any bucket is missing.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: seaweedfs-setup
+  labels:
+    {{- include "seaweedfs.labels" . | nindent 4 }}
+data:
+  setup.sh: |
+    #!/bin/sh
+    set -eu
+    shell() { printf '%s\n' "$1" | weed shell -master=seaweedfs:9333; }
+    {{- range .Values.buckets }}
+    shell "s3.bucket.create -name {{ . }}"
+    {{- end }}
+    listing="$(shell s3.bucket.list)"
+    for b in {{ join " " .Values.buckets }}; do
+      echo "$listing" | grep -Eq "^\s*${b}\s" || { echo "bucket ${b} missing"; exit 1; }
+    done
+    echo "artifact store provisioned"
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: seaweedfs-setup
+  labels:
+    {{- include "seaweedfs.labels" . | nindent 4 }}
+  annotations:
+    argocd.argoproj.io/hook: PostSync
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation
+spec:
+  backoffLimit: 6
+  ttlSecondsAfterFinished: 3600
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: seaweedfs-setup
+        {{- include "seaweedfs.labels" . | nindent 8 }}
+    spec:
+      restartPolicy: OnFailure
+      securityContext:
+        runAsUser: 1000
+        runAsNonRoot: true
+      containers:
+        - name: shell
+          image: {{ include "seaweedfs.image" . }}
+          imagePullPolicy: IfNotPresent
+          command: ["/bin/sh", "/scripts/setup.sh"]
+          env:
+            - name: HOME
+              value: /tmp
+          volumeMounts:
+            - name: scripts
+              mountPath: /scripts
+            - name: tmp
+              mountPath: /tmp
+          resources:
+            requests: {cpu: 20m, memory: 64Mi}
+            limits: {memory: 256Mi}
+      volumes:
+        - name: scripts
+          configMap:
+            name: seaweedfs-setup
+        - name: tmp
+          emptyDir: {}

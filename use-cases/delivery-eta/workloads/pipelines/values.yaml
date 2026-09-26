@@ -12,7 +12,7 @@ serviceAccount: argo-workflow
 
 # --- contracts the steps talk to --------------------------------------------
 artifactStore:
-  endpointUrl: http://minio.minio.svc.cluster.local:9000
+  endpointUrl: http://seaweedfs.seaweedfs.svc.cluster.local:9000
   secretName: pipeline-s3-credentials     # user `pipeline`, created out of band
   datasetsBucket: delivery-eta-datasets       # this use case's buckets (isolation)
   modelsBucket: delivery-eta-models
@@ -70,6 +70,6 @@ eventBus:
 
 networkPolicy:
   enabled: true
-  artifactStoreNamespace: minio
+  artifactStoreNamespace: seaweedfs
   registryNamespace: mlflow
   observabilityNamespace: observability

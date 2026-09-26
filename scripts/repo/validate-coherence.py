@@ -40,7 +40,7 @@ ARCHETYPE_ANNOTATION = "mlops-ct-platform.dev/archetype"
 MARKERS = ("NAME", "REPO_URL", "DESCRIPTION", "GROUP", "TEAM", "ARCHETYPE", "PATH")
 PLATFORM_PROJECTS = {"platform"}
 DIR_USE_CASES = ROOT / "use-cases"
-MINIO_VALUES = ROOT / "workloads" / "minio" / "values.yaml"
+STORE_VALUES = ROOT / "workloads" / "seaweedfs" / "values.yaml"
 ARGO_WF_VALUES = DIR_PLATFORM / "argo-workflows" / "values.yaml"
 ARGO_WF_NAMESPACES = DIR_PLATFORM / "argo-workflows" / "manifests" / "namespaces.yaml"
 AIRFLOW_RBAC = DIR_PLATFORM / "airflow" / "manifests" / "rbac.yaml"
@@ -247,10 +247,10 @@ def check_use_cases() -> None:
     ucs = use_cases()
     if not ucs:
         return
-    minio = load(MINIO_VALUES)
-    buckets = set(minio.get("buckets") or [])
-    users = {u["name"]: u for u in minio.get("users") or []}
-    api_clients = set((minio.get("networkPolicy") or {}).get("apiClients") or [])
+    store = load(STORE_VALUES)
+    buckets = set(store.get("buckets") or [])
+    users = {u["name"]: u for u in store.get("users") or []}
+    api_clients = set((store.get("networkPolicy") or {}).get("apiClients") or [])
     wf_namespaces = set(
         (load(ARGO_WF_VALUES).get("controller") or {}).get("workflowNamespaces") or []
     )
@@ -313,7 +313,7 @@ def check_use_cases() -> None:
         for b in (f"{uc}-models", f"{uc}-datasets", f"{uc}-predictions"):
             if b not in buckets:
                 error(
-                    f"{rel(MINIO_VALUES)}: bucket {b!r} missing (isolation: one set of buckets per use case)"
+                    f"{rel(STORE_VALUES)}: bucket {b!r} missing (isolation: one set of buckets per use case)"
                 )
         prefix = uc.upper().replace("-", "_")
         for user, env, must in (
@@ -328,22 +328,22 @@ def check_use_cases() -> None:
             u = users.get(user)
             if not u:
                 error(
-                    f"{rel(MINIO_VALUES)}: user {user!r} missing (isolation: one set of users per use case)"
+                    f"{rel(STORE_VALUES)}: user {user!r} missing (isolation: one set of users per use case)"
                 )
                 continue
             if u.get("envPrefix") != env:
                 error(
-                    f"{rel(MINIO_VALUES)}: user {user!r} envPrefix {u.get('envPrefix')!r}, expected {env!r}"
+                    f"{rel(STORE_VALUES)}: user {user!r} envPrefix {u.get('envPrefix')!r}, expected {env!r}"
                 )
             granted = {b for v in (u.get("policy") or {}).values() for b in v}
             if granted != must:
                 error(
-                    f"{rel(MINIO_VALUES)}: user {user!r} touches {sorted(granted)}; a use case's user may only touch {sorted(must)}"
+                    f"{rel(STORE_VALUES)}: user {user!r} touches {sorted(granted)}; a use case's user may only touch {sorted(must)}"
                 )
         for ns in expected:
             if ns not in api_clients:
                 error(
-                    f"{rel(MINIO_VALUES)}: {ns!r} missing in networkPolicy.apiClients"
+                    f"{rel(STORE_VALUES)}: {ns!r} missing in networkPolicy.apiClients"
                 )
         # 3. its charts agree with the declaration
         charts = d / "workloads"

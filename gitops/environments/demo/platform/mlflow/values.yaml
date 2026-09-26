@@ -17,14 +17,14 @@ artifactRoot:
   s3:
     enabled: true
     bucket: mlflow
-    # Credentials of the MinIO user `mlflow` (read/write on bucket mlflow).
+    # Credentials of the artifact-store user `mlflow` (read/write on bucket mlflow).
     # Created by scripts/platform/03-secrets.sh, never in Git.
     existingSecret:
       name: mlflow-s3-credentials
       keyOfAccessKeyId: AWS_ACCESS_KEY_ID
       keyOfSecretAccessKey: AWS_SECRET_ACCESS_KEY
 extraEnvVars:
-  MLFLOW_S3_ENDPOINT_URL: http://minio.minio.svc.cluster.local:9000
+  MLFLOW_S3_ENDPOINT_URL: http://seaweedfs.seaweedfs.svc.cluster.local:9000
   AWS_DEFAULT_REGION: us-east-1
 extraVolumes:
   - name: data

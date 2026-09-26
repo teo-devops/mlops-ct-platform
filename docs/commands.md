@@ -49,7 +49,7 @@ Their cards in [modules/](modules/README.md) say what else to flip in the use ca
 |---|---|---|
 | 01 | `make prereqs` | see above |
 | 02 | `make up` | kind cluster from `cluster/kind.yaml`, ingress-nginx on host port 8088, images of the **enabled** modules preloaded |
-| 03 | `make secrets` | platform namespaces and Secrets (MinIO root and one key per artifact-store user, MLflow, Grafana), then each **deployed** use case's (namespaces, its own S3 users, Git credential for promote, data-source ConfigMap) — never in Git |
+| 03 | `make secrets` | platform namespaces and Secrets (SeaweedFS root and one key per artifact-store user, MLflow, Grafana), then each **deployed** use case's (namespaces, its own S3 users, Git credential for promote, data-source ConfigMap) — never in Git |
 | 04 | `make bootstrap` | Argo CD from the pinned chart with the same values it will later manage itself, AppProjects, root-app; from here on every change is a commit |
 | 05 | `make wait` | until every platform module is Synced/Healthy (`SCOPE=<uc>` for a use case) |
 | 06–08 | `make build pipeline smoke` | the use case: images, first training (v0 → v1), smoke |
@@ -75,6 +75,6 @@ Their cards in [modules/](modules/README.md) say what else to flip in the use ca
 | `ENABLE`, `DISABLE`, `COMMIT` | — | `module`, `use-case` |
 | `NAME`, `MODELS`, `TASK`, `API` | — | `new-use-case` |
 | `GIT_USER`, `GIT_TOKEN` | `teo-devops`, `gh auth token` | `secrets`, `bootstrap` (promote push; a private fork's Argo CD) |
-| `MINIO_ROOT_PASSWORD`, `GRAFANA_ADMIN_PASSWORD` | `minio-demo`, `admin-demo` | `secrets` |
+| `SEAWEEDFS_ROOT_PASSWORD`, `GRAFANA_ADMIN_PASSWORD` | `seaweedfs-demo`, `admin-demo` | `secrets` |
 | `DOCKER_BUILD_HOST_NETWORK` | `1` | `build`, `prereqs` (builders without DNS) |
 | `SCOPE`, `TIMEOUT` | `platform`, `1200` | `wait` |

@@ -3,8 +3,8 @@
 The kind profile validates the **control flow** of the platform for near-zero cost. Do not read
 more into it than that.
 
-* **High availability** — one control plane, single replicas of Argo CD, MLflow (sqlite), MinIO,
-  Prometheus. Production needs replicated etcd, HA engine, managed Postgres, erasure-coded MinIO or S3.
+* **High availability** — one control plane, single replicas of Argo CD, MLflow (sqlite), SeaweedFS,
+  Prometheus. Production needs replicated etcd, HA engine, managed Postgres, a replicated SeaweedFS cluster or S3.
 * **Real multi-tenancy** — AppProjects isolate at deploy time and NetworkPolicies at runtime, but
   there are no ResourceQuotas, no LimitRanges, and Argo CD's own RBAC is not exercised (no SSO).
 * **Autoscaling under load** — `autoscalerClass: external` (no metrics-server); the prod values

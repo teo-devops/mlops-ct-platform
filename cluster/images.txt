@@ -33,9 +33,8 @@ quay.io/kiwigrid/k8s-sidecar:2.11.2
 registry.k8s.io/kube-state-metrics/kube-state-metrics:v2.20.0
 quay.io/prometheus/node-exporter:v1.12.1-distroless
 quay.io/prometheus/pushgateway:v1.11.3
-# --- module: core (MinIO workload; Docker Hub no longer serves MinIO, quay.io does)
-quay.io/minio/minio:RELEASE.2025-09-07T16-13-09Z
-quay.io/minio/mc:RELEASE.2025-08-13T08-35-41Z
+# --- module: core (SeaweedFS workload: server, admin console and setup Job share one image)
+docker.io/chrislusf/seaweedfs:4.47
 # --- module: airflow (3.2.2, chart 1.22.0) — opt-in: preloaded only while enabled
 apache/airflow:3.2.2
 registry.k8s.io/git-sync/git-sync:v4.4.2

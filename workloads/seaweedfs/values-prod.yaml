@@ -1,0 +1,19 @@
+# prod profile (bare-metal) — ILLUSTRATIVE, not applied by gitops/environments/demo.
+# In production the artifact-store contract is fulfilled by a SeaweedFS cluster
+# (separate masters, volume servers and filers, replication on Longhorn volumes,
+# e.g. the upstream seaweedfs Helm chart), or by S3 in the aws profile. Same
+# buckets, users and rights.
+persistence:
+  size: 500Gi
+  storageClassName: longhorn
+storage:
+  volumeSizeLimitMB: 30000
+  maxVolumes: 0   # 0 = derived from free disk space
+resources:
+  requests: {cpu: "1", memory: 4Gi}
+  limits: {memory: 8Gi}
+ingress:
+  enabled: true
+  consoleHost: seaweedfs.example.internal
+networkPolicy:
+  hostCidr: 10.0.0.0/8

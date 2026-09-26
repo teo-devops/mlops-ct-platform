@@ -26,9 +26,9 @@ kserve:
     # Cluster-wide S3 defaults for the storage-initializer: every
     # InferenceService reads the artifact store through them, so a Secret only
     # needs credentials. Per-secret annotations (serving.kserve.io/s3-*)
-    # override these. Swapping MinIO for S3 = changing these four lines.
+    # override these. Swapping the artifact store (SeaweedFS today, S3 on aws) = changing these four lines.
     s3:
-      endpoint: minio.minio.svc.cluster.local:9000
+      endpoint: seaweedfs.seaweedfs.svc.cluster.local:9000
       useHttps: "0"
       region: us-east-1
       verifySSL: "0"

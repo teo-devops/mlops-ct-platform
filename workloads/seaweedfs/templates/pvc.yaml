@@ -1,9 +1,9 @@
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: minio-data
+  name: seaweedfs-data
   labels:
-    {{- include "minio.labels" . | nindent 4 }}
+    {{- include "seaweedfs.labels" . | nindent 4 }}
   annotations:
     # Never pruned, even once the workload enables prune: it holds every
     # artifact of the platform.
