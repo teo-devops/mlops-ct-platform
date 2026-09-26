@@ -64,11 +64,14 @@ bad=[]
 counted=0
 for a in apps:
     n=a["metadata"]["name"]
-    # root-app cannot render (e.g. Git credential rejected): nothing below it exists
-    # yet, so an empty scope must not read as "all healthy".
+    # Children appear wave by wave: until root-app is Synced some of them do not
+    # exist yet, so the ones that do cannot speak for the scope. If it cannot
+    # render at all (e.g. Git credential rejected), say why.
     if n=="root-app":
-        for c in a.get("status",{}).get("conditions") or []:
-            if c.get("type")=="ComparisonError": bad.append("root-app(ComparisonError: "+c.get("message","")[:160]+")")
+        errs=[c.get("message","")[:160] for c in a.get("status",{}).get("conditions") or [] if c.get("type")=="ComparisonError"]
+        rs=a.get("status",{}).get("sync",{}).get("status","Unknown")
+        if errs: bad.append("root-app(ComparisonError: "+errs[0]+")")
+        elif rs!="Synced": bad.append(f"root-app({rs}: child Applications still being created)")
     group=(a["metadata"].get("labels") or {}).get("mlops-ct-platform.dev/group","")
     # root-app aggregates EVERY child, use cases included: before `make build` and
     # the first pipeline run those are legitimately Degraded, so the app-of-apps
