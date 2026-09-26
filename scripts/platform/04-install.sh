@@ -80,6 +80,10 @@ if kubectl -n "${NAMESPACE}" get secret "${PLATFORM_SECRET}" >/dev/null 2>&1 && 
 elif [[ -z "${GIT_TOKEN}" ]]; then
   info "no GIT_TOKEN: no repository credential (fine for the public repository; a private fork needs one)"
 else
+  # A rejected token is worse than none: Argo CD sends it and GitHub refuses the
+  # clone even of the public repository (`gh auth token` still prints an expired one).
+  curl -fsS -o /dev/null -H @- https://api.github.com/user <<<"Authorization: token ${GIT_TOKEN}" 2>/dev/null \
+    || die "GitHub rejects the token (expired? run 'gh auth login', or GIT_TOKEN= to skip the credential)"
   credential_add
 fi
 

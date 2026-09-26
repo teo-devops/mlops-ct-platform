@@ -61,8 +61,14 @@ import json,sys
 scope=sys.argv[1]
 apps=json.load(sys.stdin)["items"]
 bad=[]
+counted=0
 for a in apps:
     n=a["metadata"]["name"]
+    # root-app cannot render (e.g. Git credential rejected): nothing below it exists
+    # yet, so an empty scope must not read as "all healthy".
+    if n=="root-app":
+        for c in a.get("status",{}).get("conditions") or []:
+            if c.get("type")=="ComparisonError": bad.append("root-app(ComparisonError: "+c.get("message","")[:160]+")")
     group=(a["metadata"].get("labels") or {}).get("mlops-ct-platform.dev/group","")
     # root-app aggregates EVERY child, use cases included: before `make build` and
     # the first pipeline run those are legitimately Degraded, so the app-of-apps
@@ -72,7 +78,9 @@ for a in apps:
     if scope not in ("platform","all") and group!=scope: continue
     h=a.get("status",{}).get("health",{}).get("status","Unknown")
     s=a.get("status",{}).get("sync",{}).get("status","Unknown")
+    counted+=1
     if h!="Healthy" or s!="Synced": bad.append(f"{n}({s}/{h})")
+if not counted and not bad: bad.append(f"no {scope} Applications yet")
 print(" ".join(bad))' "$scope")"
     [[ -z "$pending" ]] && return 0
     now=$(date +%s)
