@@ -44,10 +44,11 @@ grafana:
     existingSecret: grafana-admin
     userKey: admin-user
     passwordKey: admin-password
-  # 256Mi gets OOMKilled on Grafana 11+ in kind.
+  # Grafana 13 keeps in-memory search indexes: ~300Mi idle, and a 30s-refresh
+  # dashboard reached the old 512Mi limit (OOMKilled). 256Mi fails on 11+.
   resources:
-    requests: {cpu: 50m, memory: 256Mi}
-    limits: {memory: 512Mi}
+    requests: {cpu: 50m, memory: 384Mi}
+    limits: {memory: 1Gi}
   ingress:
     enabled: true
     ingressClassName: nginx
