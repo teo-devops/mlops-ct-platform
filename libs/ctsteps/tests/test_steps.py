@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import json
+import subprocess
+from types import SimpleNamespace
 
 import pandas as pd
 import pytest
@@ -62,6 +64,42 @@ def test_bump_version_keeps_comments():
     assert out.count('version: "4"') == 1 and 'version: "7"' in out
     with pytest.raises(SystemExit):
         promote.bump_version(text, "missing", 1)
+
+
+def test_push_bump_commits_once_and_is_idempotent(tmp_path):
+    """A bump is one commit on the branch; bumping to the version Git already has is a no-op."""
+
+    def sh(*args, cwd):
+        return subprocess.run(
+            args, cwd=cwd, check=True, text=True, capture_output=True
+        ).stdout.strip()
+
+    origin, work = tmp_path / "origin.git", tmp_path / "work"
+    sh("git", "init", "--bare", "-b", "main", str(origin), cwd=tmp_path)
+    sh("git", "clone", str(origin), str(work), cwd=tmp_path)
+    (work / "values.yaml").write_text('models:\n  fraud:\n    version: "1"\n')
+    sh("git", "add", "values.yaml", cwd=work)
+    sh("git", "-c", "user.name=t", "-c", "user.email=t@t", "commit", "-m", "init", cwd=work)
+    sh("git", "push", "origin", "HEAD:main", cwd=work)
+    ctx = SimpleNamespace(
+        settings=SimpleNamespace(
+            git_repo=str(origin),
+            git_branch="main",
+            git_user="",
+            git_token="t",
+            values_file="values.yaml",
+        ),
+        use_case=SimpleNamespace(name="uc"),
+        spec=SimpleNamespace(name="fraud"),
+        run_id="run-1",
+        serving_uri=lambda v: f"s3://uc-models/uc/fraud/v{v}",
+    )
+    head = sh("git", "rev-parse", "main", cwd=origin)
+    assert promote.push_bump(ctx, 1, "manual") == head  # already v1: no commit
+    assert sh("git", "rev-parse", "main", cwd=origin) == head
+    new = promote.push_bump(ctx, 2, "manual")
+    assert new != head and sh("git", "rev-parse", "main", cwd=origin) == new
+    assert 'version: "2"' in sh("git", "show", "main:values.yaml", cwd=origin)
 
 
 def test_pipeline_end_to_end(env):

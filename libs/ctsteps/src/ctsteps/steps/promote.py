@@ -72,6 +72,16 @@ def push_bump(ctx: Context, version: int, trigger: str) -> str:
             for values in files:
                 values.write_text(bump_version(values.read_text(), ctx.spec.name, version))
             git("add", *[str(f.relative_to(repo)) for f in files], cwd=repo)
+            # Git already deploys this version (a rebuilt cluster whose registry
+            # numbers from v1 again, a re-run): the deployment state matches, done.
+            if (
+                subprocess.run(
+                    ["git", "diff", "--cached", "--quiet"], cwd=repo, check=False
+                ).returncode
+                == 0
+            ):
+                print(f"values already at v{version}: nothing to commit")
+                return git("rev-parse", "HEAD", cwd=repo).stdout.strip()
             git("commit", "-m", msg, cwd=repo)
             try:
                 git("push", "origin", f"HEAD:{s.git_branch}", cwd=repo)
