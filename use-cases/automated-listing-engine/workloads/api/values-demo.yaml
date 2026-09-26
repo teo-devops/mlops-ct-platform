@@ -4,6 +4,6 @@ ingress:
 # ../serving/values-demo.yaml — see ctsteps promote.
 models:
   categorizer:
-    version: "1"
+    version: "2"
   fraud:
     version: "2"
