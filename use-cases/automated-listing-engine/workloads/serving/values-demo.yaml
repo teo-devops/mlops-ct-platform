@@ -3,4 +3,4 @@ models:
   categorizer:
     version: "1"
   fraud:
-    version: "1"
+    version: "2"
