@@ -14,7 +14,15 @@ call() { curl -s -o /tmp/ct-smoke-body -w '%{http_code}' -X POST "${API}${UC_API
 fallbacks() { curl -s "${API}/metrics" | awk -v uc="$UC_NAME" '$1 ~ /^uc_fallback_total\{/ && index($0, "use_case=\"" uc "\"") {s+=$2} END {print s+0}'; }
 
 step "1. Happy path: ${UC_API_PATH}"
-code="$(call "$UC_API_SAMPLE")"
+# Right after `make pipeline` the promotion commit may not be synced yet (Argo CD
+# polls every ≤3 min): nudge a refresh and wait until the models answer.
+for _ in $(seq 1 40); do
+  code="$(call "$UC_API_SAMPLE")"
+  [[ "$code" == "200" ]] && break
+  kubectl -n argocd annotate application "${UC_NAME}-serving" "${UC_NAME}-api" argocd.argoproj.io/refresh=normal --overwrite >/dev/null 2>&1
+  info "HTTP ${code}; waiting for Argo CD to sync the promoted models"
+  sleep 15
+done
 info "$(head -c 400 /tmp/ct-smoke-body)"; echo
 [[ "$code" == "200" ]] || die "expected 200, got ${code}"
 python3 - "$UC_NAME" /tmp/ct-smoke-body <<'PY'
