@@ -6,4 +6,4 @@ cards say where they would plug in and what stands in for them.
 
 Implemented: [gitops-engine](gitops-engine.md) · [cert-manager](cert-manager.md) · [gateway-api-crds](gateway-api-crds.md) · [serving](serving.md) · [model-registry](model-registry.md) · [orchestration](orchestration.md) · [airflow](airflow.md) (opt-in) · [event-bus](event-bus.md) (Redpanda, opt-in) · [progressive-delivery](progressive-delivery.md) (Argo Rollouts, opt-in) · [monitoring](monitoring.md) · [model-monitoring](model-monitoring.md) · [artifact-store](artifact-store.md) · [ingress](ingress.md)
 
-Gaps: [feature-store](feature-store.md) · [data-quality](data-quality.md) · [hpo](hpo.md) 
+Gaps: [feature-store](feature-store.md) · [data-quality](data-quality.md) · [data-versioning](data-versioning.md) · [hpo](hpo.md)

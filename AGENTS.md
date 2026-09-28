@@ -45,7 +45,7 @@ proposing changes; most "improvements" that look obvious were decided against, o
   without Istio; push to `main` instead of a PR for promotion; the observability *workload* holds
   rules and dashboards while the monitoring *module* holds the stack.
 * `autoscalerClass: external` on kind; `startupapicheck` off; Alertmanager off; Dex off.
-* Module gaps (event-bus, feature-store, data-quality, hpo, progressive-delivery) have cards in
+* Module gaps (event-bus, feature-store, data-quality, data-versioning, hpo, progressive-delivery) have cards in
   `docs/modules/`. Implementing one = a new module directory + a card, not a rewrite.
 
 ## Before you finish a change
