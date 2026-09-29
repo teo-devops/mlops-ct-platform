@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=68"]
+requires = ["setuptools==79.0.1"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -8,15 +8,15 @@ version = "0.1.0"
 description = "Serving-side contract of the platform for use-case APIs: metrics, prediction log, event bus, circuit breaker."
 requires-python = ">=3.12"
 dependencies = [
-  "prometheus-client>=0.21",
+  "prometheus-client==0.26.0",
   "structlog==26.1.0",
-  "boto3>=1.35",
+  "boto3==1.43.103",
   "confluent-kafka==2.15.1",
-  "httpx>=0.28",
+  "httpx==0.28.1",
 ]
 
 [project.optional-dependencies]
-dev = ["pytest>=8", "ruff>=0.8"]
+dev = ["pytest==9.1.1", "ruff==0.16.8"]
 
 [tool.setuptools.packages.find]
 where = ["src"]
