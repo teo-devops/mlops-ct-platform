@@ -1,0 +1,53 @@
+# Platform module: strimzi — see docs/modules/strimzi.md
+# OPT-IN implementation of the event-bus contract, the production-shaped
+# alternative to `redpanda` (same Kafka protocol, same topic, other bootstrap
+# URL). Enabled by listing `strimzi` in ../kustomization.yaml. The operator
+# from its upstream chart; the Kafka cluster and the topics of the contract as
+# Strimzi resources from this repository. Pinned.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: strimzi
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: platform
+  sources:
+    - repoURL: https://strimzi.io/charts/
+      chart: strimzi-kafka-operator
+      targetRevision: 1.2.0   # Strimzi 1.2.0, Kafka 4.3.1, API kafka.strimzi.io/v1
+      helm:
+        releaseName: strimzi
+        valueFiles:
+          - $values/gitops/environments/demo/platform/strimzi/values.yaml
+    # Extra manifests of this module: the Kafka cluster (KRaft, one node pool)
+    # and the topics of the contract as KafkaTopic resources — declarative,
+    # where redpanda needs a PostSync Job.
+    - repoURL: 'https://github.com/teo-devops/mlops-ct-platform.git'
+      targetRevision: main
+      path: gitops/environments/demo/platform/strimzi/manifests
+    - repoURL: 'https://github.com/teo-devops/mlops-ct-platform.git'
+      targetRevision: main
+      ref: values
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: kafka
+  syncPolicy:
+    automated:
+      selfHeal: true
+      prune: true
+    # Server-side apply: the Kafka CRD (≈340 KB) exceeds the annotation limit
+    # of client-side apply.
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
+      - RespectIgnoreDifferences=true
+    retry:
+      limit: 10
+      backoff:
+        duration: 15s
+        factor: 2
+        maxDuration: 3m

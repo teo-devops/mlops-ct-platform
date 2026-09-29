@@ -118,6 +118,10 @@ configs:
       type: helm
       name: redpanda
       url: https://charts.redpanda.com
+    strimzi:
+      type: helm
+      name: strimzi
+      url: https://strimzi.io/charts/
 
   # ==========================================================================
   # RBAC — designed to grow from "admin only" to several users without redoing

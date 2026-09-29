@@ -1,0 +1,70 @@
+# The Kafka cluster of the event-bus contract (docs/modules/strimzi.md).
+#
+# KRaft, one node pool with one node acting as controller and broker: the size
+# of kind. The production shape is the same objects with more replicas
+# (3 controllers + 3 brokers, replication factor 3, min.insync.replicas 2,
+# rack awareness) — nothing a use case sees changes: bootstrap URL and topic.
+#
+# Internal listener only, no TLS, no SASL, like the redpanda module: the use
+# cases' NetworkPolicies decide who reaches port 9093. Prod: `tls: true` +
+# `authentication: {type: scram-sha-512}` and one KafkaUser per use case,
+# delivered as a Secret by the use case's secrets script.
+#
+# Created before the CRDs exist on a first sync: SkipDryRunOnMissingResource.
+apiVersion: kafka.strimzi.io/v1
+kind: KafkaNodePool
+metadata:
+  name: dual
+  namespace: kafka
+  labels:
+    strimzi.io/cluster: platform
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  replicas: 1
+  roles: [controller, broker]
+  storage:
+    type: persistent-claim
+    size: 5Gi
+    deleteClaim: true        # demo: the data dies with the cluster; prod: false
+  jvmOptions:
+    -Xms: 512m
+    -Xmx: 512m
+  resources:
+    requests: {cpu: 250m, memory: 1Gi}
+    limits: {memory: 1Gi}
+---
+apiVersion: kafka.strimzi.io/v1
+kind: Kafka
+metadata:
+  name: platform
+  namespace: kafka
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  kafka:
+    version: 4.3.1
+    listeners:
+      # bootstrap: platform-kafka-bootstrap.kafka.svc.cluster.local:9093
+      - name: internal
+        port: 9093
+        type: internal
+        tls: false
+    config:
+      # one node: every replication factor is 1
+      default.replication.factor: 1
+      min.insync.replicas: 1
+      offsets.topic.replication.factor: 1
+      transaction.state.log.replication.factor: 1
+      transaction.state.log.min.isr: 1
+      auto.create.topics.enable: false   # topics are KafkaTopic resources (topics.yaml)
+      log.retention.ms: 604800000        # 7 days: the monitor's windows are minutes
+    # Prometheus format straight from Kafka, no JMX exporter config to maintain;
+    # scraped by podmonitor.yaml.
+    metricsConfig:
+      type: strimziMetricsReporter
+  entityOperator:
+    topicOperator:
+      resources:
+        requests: {cpu: 50m, memory: 256Mi}
+        limits: {memory: 384Mi}

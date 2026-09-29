@@ -68,7 +68,7 @@ off is preloaded, secreted or synced. Argo CD deploys what `main` says, so enabl
 (`COMMIT=1` does it for you).
 
 ```bash
-make module                            # platform modules: on / opt-in (Airflow, Redpanda, Argo Rollouts)
+make module                            # platform modules: on / opt-in (Airflow, Redpanda, Strimzi, Argo Rollouts)
 make module ENABLE=airflow COMMIT=1
 make use-case                          # use cases the demo deploys
 make use-case ENABLE=delivery-eta COMMIT=1
@@ -86,7 +86,7 @@ make use-case ENABLE=delivery-eta COMMIT=1
 | model-monitoring | Evidently (`ctsteps drift`) | PSI against the frozen training reference, automatic retrain above threshold |
 | promotion | `ctsteps promote` + Argo CD | deployment = a commit; rollback = another commit |
 | progressive-delivery (opt-in) | Argo Rollouts | canary of the use case's API judged by the SLO analysis |
-| event-bus (opt-in) | Redpanda | the prediction records on a Kafka topic; the monitor reads its window from it |
+| event-bus (opt-in) | Redpanda or Strimzi (Kafka) | the prediction records on a Kafka topic; the monitor reads its window from it |
 
 Modules are self-contained directories under `gitops/environments/demo/platform/`, each with a card
 in [docs/modules/](docs/modules/README.md) (what it promises, pinned version, how to replace or

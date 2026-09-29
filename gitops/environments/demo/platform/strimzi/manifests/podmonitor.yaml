@@ -1,0 +1,15 @@
+# Kafka metrics (Strimzi Metrics Reporter, port tcp-prometheus) into the
+# platform's Prometheus: the monitoring contract scrapes any PodMonitor.
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: kafka
+  namespace: kafka
+spec:
+  selector:
+    matchLabels:
+      strimzi.io/kind: Kafka
+  podMetricsEndpoints:
+    - port: tcp-prometheus
+      path: /metrics
+      interval: 30s

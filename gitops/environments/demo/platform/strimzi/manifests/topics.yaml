@@ -1,0 +1,17 @@
+# The topics of the event-bus contract. The platform owns the list; a use case
+# publishes to `predictions` and reads it back, it never creates topics.
+# Declarative: the Topic Operator reconciles them (redpanda needs a Job).
+apiVersion: kafka.strimzi.io/v1
+kind: KafkaTopic
+metadata:
+  name: predictions
+  namespace: kafka
+  labels:
+    strimzi.io/cluster: platform
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  partitions: 3
+  replicas: 1
+  config:
+    retention.ms: 604800000

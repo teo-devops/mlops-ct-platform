@@ -27,6 +27,7 @@ spec:
     - 'https://github.com/kubernetes-sigs/gateway-api.git'
     - 'https://airflow.apache.org'
     - 'https://charts.redpanda.com'
+    - 'https://strimzi.io/charts/'
 
   destinations:
     - server: 'https://kubernetes.default.svc'

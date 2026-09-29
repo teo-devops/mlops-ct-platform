@@ -14,7 +14,7 @@ namespace: argocd
 # (docs/design/contracts.md). Sync-waves (in each application.yaml):
 #   1  cert-manager, gateway-api-crds
 #   2  kserve-crd, mlflow, argo-workflows, kube-prometheus-stack, pushgateway,
-#      airflow, redpanda, argo-rollouts (opt-in)
+#      airflow, redpanda, strimzi, argo-rollouts (opt-in)
 #   3  kserve (needs cert-manager webhooks + CRDs)
 #   4  kserve-runtimes (needs the KServe webhook)
 #   5  workload Applications (../apps)
@@ -33,4 +33,5 @@ resources:
   # says how to enable one: uncomment, `make secrets`, commit).
   #  - airflow
   #  - redpanda
+  - strimzi
   #  - argo-rollouts

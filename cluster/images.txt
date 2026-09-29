@@ -45,6 +45,10 @@ alpine:3.23.4
 docker.redpanda.com/redpandadata/redpanda:v26.2.2
 docker.redpanda.com/redpandadata/redpanda-operator:v26.2.3
 docker.redpanda.com/redpandadata/console:v3.9.0
+# --- module: strimzi (1.2.0, Kafka 4.3.1) — opt-in: preloaded only while enabled
+# operator, topic operator and init share one image; brokers use the kafka one
+quay.io/strimzi/operator:1.2.0
+quay.io/strimzi/kafka:1.2.0-kafka-4.3.1
 # --- module: argo-rollouts (v1.10.0, chart 2.43.2) — opt-in: preloaded only while enabled
 quay.io/argoproj/argo-rollouts:v1.10.0
 quay.io/argoproj/kubectl-argo-rollouts:v1.10.0
