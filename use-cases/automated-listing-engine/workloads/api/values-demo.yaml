@@ -7,3 +7,10 @@ models:
     version: "3"
   fraud:
     version: "2"
+
+# Event bus on the opt-in platform module `strimzi` (docs/modules/strimzi.md):
+# the same contract as redpanda, another bootstrap URL and namespace.
+eventBus:
+  enabled: true
+  bootstrap: platform-kafka-bootstrap.kafka.svc.cluster.local:9093
+  namespace: kafka

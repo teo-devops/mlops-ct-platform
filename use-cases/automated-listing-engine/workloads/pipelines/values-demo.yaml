@@ -2,3 +2,10 @@
 # relies on `make pipeline` and on the drift monitor.
 data:
   rows: 6000
+
+# Event bus on the opt-in platform module `strimzi` (docs/modules/strimzi.md):
+# the same contract as redpanda, another bootstrap URL and namespace.
+eventBus:
+  enabled: true
+  bootstrap: platform-kafka-bootstrap.kafka.svc.cluster.local:9093
+  namespace: kafka
