@@ -2,8 +2,8 @@
 
 Same record as `prediction_log.py` (docs/modules/event-bus.md); the topic adds fan-out and
 latency: the drift monitor can read a window straight from it, a shadow model or a label join
-can consume the same stream. Off unless `ALE_EVENT_BUS_BOOTSTRAP` is set (the opt-in redpanda
-module). The producer is asynchronous and never blocks a request: a broker outage costs
+can consume the same stream. Off unless `CT_EVENT_BUS_BOOTSTRAP` is set (the opt-in redpanda
+or strimzi module). The producer is asynchronous and never blocks a request: a broker outage costs
 `uc_event_bus_errors_total`, not availability — the S3 log stays the batch source of truth.
 """
 
